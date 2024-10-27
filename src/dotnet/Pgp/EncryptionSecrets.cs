@@ -1,0 +1,66 @@
+﻿namespace Proton.Cryptography.Pgp;
+
+public readonly ref struct EncryptionSecrets
+{
+    private readonly PgpKeyRing _keyRing;
+    private readonly PgpSessionKey? _sessionKey;
+    private readonly ReadOnlySpan<byte> _password;
+
+    public EncryptionSecrets(PgpKeyRing keyRing)
+        : this(keyRing, default, [])
+    {
+    }
+
+    public EncryptionSecrets(PgpSessionKey sessionKey)
+        : this(default, sessionKey, [])
+    {
+    }
+
+    public EncryptionSecrets(PgpKeyRing keyRing, PgpSessionKey sessionKey)
+        : this(keyRing, sessionKey, [])
+    {
+    }
+
+    public EncryptionSecrets(ReadOnlySpan<byte> password)
+        : this(default, default, password)
+    {
+    }
+
+    public EncryptionSecrets(PgpKeyRing keyRing, ReadOnlySpan<byte> password)
+        : this(keyRing, default, password)
+    {
+    }
+
+    private EncryptionSecrets(PgpKeyRing keyRing, PgpSessionKey? sessionKey, ReadOnlySpan<byte> password)
+    {
+        _keyRing = keyRing;
+        _sessionKey = sessionKey;
+        _password = password;
+    }
+
+    public static implicit operator EncryptionSecrets(PgpPrivateKey privateKey)
+        => new(new PgpKeyRing(privateKey));
+
+    public static implicit operator EncryptionSecrets(PgpPublicKey publicKey)
+        => new(new PgpKeyRing(publicKey));
+
+    public static implicit operator EncryptionSecrets(PgpKey key)
+        => new(new PgpKeyRing(key));
+
+    public static implicit operator EncryptionSecrets(PgpKeyRing keyRing)
+        => new(keyRing);
+
+    public static implicit operator EncryptionSecrets(PgpSessionKey sessionKey)
+        => new(sessionKey);
+
+    public static implicit operator EncryptionSecrets(ReadOnlySpan<byte> password)
+        => new(password);
+
+    [UnscopedRef]
+    internal void Deconstruct(out ReadOnlySpan<nint> goKeyHandles, out PgpSessionKey? sessionKey, out ReadOnlySpan<byte> password)
+    {
+        goKeyHandles = _keyRing.GoKeyHandles;
+        sessionKey = _sessionKey;
+        password = _password;
+    }
+}
