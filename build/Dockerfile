@@ -17,12 +17,13 @@ ENV LLVM_MINGW_ROOT=/opt/llvm-mingw
 #    cd /tmp/llvm-mingw && \
 #    ./buildall.sh ${LLVM_MINGW_ROOT} && \
 #    rm -rf /tmp/llvm-mingw
-	
-RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/20241015/llvm-mingw-20241015-ucrt-ubuntu-20.04-x86_64.tar.xz && \
+
+ENV LLVM_MINGW_FILE_NAME=llvm-mingw-20241203-ucrt-ubuntu-20.04-x86_64.tar.xz
+RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/20241203/${LLVM_MINGW_FILE_NAME} && \
     mkdir -p ${LLVM_MINGW_ROOT} && \
-    tar xf llvm-mingw-20241015-ucrt-ubuntu-20.04-x86_64.tar.xz --strip-components=1 -C ${LLVM_MINGW_ROOT}
-	
-ENV ANDROID_NDK_VERSION=r27b
+    tar xf ${LLVM_MINGW_FILE_NAME} --strip-components=1 -C ${LLVM_MINGW_ROOT}
+
+ENV ANDROID_NDK_VERSION=r27c
 ENV ANDROID_NDK_URL=https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux.zip
 ENV NDK_ROOT=/opt/android-ndk-${ANDROID_NDK_VERSION}
 

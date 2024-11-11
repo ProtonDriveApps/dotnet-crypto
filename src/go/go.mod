@@ -3,9 +3,9 @@ module extern
 go 1.21
 
 require (
-	github.com/ProtonMail/go-crypto v1.1.0-beta.0-proton
+	github.com/ProtonMail/go-crypto v1.1.0-proton
 	github.com/ProtonMail/go-srp v0.0.7
-	github.com/ProtonMail/gopenpgp/v3 v3.0.0-beta.2-proton
+	github.com/ProtonMail/gopenpgp/v3 v3.0.0-proton
 )
 
 require (

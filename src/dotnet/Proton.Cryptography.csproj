@@ -29,10 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="../../bin/**/*.dll;../../bin/**/*.so;../../bin/**/*.dylib" Pack="true" PackagePath=".">
+    <Content Include="../../bin/**/*.dll;../../bin/**/*.so;../../bin/**/*.dylib" PackagePath=".">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="../../bin/**/*.lib;../../bin/**/*.a" Pack="true" PackagePath="."/>
+    </Content>
+    <Content Include="../../bin/**/*.lib;../../bin/**/*.a" PackagePath="." />
   </ItemGroup>
 
   <ItemGroup>

@@ -35,41 +35,7 @@ for platform in "$@"; do
                 else
                     output_file="${lib_name}.lib"
                 fi
-                ;;
-            linux)
-                if [ "$build_mode" == "c-shared" ]; then
-                    output_file="lib${lib_name}.so"
-                else
-                    output_file="lib${lib_name}.a"
-                fi
-                ;;
-            darwin)
-                if [ "$build_mode" == "c-shared" ]; then
-                    output_file="${lib_name}.dylib"
-                else
-                    output_file="${lib_name}.a"
-                fi
-                ;;
-            android)
-                if [ "$build_mode" == "c-shared" ]; then
-                    output_file="lib${lib_name}.so"
-                else
-                    echo "Skipping unsupported $build_mode mode for $os/$arch"
-                    continue
-                fi
-                ;;
-            ios)
-                if [ "$build_mode" == "c-shared" ]; then
-                    echo "Skipping unsupported $build_mode mode for $os/$arch"
-                    continue
-                else
-                    output_file="${lib_name}.a"
-                fi
-                ;;
-        esac
-        
-        case "$os" in
-            windows)
+
                 if [ $arch == "386" ]; then
                     export CC=$LLVM_MINGW_ROOT/bin/i686-w64-mingw32-gcc
                 elif [ $arch == "amd64" ]; then
@@ -79,6 +45,12 @@ for platform in "$@"; do
                 fi
                 ;;
             linux)
+                if [ "$build_mode" == "c-shared" ]; then
+                    output_file="lib${lib_name}.so"
+                else
+                    output_file="lib${lib_name}.a"
+                fi
+
                 if [ $arch == "386" ]; then
                     export CC=i686-linux-gnu-gcc
                 elif [ $arch == "amd64" ]; then
@@ -88,6 +60,13 @@ for platform in "$@"; do
                 fi
                 ;;
             android)
+                if [ "$build_mode" == "c-shared" ]; then
+                    output_file="lib${lib_name}.so"
+                else
+                    echo "Skipping unsupported $build_mode mode for $os/$arch"
+                    continue
+                fi
+
                 if [ $arch == "386" ]; then
                     export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android35-clang
                 elif [ $arch == "amd64" ]; then
@@ -96,9 +75,24 @@ for platform in "$@"; do
                     export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang
                 fi
                 ;;
-            *)
+            darwin)
+                if [ "$build_mode" == "c-shared" ]; then
+                    output_file="${lib_name}.dylib"
+                else
+                    output_file="${lib_name}.a"
+                fi
+
                 export CC=""
                 ;;
+            ios)
+                if [ "$build_mode" == "c-shared" ]; then
+                    echo "Skipping unsupported $build_mode mode for $os/$arch"
+                    continue
+                else
+                    output_file="${lib_name}.a"
+                fi
+
+                export CC=""
         esac
 
         echo "Building for $os/$arch in $build_mode mode -> $output_dir/$output_file"
