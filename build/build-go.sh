@@ -8,7 +8,7 @@ build_modes=(
 )
 
 declare -A arch_rid_map=( ["386"]="x86" ["amd64"]="x64" ["arm64"]="arm64" )
-declare -A os_rid_map=( ["windows"]="win" ["darwin"]="osx" ["linux"]="linux" ["android"]="android" ["ios"]="ios" )
+declare -A os_rid_map=( ["windows"]="win" ["darwin"]="osx" ["linux"]="linux" ["android"]="linux-bionic" ["ios"]="ios" )
 
 REPOPATH=$(dirname "$(dirname "$(readlink -f "$0")")")
 
