@@ -25,15 +25,15 @@ for platform in "$@"; do
     export GOARCH=$arch
 
     runtime_id="${os_rid_map[$os]}-${arch_rid_map[$arch]}"
-    output_dir="bin/runtimes/$runtime_id/native"
+    output_dir_path="bin/runtimes/$runtime_id/native"
 
     for build_mode in "${build_modes[@]}"; do
         case "$os" in
             windows)
                 if [ "$build_mode" == "c-shared" ]; then
-                    output_file="${lib_name}.dll"
+                    output_file_name="${lib_name}.dll"
                 else
-                    output_file="${lib_name}.lib"
+                    output_file_name="${lib_name}.lib"
                 fi
 
                 if [ $arch == "386" ]; then
@@ -46,9 +46,9 @@ for platform in "$@"; do
                 ;;
             linux)
                 if [ "$build_mode" == "c-shared" ]; then
-                    output_file="lib${lib_name}.so"
+                    output_file_name="lib${lib_name}.so"
                 else
-                    output_file="lib${lib_name}.a"
+                    output_file_name="lib${lib_name}.a"
                 fi
 
                 if [ $arch == "386" ]; then
@@ -61,7 +61,7 @@ for platform in "$@"; do
                 ;;
             android)
                 if [ "$build_mode" == "c-shared" ]; then
-                    output_file="lib${lib_name}.so"
+                    output_file_name="lib${lib_name}.so"
                 else
                     echo "Skipping unsupported $build_mode mode for $os/$arch"
                     continue
@@ -74,12 +74,14 @@ for platform in "$@"; do
                 elif [ $arch == "arm64" ]; then
                     export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang
                 fi
+
+                export CGO_LDFLAGS="-Wl,-soname,$output_file_name"
                 ;;
             darwin)
                 if [ "$build_mode" == "c-shared" ]; then
-                    output_file="${lib_name}.dylib"
+                    output_file_name="${lib_name}.dylib"
                 else
-                    output_file="${lib_name}.a"
+                    output_file_name="${lib_name}.a"
                 fi
 
                 export CC=""
@@ -89,14 +91,14 @@ for platform in "$@"; do
                     echo "Skipping unsupported $build_mode mode for $os/$arch"
                     continue
                 else
-                    output_file="${lib_name}.a"
+                    output_file_name="${lib_name}.a"
                 fi
 
                 export CC=""
         esac
 
-        echo "Building for $os/$arch in $build_mode mode -> $output_dir/$output_file"
+        echo "Building for $os/$arch in $build_mode mode -> $output_dir_path/$output_file_name"
 
-        go build -C "$REPOPATH/src/go" -buildmode=$build_mode -o "$REPOPATH/$output_dir/$output_file"
+        go build -C "$REPOPATH/src/go" -buildmode=$build_mode -o "$REPOPATH/$output_dir_path/$output_file_name"
     done
 done
