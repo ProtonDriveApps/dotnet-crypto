@@ -5,12 +5,16 @@ github.com/ProtonMail/go-crypto v1.1.0-proton h1:5d2lo0UTu19UBj+UfZADLdNGDttcwa3
 github.com/ProtonMail/go-crypto v1.1.0-proton/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
 github.com/ProtonMail/go-crypto v1.1.4-proton h1:KIo9uNlk3vzlwI7o5VjhiEjI4Ld1TDixOMnoNZyfpFE=
 github.com/ProtonMail/go-crypto v1.1.4-proton/go.mod h1:zNoyBJW3p/yVWiHNZgfTF9VsjwqYof5YY0M9kt2QaX0=
+github.com/ProtonMail/go-crypto v1.1.5-proton h1:JN3NhN883nqme39cGdqD2S9Qog39DjL0G7jX6ut9BKc=
+github.com/ProtonMail/go-crypto v1.1.5-proton/go.mod h1:zNoyBJW3p/yVWiHNZgfTF9VsjwqYof5YY0M9kt2QaX0=
 github.com/ProtonMail/go-srp v0.0.7 h1:Sos3Qk+th4tQR64vsxGIxYpN3rdnG9Wf9K4ZloC1JrI=
 github.com/ProtonMail/go-srp v0.0.7/go.mod h1:giCp+7qRnMIcCvI6V6U3S1lDDXDQYx2ewJ6F/9wdlJk=
 github.com/ProtonMail/gopenpgp/v3 v3.0.0-proton h1:yggZC7fJbQgZJYYH0D8+bk3Mt/1ShB0597NnOWNU/+Y=
 github.com/ProtonMail/gopenpgp/v3 v3.0.0-proton/go.mod h1:WyaybIhMRs7yA7GK8f1COSL+f7dWcQq2xiDPl/U4OUA=
 github.com/ProtonMail/gopenpgp/v3 v3.1.1-proton h1:+EScBL2Hf4RmTSEnZUtdjfshg5BZRAHcBkjoVlClVBo=
 github.com/ProtonMail/gopenpgp/v3 v3.1.1-proton/go.mod h1:RZD2g1ysM4Eh0FZ/MEiPQaOaZM14M+jB0ceZvFN7utU=
+github.com/ProtonMail/gopenpgp/v3 v3.1.2-proton h1:5DYhY17+muCunP3aVrpxtRIqKzuc9uqOeDUMg0P492k=
+github.com/ProtonMail/gopenpgp/v3 v3.1.2-proton/go.mod h1:Jx045G4hGsx1mTzP/8mpC6TO/0312ACayiznTS6v9dU=
 github.com/bwesterb/go-ristretto v1.2.0/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/cloudflare/circl v1.1.0/go.mod h1:prBCrKB9DV4poKZY1l9zBXg2QJY7mvgRvtMxxK7fi4I=
 github.com/cloudflare/circl v1.3.7 h1:qlCDlTPz2n9fu58M0Nh1J/JzcFpfgkFHHX3O35r5vcU=

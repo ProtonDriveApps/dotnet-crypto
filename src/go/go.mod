@@ -5,9 +5,9 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	github.com/ProtonMail/go-crypto v1.1.4-proton
+	github.com/ProtonMail/go-crypto v1.1.5-proton
 	github.com/ProtonMail/go-srp v0.0.7
-	github.com/ProtonMail/gopenpgp/v3 v3.1.1-proton
+	github.com/ProtonMail/gopenpgp/v3 v3.1.2-proton
 )
 
 require (
