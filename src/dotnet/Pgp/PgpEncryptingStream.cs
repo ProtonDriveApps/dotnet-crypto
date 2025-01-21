@@ -31,7 +31,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         Dispose(false);
     }
 
-    public static unsafe PgpEncryptingStream Open(
+    public static PgpEncryptingStream Open(
         Stream messageOutputStream,
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding encoding = default,
@@ -39,9 +39,9 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
     {
         return Open(
             messageOutputStream,
-            default,
+            null,
             Unsafe.NullRef<GoExternalWriter>(),
-            default,
+            null,
             Unsafe.NullRef<GoExternalWriter>(),
             encryptionSecrets,
             [],
@@ -50,7 +50,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
             default);
     }
 
-    public static unsafe PgpEncryptingStream Open(
+    public static PgpEncryptingStream Open(
         Stream messageOutputStream,
         in EncryptionSecrets encryptionSecrets,
         PgpPrivateKeyRing signingKeyRing,
@@ -59,9 +59,9 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
     {
         return Open(
             messageOutputStream,
-            default,
+            null,
             Unsafe.NullRef<GoExternalWriter>(),
-            default,
+            null,
             Unsafe.NullRef<GoExternalWriter>(),
             encryptionSecrets,
             signingKeyRing,
@@ -70,7 +70,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
             default);
     }
 
-    public static unsafe PgpEncryptingStream Open(
+    public static PgpEncryptingStream Open(
         Stream messageOutputStream,
         Stream signatureOutputStream,
         in EncryptionSecrets encryptionSecrets,
@@ -86,7 +86,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
 
             return Open(
                 messageOutputStream,
-                default,
+                null,
                 Unsafe.NullRef<GoExternalWriter>(),
                 signatureOutputStreamHandle,
                 goSignatureWriter,
@@ -103,7 +103,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         }
     }
 
-    public static unsafe PgpEncryptingStream OpenSplit(
+    public static PgpEncryptingStream OpenSplit(
         Stream messageOutputStream,
         Stream keyPacketsOutputStream,
         in EncryptionSecrets encryptionSecrets,
@@ -118,7 +118,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
                 messageOutputStream,
                 keyPacketOutputStreamHandle,
                 goKeyPacketWriter,
-                default,
+                null,
                 Unsafe.NullRef<GoExternalWriter>(),
                 encryptionSecrets,
                 [],
@@ -133,7 +133,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         }
     }
 
-    public static unsafe PgpEncryptingStream OpenSplit(
+    public static PgpEncryptingStream OpenSplit(
         Stream messageOutputStream,
         Stream keyPacketsOutputStream,
         Stream signatureOutputStream,

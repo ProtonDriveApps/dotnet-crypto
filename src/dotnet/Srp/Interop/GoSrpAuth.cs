@@ -22,7 +22,7 @@ internal sealed partial class GoSrpAuth() : SafeHandleZeroOrMinusOneIsInvalid(ow
         PgpPublicKey verificationKey)
     {
         var usernameUtf8BytesMaxLength = Encoding.UTF8.GetMaxByteCount(username.Length);
-        Span<byte> usernameUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(
+        var usernameUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(
             usernameUtf8BytesMaxLength,
             out var usernameHeapMemory,
             out var usernameHeapMemoryOwner)
@@ -32,7 +32,7 @@ internal sealed partial class GoSrpAuth() : SafeHandleZeroOrMinusOneIsInvalid(ow
         using (usernameHeapMemoryOwner)
         {
             var signedModulusUtf8BytesMaxLength = Encoding.UTF8.GetMaxByteCount(signedModulus.Length);
-            Span<byte> signedModulusUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(
+            var signedModulusUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(
                 signedModulusUtf8BytesMaxLength,
                 out var signedModulusHeapMemory,
                 out var signedModulusHeapMemoryOwner)

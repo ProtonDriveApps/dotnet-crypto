@@ -6,7 +6,7 @@ namespace Proton.Cryptography.Pgp;
 
 public static partial class PgpEncrypter
 {
-    public static unsafe int Encrypt(
+    public static int Encrypt(
         ReadOnlySpan<byte> input,
         in EncryptionSecrets encryptionSecrets,
         ReadOnlySpan<byte> output,
@@ -16,7 +16,7 @@ public static partial class PgpEncrypter
         return Encrypt(input, encryptionSecrets, outputEncoding, outputCompression, output, [], default, Unsafe.NullRef<GoExternalWriter>());
     }
 
-    public static unsafe int EncryptAndSign(
+    public static int EncryptAndSign(
         ReadOnlySpan<byte> input,
         in EncryptionSecrets encryptionSecrets,
         ReadOnlySpan<byte> output,
@@ -109,7 +109,7 @@ public static partial class PgpEncrypter
         return outputStream.TryGetBuffer(out var outputBuffer) ? outputBuffer : outputStream.ToArray();
     }
 
-    public static unsafe void EncryptToStream(
+    public static void EncryptToStream(
         ReadOnlySpan<byte> input,
         in EncryptionSecrets encryptionSecrets,
         Stream outputStream,
@@ -119,7 +119,7 @@ public static partial class PgpEncrypter
         Encrypt(input, encryptionSecrets, outputEncoding, outputCompression, outputStream, [], default, Unsafe.NullRef<GoExternalWriter>());
     }
 
-    public static unsafe void EncryptAndSignToStream(
+    public static void EncryptAndSignToStream(
         ReadOnlySpan<byte> input,
         in EncryptionSecrets encryptionSecrets,
         Stream outputStream,
@@ -167,12 +167,12 @@ public static partial class PgpEncrypter
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
 
-        Span<byte> textBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(maxTextByteLength, out var heapMemory, out var heapMemoryOwner)
+        var textBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(maxTextByteLength, out var heapMemory, out var heapMemoryOwner)
             ? heapMemory.Span
             : stackalloc byte[maxTextByteLength];
 
@@ -190,12 +190,12 @@ public static partial class PgpEncrypter
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
 
-        Span<byte> textBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(maxTextByteLength, out var heapMemory, out var heapMemoryOwner)
+        var textBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(maxTextByteLength, out var heapMemory, out var heapMemoryOwner)
             ? heapMemory.Span
             : stackalloc byte[maxTextByteLength];
 
@@ -215,12 +215,12 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
 
-        Span<byte> textBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(maxTextByteLength, out var heapMemory, out var heapMemoryOwner)
+        var textBytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(maxTextByteLength, out var heapMemory, out var heapMemoryOwner)
             ? heapMemory.Span
             : stackalloc byte[maxTextByteLength];
 

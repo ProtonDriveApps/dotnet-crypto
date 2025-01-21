@@ -146,7 +146,7 @@ public static class EncryptionSecretsExtensions
         string input,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncrypter.EncryptText(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, textEncoding);
@@ -158,7 +158,7 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncrypter.EncryptAndSignText(
@@ -178,7 +178,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncrypter.EncryptAndSignText(

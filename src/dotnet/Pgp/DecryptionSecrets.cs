@@ -7,7 +7,7 @@ public readonly ref struct DecryptionSecrets
     private readonly ReadOnlySpan<byte> _password;
 
     public DecryptionSecrets(PgpPrivateKeyRing privateKeyRing)
-        : this(privateKeyRing, default, [])
+        : this(privateKeyRing, null, [])
     {
     }
 
@@ -22,12 +22,12 @@ public readonly ref struct DecryptionSecrets
     }
 
     public DecryptionSecrets(ReadOnlySpan<byte> password)
-        : this(default, default, password)
+        : this(default, null, password)
     {
     }
 
     public DecryptionSecrets(PgpPrivateKeyRing privateKeyRing, ReadOnlySpan<byte> password)
-        : this(privateKeyRing, default, password)
+        : this(privateKeyRing, null, password)
     {
     }
 

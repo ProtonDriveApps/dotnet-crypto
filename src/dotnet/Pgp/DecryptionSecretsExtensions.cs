@@ -135,7 +135,7 @@ public static class DecryptionSecretsExtensions
         this T decryptionSecretsSource,
         ReadOnlySpan<byte> input,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptText(input, decryptionSecretsSource.DecryptionSecrets, inputEncoding, textEncoding);
@@ -147,7 +147,7 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptAndVerifyText(
@@ -166,7 +166,7 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptAndVerifyText(

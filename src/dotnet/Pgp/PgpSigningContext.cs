@@ -16,7 +16,7 @@ internal sealed partial class PgpSigningContext : IDisposable
     public static unsafe PgpSigningContext Create(string value, bool isCritical = false)
     {
         var valueUtf8BytesMaxLength = Encoding.UTF8.GetMaxByteCount(value.Length);
-        Span<byte> valueUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(valueUtf8BytesMaxLength, out var heapMemory, out var heapMemoryOwner)
+        var valueUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(valueUtf8BytesMaxLength, out var heapMemory, out var heapMemoryOwner)
             ? heapMemory.Span
             : stackalloc byte[valueUtf8BytesMaxLength];
 

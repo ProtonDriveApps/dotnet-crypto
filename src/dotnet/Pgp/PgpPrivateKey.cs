@@ -33,14 +33,14 @@ public readonly partial struct PgpPrivateKey
         GoKey? goPrivateKey;
 
         var nameUtf8BytesMaxLength = Encoding.UTF8.GetMaxByteCount(name.Length);
-        Span<byte> nameUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(nameUtf8BytesMaxLength, out var nameHeapMemory, out var nameHeapMemoryOwner)
+        var nameUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(nameUtf8BytesMaxLength, out var nameHeapMemory, out var nameHeapMemoryOwner)
             ? nameHeapMemory.Span
             : stackalloc byte[nameUtf8BytesMaxLength];
 
         using (nameHeapMemoryOwner)
         {
             var emailAddressUtf8BytesMaxLength = Encoding.UTF8.GetMaxByteCount(emailAddress.Length);
-            Span<byte> emailAddressUtf8Bytes =
+            var emailAddressUtf8Bytes =
                 MemoryProvider.GetHeapMemoryIfTooLargeForStack(
                     emailAddressUtf8BytesMaxLength,
                     out var emailAddressHeapMemory,

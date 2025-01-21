@@ -13,7 +13,7 @@ public static partial class PgpDecrypter
             var outputWriter = new SpanWriter(outputPointer, output.Length);
             var goResult = new GoPlaintextResult(&outputWriter);
 
-            Decrypt(input, inputEncoding, secrets, default, default, default, default, [], ref goResult);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult);
 
             return outputWriter.NumberOfBytesWritten;
         }
@@ -27,7 +27,7 @@ public static partial class PgpDecrypter
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default)
     {
-        return Decrypt(input, inputEncoding, secrets, default, default, default, default, verificationKeyRing, output, out verificationResult);
+        return Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, output, out verificationResult);
     }
 
     public static unsafe int DecryptAndVerify(
@@ -65,7 +65,7 @@ public static partial class PgpDecrypter
         {
             var goResult = new GoPlaintextResult(outputStreamHandle);
 
-            Decrypt(input, inputEncoding, secrets, default, default, default, default, [], ref goResult);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult);
         }
         finally
         {
@@ -81,7 +81,7 @@ public static partial class PgpDecrypter
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default)
     {
-        Decrypt(input, inputEncoding, secrets, default, default, default, default, verificationKeyRing, outputStream, out verificationResult);
+        Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, outputStream, out verificationResult);
     }
 
     public static unsafe void DecryptAndVerify(
@@ -160,7 +160,7 @@ public static partial class PgpDecrypter
         ReadOnlySpan<byte> input,
         in DecryptionSecrets secrets,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
     {
         var decryptedBytes = Decrypt(input, secrets, inputEncoding);
 
@@ -175,7 +175,7 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
     {
         var decryptedBytes = DecryptAndVerify(input, secrets, verificationKeyRing, out verificationResult, inputEncoding);
 
@@ -191,7 +191,7 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = default)
+        Encoding? textEncoding = null)
     {
         var decryptedBytes = DecryptAndVerify(input, secrets, signature, verificationKeyRing, out verificationResult, inputEncoding);
 
@@ -207,13 +207,13 @@ public static partial class PgpDecrypter
             var parameters = new GoDecryptionParameters(
                 goDecryptionKeysPointer,
                 (nuint)decryptionKeyRing.Count,
-                default,
-                default,
-                default,
-                default,
-                default,
-                default,
-                default,
+                null,
+                0,
+                null,
+                null,
+                0,
+                null,
+                0,
                 default,
                 default);
 

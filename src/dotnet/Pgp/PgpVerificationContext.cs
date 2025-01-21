@@ -13,10 +13,10 @@ public sealed partial class PgpVerificationContext : IDisposable
         _goHandle = goHandle;
     }
 
-    public static unsafe PgpVerificationContext Create(string value, bool isRequired = true, DateTimeOffset? requiredAfter = default)
+    public static unsafe PgpVerificationContext Create(string value, bool isRequired = true, DateTimeOffset? requiredAfter = null)
     {
         var valueUtf8BytesMaxLength = Encoding.UTF8.GetMaxByteCount(value.Length);
-        Span<byte> valueUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(valueUtf8BytesMaxLength, out var heapMemory, out var heapMemoryOwner)
+        var valueUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(valueUtf8BytesMaxLength, out var heapMemory, out var heapMemoryOwner)
             ? heapMemory.Span
             : stackalloc byte[valueUtf8BytesMaxLength];
 
@@ -29,7 +29,7 @@ public sealed partial class PgpVerificationContext : IDisposable
                 MemoryMarshal.GetReference(valueUtf8Bytes),
                 (nuint)valueUtf8BytesLength,
                 isRequired,
-                requiredAfter?.ToUnixTimeMilliseconds() ?? default);
+                requiredAfter?.ToUnixTimeMilliseconds() ?? 0);
         }
 
         return new PgpVerificationContext(new GoVerificationContextHandle(goHandle));

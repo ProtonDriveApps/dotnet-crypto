@@ -43,7 +43,7 @@ public sealed class PgpPrivateKeyTest
         var version = PgpSamples.PrivateKey.Version;
 
         // Assert
-        version.Should().NotBe(default);
+        version.Should().NotBe(0);
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class PgpPrivateKeyTest
         var id = PgpSamples.PrivateKey.Id;
 
         // Assert
-        id.Should().NotBe(default);
+        id.Should().NotBe(0);
     }
 
     [Fact]

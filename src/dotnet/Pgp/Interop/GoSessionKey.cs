@@ -36,14 +36,14 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
             var parameters = new GoEncryptionParameters(
                 goEncryptionKeysPointer,
                 (nuint)goEncryptionKeyHandles.Length,
-                default,
-                default,
-                default,
-                default,
-                default,
-                default,
-                default,
-                default);
+                null,
+                0,
+                null,
+                null,
+                0,
+                false,
+                false,
+                false);
 
             var streamHandle = GCHandle.Alloc(outputStream);
             try
