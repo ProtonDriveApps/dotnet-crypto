@@ -13,10 +13,11 @@ public static class EncryptionSecretsExtensions
         ReadOnlySpan<byte> input,
         ReadOnlySpan<byte> output,
         PgpEncoding outputEncoding = default,
-        PgpCompression outputCompression = default)
+        PgpCompression outputCompression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, output, outputEncoding, outputCompression);
+        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, output, outputEncoding, outputCompression, timestamp);
     }
 
     public static int EncryptAndSign<T>(
@@ -25,10 +26,18 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         ReadOnlySpan<byte> output,
         PgpEncoding outputEncoding = default,
-        PgpCompression outputCompression = default)
+        PgpCompression outputCompression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.EncryptAndSign(input, encryptionSecretsSource.EncryptionSecrets, output, signingKeyRing, outputEncoding, outputCompression);
+        return PgpEncrypter.EncryptAndSign(
+            input,
+            encryptionSecretsSource.EncryptionSecrets,
+            output,
+            signingKeyRing,
+            outputEncoding,
+            outputCompression,
+            timestamp);
     }
 
     public static int EncryptAndSign<T>(
@@ -40,7 +49,8 @@ public static class EncryptionSecretsExtensions
         out int signatureLength,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncrypter.EncryptAndSign(
@@ -52,17 +62,19 @@ public static class EncryptionSecretsExtensions
             out signatureLength,
             outputEncoding,
             outputCompression,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timestamp);
     }
 
     public static ArraySegment<byte> Encrypt<T>(
         this T encryptionSecretsSource,
         ReadOnlySpan<byte> input,
         PgpEncoding outputEncoding = default,
-        PgpCompression outputCompression = default)
+        PgpCompression outputCompression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression);
+        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, timestamp);
     }
 
     public static ArraySegment<byte> EncryptAndSign<T>(
@@ -70,10 +82,11 @@ public static class EncryptionSecretsExtensions
         ReadOnlySpan<byte> input,
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
-        PgpCompression outputCompression = default)
+        PgpCompression outputCompression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.EncryptAndSign(input, encryptionSecretsSource.EncryptionSecrets, signingKeyRing, outputEncoding, outputCompression);
+        return PgpEncrypter.EncryptAndSign(input, encryptionSecretsSource.EncryptionSecrets, signingKeyRing, outputEncoding, outputCompression, timestamp);
     }
 
     public static ArraySegment<byte> EncryptAndSign<T>(
@@ -83,7 +96,8 @@ public static class EncryptionSecretsExtensions
         out ArraySegment<byte> signature,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncrypter.EncryptAndSign(
@@ -93,7 +107,8 @@ public static class EncryptionSecretsExtensions
             out signature,
             outputEncoding,
             outputCompression,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timestamp);
     }
 
     public static void EncryptToStream<T>(
@@ -101,10 +116,11 @@ public static class EncryptionSecretsExtensions
         ReadOnlySpan<byte> input,
         Stream outputStream,
         PgpEncoding outputEncoding = default,
-        PgpCompression outputCompression = default)
+        PgpCompression outputCompression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        PgpEncrypter.EncryptToStream(input, encryptionSecretsSource.EncryptionSecrets, outputStream, outputEncoding, outputCompression);
+        PgpEncrypter.EncryptToStream(input, encryptionSecretsSource.EncryptionSecrets, outputStream, outputEncoding, outputCompression, timestamp);
     }
 
     public static void EncryptAndSignToStream<T>(
@@ -113,10 +129,18 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         Stream outputStream,
         PgpEncoding outputEncoding = default,
-        PgpCompression outputCompression = default)
+        PgpCompression outputCompression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        PgpEncrypter.EncryptAndSignToStream(input, encryptionSecretsSource.EncryptionSecrets, outputStream, signingKeyRing, outputEncoding, outputCompression);
+        PgpEncrypter.EncryptAndSignToStream(
+            input,
+            encryptionSecretsSource.EncryptionSecrets,
+            outputStream,
+            signingKeyRing,
+            outputEncoding,
+            outputCompression,
+            timestamp);
     }
 
     public static void EncryptAndSignToStreams<T>(
@@ -127,7 +151,8 @@ public static class EncryptionSecretsExtensions
         Stream signatureOutputStream,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
         PgpEncrypter.EncryptAndSignToStreams(
@@ -138,7 +163,8 @@ public static class EncryptionSecretsExtensions
             signatureOutputStream,
             outputEncoding,
             outputCompression,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timestamp);
     }
 
     public static ArraySegment<byte> EncryptText<T>(
@@ -146,10 +172,11 @@ public static class EncryptionSecretsExtensions
         string input,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.EncryptText(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, textEncoding);
+        return PgpEncrypter.EncryptText(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, textEncoding, timestamp);
     }
 
     public static ArraySegment<byte> EncryptAndSignText<T>(
@@ -158,7 +185,8 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncrypter.EncryptAndSignText(
@@ -167,7 +195,8 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             outputEncoding,
             outputCompression,
-            textEncoding);
+            textEncoding,
+            timestamp);
     }
 
     public static ArraySegment<byte> EncryptAndSignText<T>(
@@ -178,7 +207,8 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncrypter.EncryptAndSignText(
@@ -189,17 +219,19 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             signatureEncryptionState,
-            textEncoding);
+            textEncoding,
+            timestamp);
     }
 
     public static PgpEncryptingStream OpenEncryptingStream<T>(
         this T encryptionSecretsSource,
         Stream messageOutputStream,
         PgpEncoding encoding = default,
-        PgpCompression compression = default)
+        PgpCompression compression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression);
+        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, timestamp);
     }
 
     public static PgpEncryptingStream OpenEncryptingAndSigningStream<T>(
@@ -207,10 +239,11 @@ public static class EncryptionSecretsExtensions
         Stream messageOutputStream,
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
-        PgpCompression compression = default)
+        PgpCompression compression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, signingKeyRing, encoding, compression);
+        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, signingKeyRing, encoding, compression, timestamp);
     }
 
     public static PgpEncryptingStream OpenEncryptingAndSigningStream<T>(
@@ -220,7 +253,8 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
         PgpCompression messageCompression = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncryptingStream.Open(
@@ -230,17 +264,24 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             encoding,
             messageCompression,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timestamp);
     }
 
     public static PgpEncryptingStream OpenSplitEncryptingStream<T>(
         this T encryptionSecretsSource,
         Stream messageOutputStream,
         Stream keyPacketsOutputStream,
-        PgpCompression messageCompression = default)
+        PgpCompression messageCompression = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncryptingStream.OpenSplit(messageOutputStream, keyPacketsOutputStream, encryptionSecretsSource.EncryptionSecrets, messageCompression);
+        return PgpEncryptingStream.OpenSplit(
+            messageOutputStream,
+            keyPacketsOutputStream,
+            encryptionSecretsSource.EncryptionSecrets,
+            messageCompression,
+            timestamp);
     }
 
     public static PgpEncryptingStream OpenSplitEncryptingStream<T>(
@@ -250,7 +291,8 @@ public static class EncryptionSecretsExtensions
         Stream signatureOutputStream,
         PgpPrivateKeyRing signingKeyRing,
         PgpCompression messageCompression = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        DateTime? timestamp = null)
         where T : IEncryptionSecretsSource
     {
         return PgpEncryptingStream.OpenSplit(
@@ -260,6 +302,7 @@ public static class EncryptionSecretsExtensions
             encryptionSecretsSource.EncryptionSecrets,
             signingKeyRing,
             messageCompression,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timestamp);
     }
 }

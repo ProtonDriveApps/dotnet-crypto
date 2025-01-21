@@ -197,7 +197,8 @@ public static partial class PgpEncrypter
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        DateTime? timestamp = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
@@ -210,7 +211,7 @@ public static partial class PgpEncrypter
         {
             var textByteLength = textEncoding.GetBytes(input, textBytes);
 
-            return Encrypt(textBytes[..textByteLength], encryptionSecrets, outputEncoding, outputCompression);
+            return Encrypt(textBytes[..textByteLength], encryptionSecrets, outputEncoding, outputCompression, timestamp);
         }
     }
 
@@ -220,7 +221,8 @@ public static partial class PgpEncrypter
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        DateTime? timestamp = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
@@ -233,7 +235,7 @@ public static partial class PgpEncrypter
         {
             var textByteLength = textEncoding.GetBytes(input, textBytes);
 
-            return EncryptAndSign(textBytes[..textByteLength], encryptionSecrets, signingKeyRing, outputEncoding, outputCompression);
+            return EncryptAndSign(textBytes[..textByteLength], encryptionSecrets, signingKeyRing, outputEncoding, outputCompression, timestamp);
         }
     }
 
@@ -245,7 +247,8 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        DateTime? timestamp = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
@@ -265,7 +268,8 @@ public static partial class PgpEncrypter
                 out signature,
                 outputEncoding,
                 outputCompression,
-                signatureEncryptionState);
+                signatureEncryptionState,
+                timestamp);
         }
     }
 
