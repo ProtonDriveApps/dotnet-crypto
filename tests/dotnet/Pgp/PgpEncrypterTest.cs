@@ -46,4 +46,34 @@ public sealed class PgpEncrypterTest
         message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
         signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
     }
+
+    [Fact]
+    public void Encrypt_Succeeds_WithCompression()
+    {
+        // Act
+        var messageBytes = PgpEncrypter.Encrypt(
+            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
+            PgpSamples.PublicKey,
+            PgpEncoding.AsciiArmor,
+            PgpCompression.Default);
+
+        // Assert
+        var message = Encoding.UTF8.GetString(messageBytes);
+        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+    }
+
+    [Fact]
+    public void Encrypt_Succeeds_WithTimestamp()
+    {
+        // Act
+        var messageBytes = PgpEncrypter.Encrypt(
+            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
+            PgpSamples.PublicKey,
+            PgpEncoding.AsciiArmor,
+            timestamp: DateTime.UtcNow - TimeSpan.FromDays(1));
+
+        // Assert
+        var message = Encoding.UTF8.GetString(messageBytes);
+        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+    }
 }

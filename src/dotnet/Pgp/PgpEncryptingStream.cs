@@ -35,7 +35,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         Stream messageOutputStream,
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding encoding = default,
-        PgpCompression compression = default)
+        PgpCompression compression = default,
+        DateTime? timestamp = null)
     {
         return Open(
             messageOutputStream,
@@ -47,7 +48,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
             [],
             encoding,
             compression,
-            default);
+            default,
+            timestamp);
     }
 
     public static PgpEncryptingStream Open(
@@ -55,7 +57,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         in EncryptionSecrets encryptionSecrets,
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
-        PgpCompression compression = default)
+        PgpCompression compression = default,
+        DateTime? timestamp = null)
     {
         return Open(
             messageOutputStream,
@@ -67,7 +70,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
             signingKeyRing,
             encoding,
             compression,
-            default);
+            default,
+            timestamp);
     }
 
     public static PgpEncryptingStream Open(
@@ -77,7 +81,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
         PgpCompression messageCompression = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        DateTime? timestamp = null)
     {
         var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
         try
@@ -94,7 +99,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
                 signingKeyRing,
                 encoding,
                 messageCompression,
-                signatureEncryptionState);
+                signatureEncryptionState,
+                timestamp);
         }
         catch
         {
@@ -107,7 +113,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         Stream messageOutputStream,
         Stream keyPacketsOutputStream,
         in EncryptionSecrets encryptionSecrets,
-        PgpCompression messageCompression = default)
+        PgpCompression messageCompression = default,
+        DateTime? timestamp = null)
     {
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
         try
@@ -124,7 +131,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
                 [],
                 default,
                 messageCompression,
-                default);
+                default,
+                timestamp);
         }
         catch
         {
@@ -140,7 +148,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         in EncryptionSecrets encryptionSecrets,
         PgpPrivateKeyRing signingKeyRing,
         PgpCompression messageCompression = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        DateTime? timestamp = null)
     {
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
         try
@@ -162,7 +171,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
                     signingKeyRing,
                     default,
                     messageCompression,
-                    signatureEncryptionState);
+                    signatureEncryptionState,
+                    timestamp);
             }
             catch
             {
@@ -239,7 +249,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         ReadOnlySpan<nint> goSigningKeyHandles,
         PgpEncoding encoding,
         PgpCompression dataCompression,
-        EncryptionState signatureEncryptionState)
+        EncryptionState signatureEncryptionState,
+        DateTime? timestamp)
     {
         var (goEncryptionKeyHandles, sessionKey, password) = encryptionSecrets;
 
@@ -259,7 +270,8 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
                         (nuint)password.Length,
                         signatureOutputStreamHandle.HasValue,
                         signatureEncryptionState == EncryptionState.Encrypted,
-                        dataCompression != PgpCompression.None);
+                        dataCompression != PgpCompression.None,
+                        timestamp);
 
                     var streamHandle = GCHandle.Alloc(messageOutputStream);
                     try

@@ -43,7 +43,8 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
                 0,
                 false,
                 false,
-                false);
+                false,
+                null);
 
             var streamHandle = GCHandle.Alloc(outputStream);
             try

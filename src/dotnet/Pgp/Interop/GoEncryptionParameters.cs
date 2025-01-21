@@ -6,17 +6,17 @@ internal unsafe readonly struct GoEncryptionParameters
     public readonly nuint EncryptionKeysLength;
     public readonly nuint SigningKeysLength;
     public readonly bool HasSessionKey;
-    public readonly bool HasSigningContext = false;
-    public readonly bool HasEncryptionTime = true;
+    public readonly bool HasSigningContext;
+    public readonly bool HasEncryptionTime;
     public readonly bool DetachSignature;
     public readonly bool DetachedSignatureIsEncrypted;
-    public readonly bool Utf8 = false;
+    public readonly bool Utf8;
     public readonly bool Compress;
     public readonly nint* EncryptionKeys;
     public readonly nint* SigningKeys;
     public readonly nint SessionKey;
-    public readonly nint SigningContext = 0;
-    public readonly long EncryptionTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public readonly nint SigningContext;
+    public readonly long EncryptionTime;
     public readonly nuint PasswordLength;
     public readonly byte* Password;
 
@@ -30,7 +30,8 @@ internal unsafe readonly struct GoEncryptionParameters
         nuint passwordLength,
         bool detachSignature,
         bool detachedSignatureIsEncrypted,
-        bool compress)
+        bool compress,
+        DateTime? timestamp)
     {
         EncryptionKeys = encryptionKeys;
         EncryptionKeysLength = encryptionKeysLength;
@@ -51,5 +52,11 @@ internal unsafe readonly struct GoEncryptionParameters
         DetachedSignatureIsEncrypted = detachedSignatureIsEncrypted;
 
         Compress = compress;
+
+        if (timestamp is not null)
+        {
+            HasEncryptionTime = true;
+            EncryptionTime = new DateTimeOffset(timestamp.Value).ToUnixTimeSeconds();
+        }
     }
 }
