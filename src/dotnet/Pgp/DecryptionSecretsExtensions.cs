@@ -8,7 +8,8 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         Span<byte> output,
         out PgpVerificationResult verificationResult,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptAndVerify(
@@ -17,7 +18,8 @@ public static class DecryptionSecretsExtensions
             verificationKeyRing,
             output,
             out verificationResult,
-            inputEncoding);
+            inputEncoding,
+            timeProviderOverride);
     }
 
     public static int DecryptAndVerify<T>(
@@ -29,7 +31,8 @@ public static class DecryptionSecretsExtensions
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptAndVerify(
@@ -41,13 +44,19 @@ public static class DecryptionSecretsExtensions
             out verificationResult,
             inputEncoding,
             signatureEncoding,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timeProviderOverride);
     }
 
-    public static void Decrypt<T>(this T decryptionSecretsSource, ReadOnlySpan<byte> input, Stream outputStream, PgpEncoding inputEncoding = default)
+    public static void Decrypt<T>(
+        this T decryptionSecretsSource,
+        ReadOnlySpan<byte> input,
+        Stream outputStream,
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
-        PgpDecrypter.Decrypt(input, decryptionSecretsSource.DecryptionSecrets, outputStream, inputEncoding);
+        PgpDecrypter.Decrypt(input, decryptionSecretsSource.DecryptionSecrets, outputStream, inputEncoding, timeProviderOverride);
     }
 
     public static void DecryptAndVerify<T>(
@@ -56,7 +65,8 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         Stream outputStream,
         out PgpVerificationResult verificationResult,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         PgpDecrypter.DecryptAndVerify(
@@ -65,7 +75,8 @@ public static class DecryptionSecretsExtensions
             verificationKeyRing,
             outputStream,
             out verificationResult,
-            inputEncoding);
+            inputEncoding,
+            timeProviderOverride);
     }
 
     public static void DecryptAndVerify<T>(
@@ -77,7 +88,8 @@ public static class DecryptionSecretsExtensions
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         PgpDecrypter.DecryptAndVerify(
@@ -89,13 +101,18 @@ public static class DecryptionSecretsExtensions
             out verificationResult,
             inputEncoding,
             signatureEncoding,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timeProviderOverride);
     }
 
-    public static ArraySegment<byte> Decrypt<T>(this T decryptionSecretsSource, ReadOnlySpan<byte> input, PgpEncoding inputEncoding = default)
+    public static ArraySegment<byte> Decrypt<T>(
+        this T decryptionSecretsSource,
+        ReadOnlySpan<byte> input,
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
-        return PgpDecrypter.Decrypt(input, decryptionSecretsSource.DecryptionSecrets, inputEncoding);
+        return PgpDecrypter.Decrypt(input, decryptionSecretsSource.DecryptionSecrets, inputEncoding, timeProviderOverride);
     }
 
     public static ArraySegment<byte> DecryptAndVerify<T>(
@@ -103,10 +120,17 @@ public static class DecryptionSecretsExtensions
         ReadOnlySpan<byte> input,
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
-        return PgpDecrypter.DecryptAndVerify(input, decryptionSecretsSource.DecryptionSecrets, verificationKeyRing, out verificationResult, inputEncoding);
+        return PgpDecrypter.DecryptAndVerify(
+            input,
+            decryptionSecretsSource.DecryptionSecrets,
+            verificationKeyRing,
+            out verificationResult,
+            inputEncoding,
+            timeProviderOverride);
     }
 
     public static ArraySegment<byte> DecryptAndVerify<T>(
@@ -117,7 +141,8 @@ public static class DecryptionSecretsExtensions
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptAndVerify(
@@ -128,17 +153,19 @@ public static class DecryptionSecretsExtensions
             out verificationResult,
             inputEncoding,
             signatureEncoding,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timeProviderOverride);
     }
 
     public static string DecryptText<T>(
         this T decryptionSecretsSource,
         ReadOnlySpan<byte> input,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
-        return PgpDecrypter.DecryptText(input, decryptionSecretsSource.DecryptionSecrets, inputEncoding, textEncoding);
+        return PgpDecrypter.DecryptText(input, decryptionSecretsSource.DecryptionSecrets, inputEncoding, textEncoding, timeProviderOverride);
     }
 
     public static string DecryptAndVerifyText<T>(
@@ -147,7 +174,8 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptAndVerifyText(
@@ -156,7 +184,8 @@ public static class DecryptionSecretsExtensions
             verificationKeyRing,
             out verificationResult,
             inputEncoding,
-            textEncoding);
+            textEncoding,
+            timeProviderOverride);
     }
 
     public static string DecryptAndVerifyText<T>(
@@ -166,7 +195,8 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecrypter.DecryptAndVerifyText(
@@ -176,24 +206,29 @@ public static class DecryptionSecretsExtensions
             verificationKeyRing,
             out verificationResult,
             inputEncoding,
-            textEncoding);
+            textEncoding,
+            timeProviderOverride);
     }
 
     public static PgpDecryptingStream OpenDecryptingStream<T>(
-        this T decryptionSecretsSource, Stream inputStream, PgpEncoding inputEncoding = default)
+        this T decryptionSecretsSource,
+        Stream inputStream,
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
-        return PgpDecryptingStream.Open(inputStream, decryptionSecretsSource.DecryptionSecrets, inputEncoding);
+        return PgpDecryptingStream.Open(inputStream, decryptionSecretsSource.DecryptionSecrets, inputEncoding, timeProviderOverride);
     }
 
     public static PgpDecryptingStream OpenDecryptingAndVerifyingStream<T>(
         this T decryptionSecretsSource,
         Stream inputStream,
         PgpKeyRing verificationKeyRing,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
-        return PgpDecryptingStream.Open(inputStream, decryptionSecretsSource.DecryptionSecrets, verificationKeyRing, inputEncoding);
+        return PgpDecryptingStream.Open(inputStream, decryptionSecretsSource.DecryptionSecrets, verificationKeyRing, inputEncoding, timeProviderOverride);
     }
 
     public static PgpDecryptingStream OpenDecryptingAndVerifyingStream<T>(
@@ -203,7 +238,8 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
         return PgpDecryptingStream.Open(
@@ -213,6 +249,7 @@ public static class DecryptionSecretsExtensions
             verificationKeyRing,
             inputEncoding,
             signatureEncoding,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timeProviderOverride);
     }
 }

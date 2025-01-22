@@ -6,14 +6,19 @@ namespace Proton.Cryptography.Pgp;
 
 public static partial class PgpDecrypter
 {
-    public static unsafe int Decrypt(ReadOnlySpan<byte> input, in DecryptionSecrets secrets, Span<byte> output, PgpEncoding inputEncoding = default)
+    public static unsafe int Decrypt(
+        ReadOnlySpan<byte> input,
+        in DecryptionSecrets secrets,
+        Span<byte> output,
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* outputPointer = output)
         {
             var outputWriter = new SpanWriter(outputPointer, output.Length);
             var goResult = new GoPlaintextResult(&outputWriter);
 
-            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult, timeProviderOverride);
 
             return outputWriter.NumberOfBytesWritten;
         }
@@ -25,9 +30,10 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         Span<byte> output,
         out PgpVerificationResult verificationResult,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        return Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, output, out verificationResult);
+        return Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, output, out verificationResult, timeProviderOverride);
     }
 
     public static unsafe int DecryptAndVerify(
@@ -39,7 +45,8 @@ public static partial class PgpDecrypter
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* signaturePointer = signature)
         {
@@ -53,11 +60,17 @@ public static partial class PgpDecrypter
                 signatureEncryptionState,
                 verificationKeyRing,
                 output,
-                out verificationResult);
+                out verificationResult,
+                timeProviderOverride);
         }
     }
 
-    public static unsafe void Decrypt(ReadOnlySpan<byte> input, in DecryptionSecrets secrets, Stream outputStream, PgpEncoding inputEncoding = default)
+    public static unsafe void Decrypt(
+        ReadOnlySpan<byte> input,
+        in DecryptionSecrets secrets,
+        Stream outputStream,
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         var outputStreamHandle = GCHandle.Alloc(outputStream);
 
@@ -65,7 +78,7 @@ public static partial class PgpDecrypter
         {
             var goResult = new GoPlaintextResult(outputStreamHandle);
 
-            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult, timeProviderOverride);
         }
         finally
         {
@@ -79,9 +92,10 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         Stream outputStream,
         out PgpVerificationResult verificationResult,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, outputStream, out verificationResult);
+        Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, outputStream, out verificationResult, timeProviderOverride);
     }
 
     public static unsafe void DecryptAndVerify(
@@ -93,7 +107,8 @@ public static partial class PgpDecrypter
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* signaturePointer = signature)
         {
@@ -107,15 +122,20 @@ public static partial class PgpDecrypter
                 signatureEncryptionState,
                 verificationKeyRing,
                 outputStream,
-                out verificationResult);
+                out verificationResult,
+                timeProviderOverride);
         }
     }
 
-    public static ArraySegment<byte> Decrypt(ReadOnlySpan<byte> input, in DecryptionSecrets secrets, PgpEncoding inputEncoding = default)
+    public static ArraySegment<byte> Decrypt(
+        ReadOnlySpan<byte> input,
+        in DecryptionSecrets secrets,
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForPlaintext(input.Length, inputEncoding);
 
-        Decrypt(input, secrets, outputStream, inputEncoding);
+        Decrypt(input, secrets, outputStream, inputEncoding, timeProviderOverride);
 
         return outputStream.TryGetBuffer(out var buffer) ? buffer : outputStream.ToArray();
     }
@@ -125,9 +145,17 @@ public static partial class PgpDecrypter
         in DecryptionSecrets secrets,
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        return DecryptAndVerify(input, secrets, default, verificationKeyRing, out verificationResult, inputEncoding);
+        return DecryptAndVerify(
+            input,
+            secrets,
+            default,
+            verificationKeyRing,
+            out verificationResult,
+            inputEncoding,
+            timeProviderOverride: timeProviderOverride);
     }
 
     public static ArraySegment<byte> DecryptAndVerify(
@@ -138,7 +166,8 @@ public static partial class PgpDecrypter
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForPlaintext(input.Length, inputEncoding);
 
@@ -151,7 +180,8 @@ public static partial class PgpDecrypter
             out verificationResult,
             inputEncoding,
             signatureEncoding,
-            signatureEncryptionState);
+            signatureEncryptionState,
+            timeProviderOverride);
 
         return outputStream.TryGetBuffer(out var buffer) ? buffer : outputStream.ToArray();
     }
@@ -160,9 +190,10 @@ public static partial class PgpDecrypter
         ReadOnlySpan<byte> input,
         in DecryptionSecrets secrets,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        TimeProvider? timeProviderOverride = null)
     {
-        var decryptedBytes = Decrypt(input, secrets, inputEncoding);
+        var decryptedBytes = Decrypt(input, secrets, inputEncoding, timeProviderOverride);
 
         textEncoding ??= Encoding.UTF8;
 
@@ -175,9 +206,10 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        TimeProvider? timeProviderOverride = null)
     {
-        var decryptedBytes = DecryptAndVerify(input, secrets, verificationKeyRing, out verificationResult, inputEncoding);
+        var decryptedBytes = DecryptAndVerify(input, secrets, verificationKeyRing, out verificationResult, inputEncoding, timeProviderOverride);
 
         textEncoding ??= Encoding.UTF8;
 
@@ -191,9 +223,17 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
-        Encoding? textEncoding = null)
+        Encoding? textEncoding = null,
+        TimeProvider? timeProviderOverride = null)
     {
-        var decryptedBytes = DecryptAndVerify(input, secrets, signature, verificationKeyRing, out verificationResult, inputEncoding);
+        var decryptedBytes = DecryptAndVerify(
+            input,
+            secrets,
+            signature,
+            verificationKeyRing,
+            out verificationResult,
+            inputEncoding,
+            timeProviderOverride: timeProviderOverride);
 
         textEncoding ??= Encoding.UTF8;
 
@@ -215,7 +255,8 @@ public static partial class PgpDecrypter
                 null,
                 0,
                 default,
-                default);
+                default,
+                null);
 
             using var goError = GoDecryptSessionKey(
                 parameters,
@@ -239,7 +280,8 @@ public static partial class PgpDecrypter
         EncryptionState signatureEncryptionState,
         PgpKeyRing verificationKeyRing,
         Span<byte> output,
-        out PgpVerificationResult verificationResult)
+        out PgpVerificationResult verificationResult,
+        TimeProvider? timeProviderOverride)
     {
         fixed (byte* outputPointer = output)
         {
@@ -255,7 +297,8 @@ public static partial class PgpDecrypter
                 signatureEncoding,
                 signatureEncryptionState,
                 verificationKeyRing.GoKeyHandles,
-                ref goResult);
+                ref goResult,
+                timeProviderOverride);
 
             verificationResult = goResult.HasVerificationResult
                 ? new PgpVerificationResult(new GoVerificationResult(goResult.VerificationResultHandle))
@@ -275,7 +318,8 @@ public static partial class PgpDecrypter
         EncryptionState signatureEncryptionState,
         PgpKeyRing verificationKeyRing,
         Stream outputStream,
-        out PgpVerificationResult verificationResult)
+        out PgpVerificationResult verificationResult,
+        TimeProvider? timeProviderOverride)
     {
         var outputStreamHandle = GCHandle.Alloc(outputStream);
 
@@ -292,7 +336,8 @@ public static partial class PgpDecrypter
                 signatureEncoding,
                 signatureEncryptionState,
                 verificationKeyRing.GoKeyHandles,
-                ref goResult);
+                ref goResult,
+                timeProviderOverride);
 
             verificationResult = goResult.HasVerificationResult
                 ? new PgpVerificationResult(new GoVerificationResult(goResult.VerificationResultHandle))
@@ -313,7 +358,8 @@ public static partial class PgpDecrypter
         PgpEncoding signatureEncoding,
         EncryptionState signatureEncryptionState,
         ReadOnlySpan<nint> goVerificationKeyHandles,
-        ref GoPlaintextResult goResult)
+        ref GoPlaintextResult goResult,
+        TimeProvider? timeProviderOverride)
     {
         var (goDecryptionKeyHandles, sessionKey, password) = secrets;
 
@@ -334,7 +380,8 @@ public static partial class PgpDecrypter
                         signaturePointer,
                         (nuint)signatureLength,
                         signatureEncoding,
-                        signatureEncryptionState);
+                        signatureEncryptionState,
+                        timeProviderOverride);
 
                     using var goError = GoDecrypt(
                         parameters,

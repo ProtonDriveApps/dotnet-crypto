@@ -29,7 +29,7 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
         return (token, (SymmetricCipher)cipher);
     }
 
-    public unsafe void ToKeyPackets(Stream outputStream, ReadOnlySpan<nint> goEncryptionKeyHandles)
+    public unsafe void ToKeyPackets(Stream outputStream, ReadOnlySpan<nint> goEncryptionKeyHandles, TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goEncryptionKeysPointer = goEncryptionKeyHandles)
         {
@@ -44,7 +44,7 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
                 false,
                 false,
                 false,
-                null);
+                timeProviderOverride);
 
             var streamHandle = GCHandle.Alloc(outputStream);
             try

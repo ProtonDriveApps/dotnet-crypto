@@ -12,9 +12,18 @@ public static partial class PgpEncrypter
         ReadOnlySpan<byte> output,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
-        return Encrypt(input, encryptionSecrets, outputEncoding, outputCompression, output, [], default, Unsafe.NullRef<GoExternalWriter>(), timestamp);
+        return Encrypt(
+            input,
+            encryptionSecrets,
+            outputEncoding,
+            outputCompression,
+            output,
+            [],
+            default,
+            Unsafe.NullRef<GoExternalWriter>(),
+            timeProviderOverride);
     }
 
     public static int EncryptAndSign(
@@ -24,7 +33,7 @@ public static partial class PgpEncrypter
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         return Encrypt(
             input,
@@ -35,7 +44,7 @@ public static partial class PgpEncrypter
             signingKeyRing,
             default,
             Unsafe.NullRef<GoExternalWriter>(),
-            timestamp);
+            timeProviderOverride);
     }
 
     public static unsafe int EncryptAndSign(
@@ -48,7 +57,7 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* signatureOutputPointer = signatureOutput)
         {
@@ -64,7 +73,7 @@ public static partial class PgpEncrypter
                 signingKeyRing,
                 signatureEncryptionState,
                 goSignatureWriter,
-                timestamp);
+                timeProviderOverride);
 
             signatureLength = signatureOutputWriter.NumberOfBytesWritten;
 
@@ -77,9 +86,9 @@ public static partial class PgpEncrypter
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
-        return EncryptAndSign(input, encryptionSecrets, default, outputEncoding, outputCompression, timestamp);
+        return EncryptAndSign(input, encryptionSecrets, default, outputEncoding, outputCompression, timeProviderOverride);
     }
 
     public static ArraySegment<byte> EncryptAndSign(
@@ -88,11 +97,11 @@ public static partial class PgpEncrypter
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForMessage(input.Length, 1, signingKeyRing.Count, outputEncoding);
 
-        EncryptAndSignToStream(input, encryptionSecrets, outputStream, signingKeyRing, outputEncoding, outputCompression, timestamp);
+        EncryptAndSignToStream(input, encryptionSecrets, outputStream, signingKeyRing, outputEncoding, outputCompression, timeProviderOverride);
 
         return outputStream.TryGetBuffer(out var buffer) ? buffer : outputStream.ToArray();
     }
@@ -105,7 +114,7 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForMessage(input.Length, 1, 0, outputEncoding);
         using var signatureOutputStream = MemoryProvider.GetMemoryStreamForSignature(signingKeyRing.Count, outputEncoding);
@@ -119,7 +128,7 @@ public static partial class PgpEncrypter
             outputEncoding,
             outputCompression,
             signatureEncryptionState,
-            timestamp);
+            timeProviderOverride);
 
         signature = signatureOutputStream.TryGetBuffer(out var signatureBuffer) ? signatureBuffer : outputStream.ToArray();
 
@@ -132,9 +141,18 @@ public static partial class PgpEncrypter
         Stream outputStream,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
-        Encrypt(input, encryptionSecrets, outputEncoding, outputCompression, outputStream, [], default, Unsafe.NullRef<GoExternalWriter>(), timestamp);
+        Encrypt(
+            input,
+            encryptionSecrets,
+            outputEncoding,
+            outputCompression,
+            outputStream,
+            [],
+            default,
+            Unsafe.NullRef<GoExternalWriter>(),
+            timeProviderOverride);
     }
 
     public static void EncryptAndSignToStream(
@@ -144,7 +162,7 @@ public static partial class PgpEncrypter
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         Encrypt(
             input,
@@ -155,7 +173,7 @@ public static partial class PgpEncrypter
             signingKeyRing,
             default,
             Unsafe.NullRef<GoExternalWriter>(),
-            timestamp);
+            timeProviderOverride);
     }
 
     public static void EncryptAndSignToStreams(
@@ -167,7 +185,7 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
 
@@ -184,7 +202,7 @@ public static partial class PgpEncrypter
                 signingKeyRing,
                 signatureEncryptionState,
                 goSignatureWriter,
-                timestamp);
+                timeProviderOverride);
         }
         finally
         {
@@ -198,7 +216,7 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         Encoding? textEncoding = null,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
@@ -211,7 +229,7 @@ public static partial class PgpEncrypter
         {
             var textByteLength = textEncoding.GetBytes(input, textBytes);
 
-            return Encrypt(textBytes[..textByteLength], encryptionSecrets, outputEncoding, outputCompression, timestamp);
+            return Encrypt(textBytes[..textByteLength], encryptionSecrets, outputEncoding, outputCompression, timeProviderOverride);
         }
     }
 
@@ -222,7 +240,7 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         Encoding? textEncoding = null,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
@@ -235,7 +253,7 @@ public static partial class PgpEncrypter
         {
             var textByteLength = textEncoding.GetBytes(input, textBytes);
 
-            return EncryptAndSign(textBytes[..textByteLength], encryptionSecrets, signingKeyRing, outputEncoding, outputCompression, timestamp);
+            return EncryptAndSign(textBytes[..textByteLength], encryptionSecrets, signingKeyRing, outputEncoding, outputCompression, timeProviderOverride);
         }
     }
 
@@ -248,7 +266,7 @@ public static partial class PgpEncrypter
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
         Encoding? textEncoding = null,
-        DateTime? timestamp = null)
+        TimeProvider? timeProviderOverride = null)
     {
         textEncoding ??= Encoding.UTF8;
         var maxTextByteLength = textEncoding.GetMaxByteCount(input.Length);
@@ -269,7 +287,7 @@ public static partial class PgpEncrypter
                 outputEncoding,
                 outputCompression,
                 signatureEncryptionState,
-                timestamp);
+                timeProviderOverride);
         }
     }
 
@@ -282,7 +300,7 @@ public static partial class PgpEncrypter
         ReadOnlySpan<nint> goSigningKeyHandles,
         EncryptionState signatureEncryptionState,
         in GoExternalWriter goSignatureWriterPointer,
-        DateTime? timestamp)
+        TimeProvider? timeProviderOverride)
     {
         fixed (byte* outputPointer = output)
         {
@@ -298,7 +316,7 @@ public static partial class PgpEncrypter
                 goSigningKeyHandles,
                 signatureEncryptionState,
                 goSignatureWriterPointer,
-                timestamp);
+                timeProviderOverride);
 
             return outputWriter.NumberOfBytesWritten;
         }
@@ -313,7 +331,7 @@ public static partial class PgpEncrypter
         ReadOnlySpan<nint> goSigningKeyHandles,
         EncryptionState signatureEncryptionState,
         in GoExternalWriter goSignatureWriter,
-        DateTime? timestamp)
+        TimeProvider? timeProviderOverride)
     {
         var outputStreamHandle = GCHandle.Alloc(outputStream);
 
@@ -330,7 +348,7 @@ public static partial class PgpEncrypter
                 goSigningKeyHandles,
                 signatureEncryptionState,
                 goSignatureWriter,
-                timestamp);
+                timeProviderOverride);
         }
         finally
         {
@@ -347,7 +365,7 @@ public static partial class PgpEncrypter
         ReadOnlySpan<nint> goSigningKeyHandles,
         EncryptionState signatureEncryptionState,
         in GoExternalWriter goSignatureWriter,
-        DateTime? timestamp)
+        TimeProvider? timeProviderOverride)
     {
         var (goEncryptionKeyHandles, sessionKey, password) = encryptionSecrets;
 
@@ -368,7 +386,7 @@ public static partial class PgpEncrypter
                         !Unsafe.IsNullRef(in goSignatureWriter),
                         signatureEncryptionState == EncryptionState.Encrypted,
                         outputCompression != PgpCompression.None,
-                        timestamp);
+                        timeProviderOverride);
 
                     var goEncoding = outputEncoding.ToGoEncoding();
 

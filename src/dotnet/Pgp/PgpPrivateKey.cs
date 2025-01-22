@@ -28,7 +28,7 @@ public readonly partial struct PgpPrivateKey
 
     internal GoKey GoKey => _goKey ?? throw new InvalidOperationException("Invalid handle");
 
-    public static unsafe PgpPrivateKey Generate(string name, string emailAddress, KeyGenerationAlgorithm algorithm)
+    public static unsafe PgpPrivateKey Generate(string name, string emailAddress, KeyGenerationAlgorithm algorithm, TimeProvider? timeProviderOverride = null)
     {
         GoKey? goPrivateKey;
 
@@ -62,7 +62,8 @@ public readonly partial struct PgpPrivateKey
                             (nuint)nameUtf8BytesLength,
                             emailAddressUtf8BytesPointer,
                             (nuint)emailAddressUtf8BytesLength,
-                            algorithm);
+                            algorithm,
+                            timeProviderOverride);
 
                         using var goError = GoGenerate(parameters, out var unsafePrivateKeyHandle);
                         goError.ThrowIfFailure();
@@ -163,20 +164,39 @@ public readonly partial struct PgpPrivateKey
     private static partial GoError GoGetPublicKey(GoKey goPrivateKey, out nint publicKeyHandle);
 
     [StructLayout(LayoutKind.Sequential)]
-    private unsafe ref struct KeyGenerationParameters(
-        byte* name,
-        nuint nameLength,
-        byte* emailAddress,
-        nuint emailAddressLength,
-        KeyGenerationAlgorithm algorithm)
+    private unsafe ref struct KeyGenerationParameters
     {
-        public bool HasGenerationTime = true;
-        public bool HasUserId = true;
-        public byte* Name = name;
-        public nuint NameLength = nameLength;
-        public byte* EmailAddress = emailAddress;
-        public nuint EmailAddressLength = emailAddressLength;
-        public long GenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        public byte Algorithm = (byte)algorithm;
+        public bool HasGenerationTime;
+        public bool HasUserId;
+        public byte* Name;
+        public nuint NameLength;
+        public byte* EmailAddress;
+        public nuint EmailAddressLength;
+        public long GenerationTime;
+        public byte Algorithm;
+
+        public KeyGenerationParameters(
+            byte* name,
+            nuint nameLength,
+            byte* emailAddress,
+            nuint emailAddressLength,
+            KeyGenerationAlgorithm algorithm,
+            TimeProvider? timeProviderOverride)
+        {
+            HasUserId = true;
+            Name = name;
+            NameLength = nameLength;
+            EmailAddress = emailAddress;
+            EmailAddressLength = emailAddressLength;
+            Algorithm = (byte)algorithm;
+
+            var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+
+            if (timeProvider is not null)
+            {
+                HasGenerationTime = true;
+                GenerationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+            }
+        }
     }
 }

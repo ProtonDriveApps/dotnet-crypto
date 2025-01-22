@@ -7,11 +7,15 @@ namespace Proton.Cryptography.Pgp;
 
 public static partial class PgpSigner
 {
-    public static ArraySegment<byte> Sign(Stream inputStream, PgpPrivateKeyRing signingKeyRing, PgpEncoding outputEncoding = default)
+    public static ArraySegment<byte> Sign(
+        Stream inputStream,
+        PgpPrivateKeyRing signingKeyRing,
+        PgpEncoding outputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForSignature(signingKeyRing.Count, outputEncoding);
 
-        using (var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding))
+        using (var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, timeProviderOverride: timeProviderOverride))
         {
             inputStream.CopyTo(signingStream);
         }
@@ -23,13 +27,14 @@ public static partial class PgpSigner
         Stream inputStream,
         PgpPrivateKeyRing signingKeyRing,
         CancellationToken cancellationToken,
-        PgpEncoding outputEncoding = default)
+        PgpEncoding outputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         var outputStream = MemoryProvider.GetMemoryStreamForSignature(signingKeyRing.Count, outputEncoding);
 
         await using (outputStream.ConfigureAwait(false))
         {
-            var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding);
+            var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, timeProviderOverride: timeProviderOverride);
 
             await using (signingStream.ConfigureAwait(false))
             {
@@ -44,13 +49,14 @@ public static partial class PgpSigner
         ReadOnlySpan<byte> input,
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
-        SigningOutputType outputType = default)
+        SigningOutputType outputType = default,
+        TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = outputType == SigningOutputType.FullMessage
             ? MemoryProvider.GetMemoryStreamForMessage(input.Length, 0, signingKeyRing.Count, outputEncoding)
             : MemoryProvider.GetMemoryStreamForSignature(signingKeyRing.Count, outputEncoding);
 
-        Sign(input, signingKeyRing, outputStream, outputEncoding, outputType);
+        Sign(input, signingKeyRing, outputStream, outputEncoding, outputType, timeProviderOverride);
 
         return outputStream.TryGetBuffer(out var buffer) ? buffer : outputStream.ToArray();
     }
@@ -59,13 +65,14 @@ public static partial class PgpSigner
         Stream inputStream,
         PgpPrivateKeyRing signingKeyRing,
         Span<byte> signatureOutput,
-        PgpEncoding outputEncoding = default)
+        PgpEncoding outputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* outputPointer = signatureOutput)
         {
             var outputStream = new UnmanagedMemoryStream(outputPointer, signatureOutput.Length);
 
-            using var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding);
+            using var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, timeProviderOverride: timeProviderOverride);
 
             inputStream.CopyTo(signingStream);
 
@@ -78,11 +85,12 @@ public static partial class PgpSigner
         PgpPrivateKeyRing signingKeyRing,
         Memory<byte> output,
         CancellationToken cancellationToken,
-        PgpEncoding outputEncoding = default)
+        PgpEncoding outputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         var outputStream = output.AsStream();
 
-        var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding);
+        var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, timeProviderOverride: timeProviderOverride);
 
         await using (signingStream)
         {
@@ -97,14 +105,15 @@ public static partial class PgpSigner
         PgpPrivateKeyRing signingKeyRing,
         Span<byte> signatureOutput,
         PgpEncoding outputEncoding = default,
-        SigningOutputType outputType = default)
+        SigningOutputType outputType = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* signatureOutputPointer = signatureOutput)
         {
             var outputWriter = new SpanWriter(signatureOutputPointer, signatureOutput.Length);
             var goWriter = new GoExternalWriter(&outputWriter);
 
-            Sign(input, signingKeyRing, goWriter, outputEncoding, outputType);
+            Sign(input, signingKeyRing, goWriter, outputEncoding, outputType, timeProviderOverride);
 
             return outputWriter.NumberOfBytesWritten;
         }
@@ -115,9 +124,10 @@ public static partial class PgpSigner
         PgpPrivateKeyRing signingKeyRing,
         Stream outputStream,
         PgpEncoding outputEncoding = default,
-        SigningOutputType outputType = default)
+        SigningOutputType outputType = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        using var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, outputType);
+        using var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, outputType, timeProviderOverride);
 
         inputStream.CopyTo(signingStream);
     }
@@ -128,9 +138,10 @@ public static partial class PgpSigner
         Stream outputStream,
         CancellationToken cancellationToken,
         PgpEncoding outputEncoding = default,
-        SigningOutputType outputType = default)
+        SigningOutputType outputType = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, outputType);
+        var signingStream = PgpSigningStream.Open(outputStream, signingKeyRing, outputEncoding, outputType, timeProviderOverride);
 
         await using (signingStream.ConfigureAwait(false))
         {
@@ -143,14 +154,15 @@ public static partial class PgpSigner
         PgpPrivateKeyRing signingKeyRing,
         Stream outputStream,
         PgpEncoding outputEncoding = default,
-        SigningOutputType outputType = default)
+        SigningOutputType outputType = default,
+        TimeProvider? timeProviderOverride = null)
     {
         var outputStreamHandle = GCHandle.Alloc(outputStream);
         try
         {
             var goWriter = new GoExternalWriter(outputStreamHandle);
 
-            Sign(input, signingKeyRing, goWriter, outputEncoding, outputType);
+            Sign(input, signingKeyRing, goWriter, outputEncoding, outputType, timeProviderOverride);
         }
         finally
         {
@@ -158,11 +170,15 @@ public static partial class PgpSigner
         }
     }
 
-    public static unsafe void SignCleartext(ReadOnlySpan<byte> input, PgpPrivateKeyRing signingKeyRing, Stream outputStream)
+    public static unsafe void SignCleartext(
+        ReadOnlySpan<byte> input,
+        PgpPrivateKeyRing signingKeyRing,
+        Stream outputStream,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goSigningKeysPointer = signingKeyRing.GoKeyHandles)
         {
-            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count);
+            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, timeProviderOverride);
 
             var outputStreamHandle = GCHandle.Alloc(outputStream);
             try
@@ -183,12 +199,13 @@ public static partial class PgpSigner
         ReadOnlySpan<byte> input,
         PgpPrivateKeyRing signingKeyRing,
         in GoExternalWriter goWriter,
-        PgpEncoding outputEncoding = default,
-        SigningOutputType outputType = default)
+        PgpEncoding outputEncoding,
+        SigningOutputType outputType,
+        TimeProvider? timeProviderOverride)
     {
         fixed (nint* goSigningKeysPointer = signingKeyRing.GoKeyHandles)
         {
-            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count);
+            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, timeProviderOverride);
 
             var detached = outputType == SigningOutputType.SignatureOnly;
 

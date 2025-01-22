@@ -6,11 +6,15 @@ namespace Proton.Cryptography.Pgp;
 
 public static partial class PgpVerifier
 {
-    public static unsafe PgpVerificationResult Verify(Stream messageStream, PgpKeyRing verificationKeyRing, PgpEncoding encoding = default)
+    public static unsafe PgpVerificationResult Verify(
+        Stream messageStream,
+        PgpKeyRing verificationKeyRing,
+        PgpEncoding encoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count);
+            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
             var messageStreamHandle = GCHandle.Alloc(messageStream);
 
@@ -34,11 +38,12 @@ public static partial class PgpVerifier
         Stream inputStream,
         ReadOnlySpan<byte> signature,
         PgpKeyRing verificationKeyRing,
-        PgpEncoding encoding = default)
+        PgpEncoding encoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count);
+            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
             var messageStreamHandle = GCHandle.Alloc(inputStream);
 
@@ -65,11 +70,15 @@ public static partial class PgpVerifier
         }
     }
 
-    public static unsafe PgpVerificationResult Verify(ReadOnlySpan<byte> message, PgpKeyRing keyRing, PgpEncoding encoding = default)
+    public static unsafe PgpVerificationResult Verify(
+        ReadOnlySpan<byte> message,
+        PgpKeyRing keyRing,
+        PgpEncoding encoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goKeysPointer = keyRing.GoKeyHandles)
         {
-            var parameters = new VerificationParameters(goKeysPointer, (nuint)keyRing.Count);
+            var parameters = new VerificationParameters(goKeysPointer, (nuint)keyRing.Count, timeProviderOverride);
 
             var streamHandle = GCHandle.Alloc(Stream.Null);
 
@@ -99,11 +108,12 @@ public static partial class PgpVerifier
         ReadOnlySpan<byte> input,
         ReadOnlySpan<byte> signature,
         PgpKeyRing verificationKeyRing,
-        PgpEncoding encoding = default)
+        PgpEncoding encoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count);
+            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
             using var goError = GoVerifyDetached(
                 parameters,
@@ -123,11 +133,15 @@ public static partial class PgpVerifier
         }
     }
 
-    public static unsafe PgpVerificationResult VerifyCleartext(ReadOnlySpan<byte> message, PgpKeyRing verificationKeyRing, Stream cleartextOutputStream)
+    public static unsafe PgpVerificationResult VerifyCleartext(
+        ReadOnlySpan<byte> message,
+        PgpKeyRing verificationKeyRing,
+        Stream cleartextOutputStream,
+        TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count);
+            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
             var cleartextOutputStreamHandle = GCHandle.Alloc(cleartextOutputStream);
 
@@ -196,14 +210,28 @@ public static partial class PgpVerifier
         ref GoPlaintextResult plaintextResult);
 
     [StructLayout(LayoutKind.Sequential)]
-    private unsafe readonly struct VerificationParameters(nint* verificationKeys, nuint verificationKeysLength)
+    private unsafe readonly struct VerificationParameters
     {
-        public readonly nuint KeysLength = verificationKeysLength;
-        public readonly bool HasVerificationTime = true;
+        public readonly nuint KeysLength;
+        public readonly bool HasVerificationTime;
         public readonly bool HasVerificationContext;
         public readonly bool IsUtf8;
-        public readonly nint* Keys = verificationKeys;
+        public readonly nint* Keys;
         public readonly nint VerificationContext;
-        public readonly long VerificationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        public readonly long VerificationTime;
+
+        public VerificationParameters(nint* verificationKeys, nuint verificationKeysLength, TimeProvider? timeProviderOverride)
+        {
+            Keys = verificationKeys;
+            KeysLength = verificationKeysLength;
+
+            var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+
+            if (timeProvider is not null)
+            {
+                HasVerificationTime = true;
+                VerificationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+            }
+        }
     }
 }

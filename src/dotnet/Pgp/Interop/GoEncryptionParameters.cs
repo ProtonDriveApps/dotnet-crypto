@@ -31,7 +31,7 @@ internal unsafe readonly struct GoEncryptionParameters
         bool detachSignature,
         bool detachedSignatureIsEncrypted,
         bool compress,
-        DateTime? timestamp)
+        TimeProvider? timeProviderOverride)
     {
         EncryptionKeys = encryptionKeys;
         EncryptionKeysLength = encryptionKeysLength;
@@ -53,10 +53,12 @@ internal unsafe readonly struct GoEncryptionParameters
 
         Compress = compress;
 
-        if (timestamp is not null)
+        var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+
+        if (timeProvider is not null)
         {
             HasEncryptionTime = true;
-            EncryptionTime = new DateTimeOffset(timestamp.Value).ToUnixTimeSeconds();
+            EncryptionTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
         }
     }
 }

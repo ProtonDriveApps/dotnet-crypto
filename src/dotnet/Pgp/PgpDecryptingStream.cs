@@ -24,18 +24,23 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         Dispose(false);
     }
 
-    public static PgpDecryptingStream Open(Stream inputStream, in DecryptionSecrets secrets, PgpEncoding inputEncoding = default)
+    public static PgpDecryptingStream Open(
+        Stream inputStream,
+        in DecryptionSecrets secrets,
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        return Open(inputStream, inputEncoding, secrets, default, default, default, []);
+        return Open(inputStream, inputEncoding, secrets, default, default, default, [], timeProviderOverride);
     }
 
     public static PgpDecryptingStream Open(
         Stream inputStream,
         in DecryptionSecrets secrets,
         PgpKeyRing verificationKeyRing,
-        PgpEncoding inputEncoding = default)
+        PgpEncoding inputEncoding = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        return Open(inputStream, inputEncoding, secrets, default, default, default, verificationKeyRing.GoKeyHandles);
+        return Open(inputStream, inputEncoding, secrets, default, default, default, verificationKeyRing.GoKeyHandles, timeProviderOverride);
     }
 
     public static PgpDecryptingStream Open(
@@ -45,9 +50,18 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         PgpKeyRing verificationKeyRing,
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
-        EncryptionState signatureEncryptionState = default)
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
     {
-        return Open(inputStream, inputEncoding, secrets, signature, signatureEncoding, signatureEncryptionState, verificationKeyRing.GoKeyHandles);
+        return Open(
+            inputStream,
+            inputEncoding,
+            secrets,
+            signature,
+            signatureEncoding,
+            signatureEncryptionState,
+            verificationKeyRing.GoKeyHandles,
+            timeProviderOverride);
     }
 
     public override int Read(Span<byte> buffer)
@@ -92,7 +106,8 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         ReadOnlyMemory<byte> signature,
         PgpEncoding signatureEncoding,
         EncryptionState signatureEncryptionState,
-        ReadOnlySpan<nint> goVerificationKeyHandles)
+        ReadOnlySpan<nint> goVerificationKeyHandles,
+        TimeProvider? timeProviderOverride)
     {
         var (goDecryptionKeyHandles, sessionKey, password) = secrets;
 
@@ -117,7 +132,8 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
                             (byte*)detachedSignatureMemoryHandle.Pointer,
                             (nuint)signature.Length,
                             signatureEncoding,
-                            signatureEncryptionState);
+                            signatureEncryptionState,
+                            timeProviderOverride);
 
                         var streamHandle = GCHandle.Alloc(inputStream);
 

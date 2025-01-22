@@ -9,7 +9,7 @@ internal readonly unsafe ref struct GoDecryptionParameters
     public readonly nuint DetachedSignatureLength;
     public readonly bool HasSessionKey;
     public readonly bool HasVerificationContext;
-    public readonly bool HasVerificationTime = true;
+    public readonly bool HasVerificationTime;
     public readonly bool IsUtf8;
     public readonly bool DetachedSignatureIsEncrypted;
     public readonly bool DetachedSignatureIsArmored;
@@ -17,7 +17,7 @@ internal readonly unsafe ref struct GoDecryptionParameters
     public readonly nint* VerificationKeys;
     public readonly nint SessionKey;
     public readonly nint VerificationContext;
-    public readonly long VerificationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public readonly long VerificationTime;
     public readonly byte* Password;
     public readonly byte* DetachedSignature;
 
@@ -32,7 +32,8 @@ internal readonly unsafe ref struct GoDecryptionParameters
         byte* detachedSignature,
         nuint detachedSignatureLength,
         PgpEncoding detachedSignatureEncoding,
-        EncryptionState detachedSignatureEncryptionState)
+        EncryptionState detachedSignatureEncryptionState,
+        TimeProvider? timeProviderOverride)
     {
         DecryptionKeys = decryptionKeys;
         DecryptionKeysLength = decryptionKeysLength;
@@ -54,5 +55,13 @@ internal readonly unsafe ref struct GoDecryptionParameters
 
         DetachedSignatureIsArmored = detachedSignatureEncoding == PgpEncoding.AsciiArmor;
         DetachedSignatureIsEncrypted = detachedSignatureEncryptionState == EncryptionState.Encrypted;
+
+        var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+
+        if (timeProvider is not null)
+        {
+            HasVerificationTime = true;
+            VerificationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+        }
     }
 }

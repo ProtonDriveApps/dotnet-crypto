@@ -1,13 +1,27 @@
 ﻿namespace Proton.Cryptography.Pgp.Interop;
 
 [StructLayout(LayoutKind.Sequential)]
-internal unsafe readonly struct GoSigningParameters(void* signingKeys, nuint signingKeysLength)
+internal unsafe readonly struct GoSigningParameters
 {
-    public readonly nuint SigningKeysLength = signingKeysLength;
-    public readonly bool HasSigningContext = false;
-    public readonly bool HasSignTime = true;
-    public readonly bool Utf8 = false;
-    public readonly void* SigningKeys = signingKeys;
+    public readonly nuint SigningKeysLength;
+    public readonly bool HasSigningContext;
+    public readonly bool HasSigningTime;
+    public readonly bool Utf8;
+    public readonly void* SigningKeys;
     public readonly nint SigningContext = 0;
-    public readonly long SignTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public readonly long SigningTime;
+
+    public GoSigningParameters(void* signingKeys, nuint signingKeysLength, TimeProvider? timeProviderOverride)
+    {
+        SigningKeysLength = signingKeysLength;
+        SigningKeys = signingKeys;
+
+        var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+
+        if (timeProvider is not null)
+        {
+            HasSigningTime = true;
+            SigningTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+        }
+    }
 }

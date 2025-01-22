@@ -38,9 +38,9 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
         return GoSessionKey.Export();
     }
 
-    public void ToKeyPackets(PgpKeyRing encryptionKeyRing, Stream outputStream)
+    public void ToKeyPackets(PgpKeyRing encryptionKeyRing, Stream outputStream, TimeProvider? timeProviderOverride = null)
     {
-        GoSessionKey.ToKeyPackets(outputStream, encryptionKeyRing.GoKeyHandles);
+        GoSessionKey.ToKeyPackets(outputStream, encryptionKeyRing.GoKeyHandles, timeProviderOverride);
     }
 
     public void Dispose()
