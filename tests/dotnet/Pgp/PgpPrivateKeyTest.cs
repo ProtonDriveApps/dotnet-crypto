@@ -9,7 +9,7 @@ public sealed class PgpPrivateKeyTest
         using var privateKey = PgpPrivateKey.Generate("Test", "test@example.com", KeyGenerationAlgorithm.Ecc);
 
         // Assert
-        privateKey.GoKey.IsInvalid.Should().BeFalse();
+        privateKey.GoKey.IsInvalid.ShouldBeFalse();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public sealed class PgpPrivateKeyTest
         using var lockedPrivateKey = privateKey.Lock(PgpSamples.Passphrase);
 
         // Assert
-        lockedPrivateKey.GoKey.IsInvalid.Should().BeFalse();
+        lockedPrivateKey.GoKey.IsInvalid.ShouldBeFalse();
     }
 
     [Fact]
@@ -30,10 +30,10 @@ public sealed class PgpPrivateKeyTest
         var privateKey = default(PgpPrivateKey);
 
         // Act
-        var act = privateKey.Export;
+        var act = new Action(() => privateKey.Export(Stream.Null, default));
 
         // Assert
-        act.Invoking(x => x.Invoke(Stream.Null, default)).Should().Throw<Exception>();
+        act.ShouldThrow<Exception>();
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public sealed class PgpPrivateKeyTest
         var version = PgpSamples.PrivateKey.Version;
 
         // Assert
-        version.Should().NotBe(0);
+        version.ShouldNotBe(0);
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class PgpPrivateKeyTest
         var id = PgpSamples.PrivateKey.Id;
 
         // Assert
-        id.Should().NotBe(0);
+        id.ShouldNotBe(0);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class PgpPrivateKeyTest
         var fingerprint = PgpSamples.PrivateKey.GetFingerprint();
 
         // Assert
-        fingerprint.Should().NotBeEmpty();
+        fingerprint.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class PgpPrivateKeyTest
         var fingerprints = PgpSamples.PrivateKey.GetSha256Fingerprints();
 
         // Assert
-        fingerprints.Should().NotBeEmpty();
+        fingerprints.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class PgpPrivateKeyTest
         var act = () => PgpSamples.PrivateKey.CanVerify;
 
         // Assert
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public sealed class PgpPrivateKeyTest
         var act = () => PgpSamples.PrivateKey.CanEncrypt;
 
         // Assert
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class PgpPrivateKeyTest
         var act = () => PgpSamples.PrivateKey.IsExpired;
 
         // Assert
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -113,6 +113,6 @@ public sealed class PgpPrivateKeyTest
         var act = () => PgpSamples.PrivateKey.IsRevoked;
 
         // Assert
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 }

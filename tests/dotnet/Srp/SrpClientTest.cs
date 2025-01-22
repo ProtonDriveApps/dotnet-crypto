@@ -19,7 +19,7 @@ public sealed class SrpClientTest
         var verifier = client.DeriveVerifier(SrpSamples.BitLength);
 
         // Assert
-        verifier.Should().Equal(SrpSamples.Verifier);
+        verifier.ShouldBe(SrpSamples.Verifier);
     }
 
     [Fact]
@@ -29,6 +29,6 @@ public sealed class SrpClientTest
         var password = SrpClient.HashPassword(SrpSamples.Password, SrpSamples.PasswordHashingSalt);
 
         // Assert
-        password.Should().Equal(SrpSamples.DerivedPassword.ToArray());
+        password.ShouldBe(SrpSamples.DerivedPassword.ToArray());
     }
 }

@@ -21,7 +21,7 @@ public class PgpSigningStreamTest
         signatureOutputStream.Seek(0, SeekOrigin.Begin);
         var signature = signatureReader.ReadToEnd();
         var expectedBlockTypeString = outputType == SigningOutputType.FullMessage ? "MESSAGE" : "SIGNATURE";
-        signature.Should().StartWith($"-----BEGIN PGP {expectedBlockTypeString}-----");
-        signature.Should().EndWith($"-----END PGP {expectedBlockTypeString}-----");
+        signature.ShouldStartWith($"-----BEGIN PGP {expectedBlockTypeString}-----");
+        signature.ShouldEndWith($"-----END PGP {expectedBlockTypeString}-----");
     }
 }

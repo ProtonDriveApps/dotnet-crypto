@@ -9,7 +9,7 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.Generate(SymmetricCipher.Aes256);
 
         // Assert
-        sessionKey.GoSessionKey.IsInvalid.Should().BeFalse();
+        sessionKey.GoSessionKey.IsInvalid.ShouldBeFalse();
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.Import(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
 
         // Assert
-        sessionKey.GoSessionKey.IsInvalid.Should().BeFalse();
+        sessionKey.GoSessionKey.IsInvalid.ShouldBeFalse();
     }
 
     [Fact]
@@ -32,8 +32,8 @@ public class PgpSessionKeyTest
         var (token, cipher) = sessionKey.Export();
 
         // Assert
-        token.Should().Equal(PgpSamples.SessionKeyToken);
-        cipher.Should().Be(PgpSamples.SessionKeyCipher);
+        token.ShouldBe(PgpSamples.SessionKeyToken);
+        cipher.ShouldBe(PgpSamples.SessionKeyCipher);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class PgpSessionKeyTest
         sessionKey.ToKeyPackets(PgpSamples.PublicKey, outputStream);
 
         // Assert
-        outputStream.Length.Should().Be(PgpSamples.KeyPacket.Length);
+        outputStream.Length.ShouldBe(PgpSamples.KeyPacket.Length);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class PgpSessionKeyTest
         sessionKey.ToKeyPackets(PgpSamples.PublicKey, keyPacketOutputStream);
 
         // Assert
-        keyPacketOutputStream.ToArray().Should().HaveCount(PgpSamples.KeyPacket.Length);
+        keyPacketOutputStream.ToArray().Length.ShouldBe(PgpSamples.KeyPacket.Length);
     }
 
     [Fact]
@@ -71,9 +71,9 @@ public class PgpSessionKeyTest
         var sessionKey = default(PgpSessionKey);
 
         // Act
-        var act = sessionKey.Export;
+        var act = new Action(() => sessionKey.Export());
 
         // Assert
-        act.Should().Throw<Exception>();
+        act.ShouldThrow<Exception>();
     }
 }

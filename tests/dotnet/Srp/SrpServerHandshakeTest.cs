@@ -12,7 +12,7 @@ public sealed class SrpServerHandshakeTest
         };
 
         // Assert
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public sealed class SrpServerHandshakeTest
         var isSuccess = serverHandshake.TryComputeSharedKey(SrpSamples.ClientProof, SrpSamples.ClientEphemeral, out var response);
 
         // Assert
-        isSuccess.Should().BeTrue();
-        response!.Should().Equal(SrpSamples.ServerProof);
+        isSuccess.ShouldBeTrue();
+        response!.ShouldBe(SrpSamples.ServerProof);
     }
 }

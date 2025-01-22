@@ -12,6 +12,6 @@ public class PgpEncoderTest
         var numberOfBytesWritten = PgpArmorEncoder.Encode(PgpSamples.DataPacket, PgpBlockType.Message, output);
 
         // Assert
-        numberOfBytesWritten.Should().BePositive();
+        numberOfBytesWritten.ShouldBePositive();
     }
 }

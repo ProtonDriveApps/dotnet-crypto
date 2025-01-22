@@ -20,7 +20,7 @@ public class PgpArmorEncodingStreamTest
         outputStream.Seek(0, SeekOrigin.Begin);
         var message = messageReader.ReadToEnd();
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        message.Should().EndWith("-----END PGP MESSAGE-----");
+        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
+        message.ShouldEndWith("-----END PGP MESSAGE-----");
     }
 }

@@ -20,7 +20,7 @@ public sealed class PgpEncryptingStreamTest
         outputStream.Seek(0, SeekOrigin.Begin);
         var message = messageReader.ReadToEnd();
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class PgpEncryptingStreamTest
         outputStream.Seek(0, SeekOrigin.Begin);
         var message = messageReader.ReadToEnd();
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class PgpEncryptingStreamTest
         signatureOutputStream.Seek(0, SeekOrigin.Begin);
         var signature = signatureReader.ReadToEnd();
 
-        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
+        signature.ShouldStartWith("-----BEGIN PGP SIGNATURE-----");
     }
 
     [Fact]
@@ -80,8 +80,8 @@ public sealed class PgpEncryptingStreamTest
         stream.Close();
 
         // Assert
-        dataPacketStream.Length.Should().BePositive();
-        keyPacketStream.Length.Should().BePositive();
+        dataPacketStream.Length.ShouldBePositive();
+        keyPacketStream.Length.ShouldBePositive();
     }
 
     [Fact]
@@ -104,8 +104,8 @@ public sealed class PgpEncryptingStreamTest
         stream.Close();
 
         // Assert
-        dataPacketOutputStream.Length.Should().BePositive();
-        keyPacketOutputStream.Length.Should().BePositive();
-        signatureOutputStream.Length.Should().BePositive();
+        dataPacketOutputStream.Length.ShouldBePositive();
+        keyPacketOutputStream.Length.ShouldBePositive();
+        signatureOutputStream.Length.ShouldBePositive();
     }
 }

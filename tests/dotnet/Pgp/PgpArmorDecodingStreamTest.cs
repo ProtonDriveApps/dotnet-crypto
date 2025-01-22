@@ -16,6 +16,6 @@ public class PgpArmorDecodingStreamTest
         stream.CopyTo(outputStream);
 
         // Assert
-        outputStream.Length.Should().Be(PgpSamples.KeyPacket.Length + PgpSamples.DataPacket.Length);
+        outputStream.Length.ShouldBe(PgpSamples.KeyPacket.Length + PgpSamples.DataPacket.Length);
     }
 }

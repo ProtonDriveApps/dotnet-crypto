@@ -18,6 +18,6 @@ public class AsciiStreamTest
         var numberOfBytesRead = stream.Read(buffer);
 
         // Assert
-        numberOfBytesRead.Should().Be(text.Length);
+        numberOfBytesRead.ShouldBe(text.Length);
     }
 }
