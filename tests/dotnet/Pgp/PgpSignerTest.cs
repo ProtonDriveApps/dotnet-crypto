@@ -49,12 +49,20 @@ public class PgpSignerTest
         message.Should().EndWith("-----END PGP SIGNATURE-----");
     }
 
-    [Fact]
-    public void Sign_Fails_WithInvalidTime()
+    [Theory]
+    [InlineData(2000, 1000)]
+    [InlineData(3000, null)]
+    [InlineData(null, 2000)]
+    public void Sign_Fails_WithInvalidTime(int? keyGenerationTimeOverrideYear, int? encryptionTimeOverrideYear)
     {
         // Arrange
-        var keyGenerationTimeProvider = new FakeTimeProvider(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
-        var encryptionTimeProvider = new FakeTimeProvider(new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        var keyGenerationTimeProvider = keyGenerationTimeOverrideYear is not null
+            ? new FakeTimeProvider(new DateTimeOffset(keyGenerationTimeOverrideYear.Value, 1, 1, 0, 0, 0, TimeSpan.Zero))
+            : TimeProvider.System;
+
+        var encryptionTimeProvider = encryptionTimeOverrideYear is not null
+            ? new FakeTimeProvider(new DateTimeOffset(encryptionTimeOverrideYear.Value, 1, 1, 0, 0, 0, TimeSpan.Zero))
+            : TimeProvider.System;
 
         var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, keyGenerationTimeProvider);
 
@@ -63,5 +71,29 @@ public class PgpSignerTest
 
         // Assert
         act.Should().Throw<PgpException>().Where(exception => exception.Message.Contains("no valid signing keys"));
+    }
+
+    [Theory]
+    [InlineData(1000, 2000)]
+    [InlineData(2000, null)]
+    [InlineData(null, 3000)]
+    public void Sign_Succeeds_WithValidTime(int? keyGenerationTimeOverrideYear, int? encryptionTimeOverrideYear)
+    {
+        // Arrange
+        var keyGenerationTimeProvider = keyGenerationTimeOverrideYear is not null
+            ? new FakeTimeProvider(new DateTimeOffset(keyGenerationTimeOverrideYear.Value, 1, 1, 0, 0, 0, TimeSpan.Zero))
+            : TimeProvider.System;
+
+        var encryptionTimeProvider = encryptionTimeOverrideYear is not null
+            ? new FakeTimeProvider(new DateTimeOffset(encryptionTimeOverrideYear.Value, 1, 1, 0, 0, 0, TimeSpan.Zero))
+            : TimeProvider.System;
+
+        var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, keyGenerationTimeProvider);
+
+        // Act
+        var act = () => privateKey.Sign(Encoding.UTF8.GetBytes(PgpSamples.PlainText), timeProviderOverride: encryptionTimeProvider);
+
+        // Assert
+        act.Should().NotThrow();
     }
 }
