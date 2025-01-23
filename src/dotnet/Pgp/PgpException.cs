@@ -1,6 +1,6 @@
 ﻿namespace Proton.Cryptography.Pgp;
 
-public sealed class PgpException : Exception
+public sealed class PgpException : CryptographicException
 {
     public PgpException()
     {

@@ -176,7 +176,7 @@ public static partial class PgpSigner
         Stream outputStream,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goSigningKeysPointer = signingKeyRing.GoKeyHandles)
+        fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, timeProviderOverride);
 
@@ -203,7 +203,7 @@ public static partial class PgpSigner
         SigningOutputType outputType,
         TimeProvider? timeProviderOverride)
     {
-        fixed (nint* goSigningKeysPointer = signingKeyRing.GoKeyHandles)
+        fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, timeProviderOverride);
 

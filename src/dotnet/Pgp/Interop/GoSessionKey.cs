@@ -29,13 +29,13 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
         return (token, (SymmetricCipher)cipher);
     }
 
-    public unsafe void ToKeyPackets(Stream outputStream, ReadOnlySpan<nint> goEncryptionKeyHandles, TimeProvider? timeProviderOverride = null)
+    public unsafe void ToKeyPackets(Stream outputStream, PgpKeyRing encryptionKeyRing, TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goEncryptionKeysPointer = goEncryptionKeyHandles)
+        fixed (nint* goEncryptionKeysPointer = encryptionKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new GoEncryptionParameters(
                 goEncryptionKeysPointer,
-                (nuint)goEncryptionKeyHandles.Length,
+                (nuint)encryptionKeyRing.Count,
                 null,
                 0,
                 null,

@@ -12,9 +12,9 @@ public readonly struct PgpPrivateKeyRing : IDecryptionKeyRingSource, IVerificati
             return;
         }
 
-        var goKeyHandles = new nint[keys.Count];
-        goKeyHandles.AsSpan().FillWithTransform(keys, key => key.GoKey.DangerousGetHandle());
-        MultipleKeyHandles = goKeyHandles;
+        var multipleGoKeys = new GoKey[keys.Count];
+        multipleGoKeys.AsSpan().FillWithTransform(keys, key => key.GoKey);
+        MultipleGoKeys = multipleGoKeys;
     }
 
     public PgpPrivateKeyRing(PgpPrivateKey key)
@@ -27,16 +27,34 @@ public readonly struct PgpPrivateKeyRing : IDecryptionKeyRingSource, IVerificati
     PgpKeyRing IEncryptionKeyRingSource.EncryptionKeyRing => this;
     PgpPrivateKeyRing ISigningKeyRingSource.SigningKeyRing => this;
 
-    public int Count => SingleGoKey is not null ? 1 : MultipleKeyHandles?.Length ?? 0;
-
-    internal ReadOnlySpan<nint> GoKeyHandles => SingleGoKey is not null
-        ? MemoryMarshal.CreateReadOnlySpan(ref SingleGoKey.DangerousGetHandleRef(), 1)
-        : MultipleKeyHandles;
+    public int Count => SingleGoKey is not null ? 1 : MultipleGoKeys?.Length ?? 0;
 
     private GoKey? SingleGoKey { get; }
-    private IntPtr[]? MultipleKeyHandles { get; }
+    private GoKey[]? MultipleGoKeys { get; }
 
     public static implicit operator PgpPrivateKeyRing(PgpPrivateKey privateKey) => new(privateKey);
-    public static implicit operator PgpKeyRing(PgpPrivateKeyRing keyRing) => new(keyRing.SingleGoKey, keyRing.MultipleKeyHandles);
-    public static implicit operator ReadOnlySpan<nint>(PgpPrivateKeyRing keyRing) => keyRing.GoKeyHandles;
+    public static implicit operator PgpKeyRing(PgpPrivateKeyRing keyRing) => new(keyRing.SingleGoKey, keyRing.MultipleGoKeys);
+
+    /// <summary>
+    /// Gets the native Go handles for the keys.
+    /// </summary>
+    /// <remarks>
+    /// Only call this just before calling a native function.
+    /// </remarks>
+    internal ReadOnlySpan<nint> DangerousGetGoKeyHandles()
+    {
+        if (SingleGoKey is not null)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref SingleGoKey.DangerousGetHandleRef(), 1);
+        }
+
+        if (MultipleGoKeys is null)
+        {
+            return [];
+        }
+
+        var goKeyHandles = new nint[MultipleGoKeys.Length];
+        goKeyHandles.AsSpan().FillWithTransform(MultipleGoKeys, key => key.DangerousGetHandle());
+        return goKeyHandles;
+    }
 }

@@ -57,9 +57,9 @@ public readonly ref struct EncryptionSecrets
         => new(password);
 
     [UnscopedRef]
-    internal void Deconstruct(out ReadOnlySpan<nint> goKeyHandles, out PgpSessionKey? sessionKey, out ReadOnlySpan<byte> password)
+    internal void Deconstruct(out PgpKeyRing keyRing, out PgpSessionKey? sessionKey, out ReadOnlySpan<byte> password)
     {
-        goKeyHandles = _keyRing.GoKeyHandles;
+        keyRing = _keyRing;
         sessionKey = _sessionKey;
         password = _password;
     }

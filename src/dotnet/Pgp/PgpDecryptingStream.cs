@@ -30,7 +30,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         PgpEncoding inputEncoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        return Open(inputStream, inputEncoding, secrets, default, default, default, [], timeProviderOverride);
+        return Open(inputStream, inputEncoding, secrets, default, default, default, default, timeProviderOverride);
     }
 
     public static PgpDecryptingStream Open(
@@ -40,7 +40,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         PgpEncoding inputEncoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        return Open(inputStream, inputEncoding, secrets, default, default, default, verificationKeyRing.GoKeyHandles, timeProviderOverride);
+        return Open(inputStream, inputEncoding, secrets, default, default, default, verificationKeyRing, timeProviderOverride);
     }
 
     public static PgpDecryptingStream Open(
@@ -60,7 +60,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
             signature,
             signatureEncoding,
             signatureEncryptionState,
-            verificationKeyRing.GoKeyHandles,
+            verificationKeyRing,
             timeProviderOverride);
     }
 
@@ -106,16 +106,16 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         ReadOnlyMemory<byte> signature,
         PgpEncoding signatureEncoding,
         EncryptionState signatureEncryptionState,
-        ReadOnlySpan<nint> goVerificationKeyHandles,
+        PgpKeyRing goVerificationKeyRing,
         TimeProvider? timeProviderOverride)
     {
-        var (goDecryptionKeyHandles, sessionKey, password) = secrets;
+        var (decryptionKeyRing, sessionKey, password) = secrets;
 
-        fixed (nint* goDecryptionKeysPointer = goDecryptionKeyHandles)
+        fixed (nint* goDecryptionKeysPointer = decryptionKeyRing.DangerousGetGoKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
-                fixed (nint* goVerificationKeysPointer = goVerificationKeyHandles)
+                fixed (nint* goVerificationKeysPointer = goVerificationKeyRing.DangerousGetGoKeyHandles())
                 {
                     var detachedSignatureMemoryHandle = signature.Pin();
 
@@ -123,9 +123,9 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
                     {
                         var parameters = new GoDecryptionParameters(
                             goDecryptionKeysPointer,
-                            (nuint)goDecryptionKeyHandles.Length,
+                            (nuint)decryptionKeyRing.Count,
                             goVerificationKeysPointer,
-                            (nuint)goVerificationKeyHandles.Length,
+                            (nuint)goVerificationKeyRing.Count,
                             sessionKey,
                             passwordPointer,
                             (nuint)password.Length,

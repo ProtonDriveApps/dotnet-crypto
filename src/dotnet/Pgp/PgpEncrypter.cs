@@ -20,7 +20,7 @@ public static partial class PgpEncrypter
             outputEncoding,
             outputCompression,
             output,
-            [],
+            default,
             default,
             Unsafe.NullRef<GoExternalWriter>(),
             timeProviderOverride);
@@ -149,7 +149,7 @@ public static partial class PgpEncrypter
             outputEncoding,
             outputCompression,
             outputStream,
-            [],
+            default,
             default,
             Unsafe.NullRef<GoExternalWriter>(),
             timeProviderOverride);
@@ -297,7 +297,7 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding,
         PgpCompression outputCompression,
         ReadOnlySpan<byte> output,
-        ReadOnlySpan<nint> goSigningKeyHandles,
+        PgpPrivateKeyRing signingKeyRing,
         EncryptionState signatureEncryptionState,
         in GoExternalWriter goSignatureWriterPointer,
         TimeProvider? timeProviderOverride)
@@ -313,7 +313,7 @@ public static partial class PgpEncrypter
                 outputEncoding,
                 outputCompression,
                 goOutputWriter,
-                goSigningKeyHandles,
+                signingKeyRing,
                 signatureEncryptionState,
                 goSignatureWriterPointer,
                 timeProviderOverride);
@@ -328,7 +328,7 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding,
         PgpCompression outputCompression,
         Stream outputStream,
-        ReadOnlySpan<nint> goSigningKeyHandles,
+        PgpPrivateKeyRing signingKeyRing,
         EncryptionState signatureEncryptionState,
         in GoExternalWriter goSignatureWriter,
         TimeProvider? timeProviderOverride)
@@ -345,7 +345,7 @@ public static partial class PgpEncrypter
                 outputEncoding,
                 outputCompression,
                 goOutputWriter,
-                goSigningKeyHandles,
+                signingKeyRing,
                 signatureEncryptionState,
                 goSignatureWriter,
                 timeProviderOverride);
@@ -362,24 +362,24 @@ public static partial class PgpEncrypter
         PgpEncoding outputEncoding,
         PgpCompression outputCompression,
         in GoExternalWriter goOutputWriter,
-        ReadOnlySpan<nint> goSigningKeyHandles,
+        PgpPrivateKeyRing signingKeyRing,
         EncryptionState signatureEncryptionState,
         in GoExternalWriter goSignatureWriter,
         TimeProvider? timeProviderOverride)
     {
-        var (goEncryptionKeyHandles, sessionKey, password) = encryptionSecrets;
+        var (encryptionKeyRing, sessionKey, password) = encryptionSecrets;
 
-        fixed (nint* goEncryptionKeysPointer = goEncryptionKeyHandles)
+        fixed (nint* goEncryptionKeysPointer = encryptionKeyRing.DangerousGetGoKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
-                fixed (nint* goSigningKeysPointer = goSigningKeyHandles)
+                fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
                 {
                     var parameters = new GoEncryptionParameters(
                         goEncryptionKeysPointer,
-                        (nuint)goEncryptionKeyHandles.Length,
+                        (nuint)encryptionKeyRing.Count,
                         goSigningKeysPointer,
-                        (nuint)goSigningKeyHandles.Length,
+                        (nuint)signingKeyRing.Count,
                         sessionKey,
                         passwordPointer,
                         (nuint)password.Length,

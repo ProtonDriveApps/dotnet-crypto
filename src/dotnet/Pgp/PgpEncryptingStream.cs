@@ -45,7 +45,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
             null,
             Unsafe.NullRef<GoExternalWriter>(),
             encryptionSecrets,
-            [],
+            default,
             encoding,
             compression,
             default,
@@ -128,7 +128,7 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
                 null,
                 Unsafe.NullRef<GoExternalWriter>(),
                 encryptionSecrets,
-                [],
+                default,
                 default,
                 messageCompression,
                 default,
@@ -246,25 +246,25 @@ public sealed partial class PgpEncryptingStream : BaseWriteOnlyStream
         GCHandle? signatureOutputStreamHandle,
         in GoExternalWriter goSignatureWriter,
         in EncryptionSecrets encryptionSecrets,
-        ReadOnlySpan<nint> goSigningKeyHandles,
+        PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding,
         PgpCompression dataCompression,
         EncryptionState signatureEncryptionState,
         TimeProvider? timeProviderOverride)
     {
-        var (goEncryptionKeyHandles, sessionKey, password) = encryptionSecrets;
+        var (goEncryptionKeyRing, sessionKey, password) = encryptionSecrets;
 
-        fixed (nint* goEncryptionKeysPointer = goEncryptionKeyHandles)
+        fixed (nint* goEncryptionKeysPointer = goEncryptionKeyRing.DangerousGetGoKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
-                fixed (nint* goSigningKeysPointer = goSigningKeyHandles)
+                fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
                 {
                     var parameters = new GoEncryptionParameters(
                         goEncryptionKeysPointer,
-                        (nuint)goEncryptionKeyHandles.Length,
+                        (nuint)goEncryptionKeyRing.Count,
                         goSigningKeysPointer,
-                        (nuint)goSigningKeyHandles.Length,
+                        (nuint)signingKeyRing.Count,
                         sessionKey,
                         passwordPointer,
                         (nuint)password.Length,

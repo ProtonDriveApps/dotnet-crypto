@@ -5,7 +5,7 @@ namespace Proton.Cryptography.Pgp;
 public readonly struct PgpKeyRing : IVerificationKeyRingSource, IEncryptionKeyRingSource
 {
     private readonly GoKey? _singleGoKey;
-    private readonly nint[]? _multipleKeyHandles;
+    private readonly GoKey[]? _multipleGoKeys;
 
     public PgpKeyRing(IReadOnlyList<PgpKey> keys)
     {
@@ -15,9 +15,9 @@ public readonly struct PgpKeyRing : IVerificationKeyRingSource, IEncryptionKeyRi
             return;
         }
 
-        var goKeyHandles = new nint[keys.Count];
-        goKeyHandles.AsSpan().FillWithTransform(keys, key => key.GoKey.DangerousGetHandle());
-        _multipleKeyHandles = goKeyHandles;
+        var goKeyHandles = new GoKey[keys.Count];
+        goKeyHandles.AsSpan().FillWithTransform(keys, key => key.GoKey);
+        _multipleGoKeys = goKeyHandles;
     }
 
     public PgpKeyRing(IReadOnlyList<PgpPrivateKey> keys)
@@ -28,9 +28,9 @@ public readonly struct PgpKeyRing : IVerificationKeyRingSource, IEncryptionKeyRi
             return;
         }
 
-        var goKeyHandles = new nint[keys.Count];
-        goKeyHandles.AsSpan().FillWithTransform(keys, key => key.GoKey.DangerousGetHandle());
-        _multipleKeyHandles = goKeyHandles;
+        var goKeyHandles = new GoKey[keys.Count];
+        goKeyHandles.AsSpan().FillWithTransform(keys, key => key.GoKey);
+        _multipleGoKeys = goKeyHandles;
     }
 
     public PgpKeyRing(IReadOnlyList<PgpPublicKey> keys)
@@ -41,9 +41,9 @@ public readonly struct PgpKeyRing : IVerificationKeyRingSource, IEncryptionKeyRi
             return;
         }
 
-        var goKeyHandles = new nint[keys.Count];
-        goKeyHandles.AsSpan().FillWithTransform(keys, key => key.GoKey.DangerousGetHandle());
-        _multipleKeyHandles = goKeyHandles;
+        var goKeyHandles = new GoKey[keys.Count];
+        goKeyHandles.AsSpan().FillWithTransform(keys, key => key.GoKey);
+        _multipleGoKeys = goKeyHandles;
     }
 
     public PgpKeyRing(PgpKey key)
@@ -61,23 +61,41 @@ public readonly struct PgpKeyRing : IVerificationKeyRingSource, IEncryptionKeyRi
         _singleGoKey = key.GoKey;
     }
 
-    internal PgpKeyRing(GoKey? singleGoKey, nint[]? multipleKeyHandles)
+    internal PgpKeyRing(GoKey? singleGoKey, GoKey[]? multipleGoKeys)
     {
         _singleGoKey = singleGoKey;
-        _multipleKeyHandles = multipleKeyHandles;
+        _multipleGoKeys = multipleGoKeys;
     }
 
     PgpKeyRing IVerificationKeyRingSource.VerificationKeyRing => this;
     PgpKeyRing IEncryptionKeyRingSource.EncryptionKeyRing => this;
 
-    public int Count => _singleGoKey is not null ? 1 : _multipleKeyHandles?.Length ?? 0;
-
-    internal ReadOnlySpan<nint> GoKeyHandles => _singleGoKey is not null
-        ? MemoryMarshal.CreateReadOnlySpan(ref _singleGoKey.DangerousGetHandleRef(), 1)
-        : _multipleKeyHandles;
+    public int Count => _singleGoKey is not null ? 1 : _multipleGoKeys?.Length ?? 0;
 
     public static implicit operator PgpKeyRing(PgpKey key) => new(key);
     public static implicit operator PgpKeyRing(PgpPrivateKey privateKey) => new(privateKey);
     public static implicit operator PgpKeyRing(PgpPublicKey publicKey) => new(publicKey);
-    public static implicit operator ReadOnlySpan<nint>(PgpKeyRing keyRing) => keyRing.GoKeyHandles;
+
+    /// <summary>
+    /// Gets the native Go handles for the keys.
+    /// </summary>
+    /// <remarks>
+    /// Only call this just before calling a native function.
+    /// </remarks>
+    internal ReadOnlySpan<nint> DangerousGetGoKeyHandles()
+    {
+        if (_singleGoKey is not null)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref _singleGoKey.DangerousGetHandleRef(), 1);
+        }
+
+        if (_multipleGoKeys is null)
+        {
+            return [];
+        }
+
+        var goKeyHandles = new nint[_multipleGoKeys.Length];
+        goKeyHandles.AsSpan().FillWithTransform(_multipleGoKeys, key => key.DangerousGetHandle());
+        return goKeyHandles;
+    }
 }

@@ -242,7 +242,7 @@ public static partial class PgpDecrypter
 
     public static unsafe PgpSessionKey DecryptSessionKey(ReadOnlySpan<byte> keyPackets, in PgpPrivateKeyRing decryptionKeyRing)
     {
-        fixed (nint* goDecryptionKeysPointer = decryptionKeyRing.GoKeyHandles)
+        fixed (nint* goDecryptionKeysPointer = decryptionKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new GoDecryptionParameters(
                 goDecryptionKeysPointer,
@@ -296,7 +296,7 @@ public static partial class PgpDecrypter
                 signatureLength,
                 signatureEncoding,
                 signatureEncryptionState,
-                verificationKeyRing.GoKeyHandles,
+                verificationKeyRing.DangerousGetGoKeyHandles(),
                 ref goResult,
                 timeProviderOverride);
 
@@ -335,7 +335,7 @@ public static partial class PgpDecrypter
                 signatureLength,
                 signatureEncoding,
                 signatureEncryptionState,
-                verificationKeyRing.GoKeyHandles,
+                verificationKeyRing.DangerousGetGoKeyHandles(),
                 ref goResult,
                 timeProviderOverride);
 
@@ -361,9 +361,9 @@ public static partial class PgpDecrypter
         ref GoPlaintextResult goResult,
         TimeProvider? timeProviderOverride)
     {
-        var (goDecryptionKeyHandles, sessionKey, password) = secrets;
+        var (decryptionKeyRing, sessionKey, password) = secrets;
 
-        fixed (nint* goDecryptionKeysPointer = goDecryptionKeyHandles)
+        fixed (nint* goDecryptionKeysPointer = decryptionKeyRing.DangerousGetGoKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
@@ -371,7 +371,7 @@ public static partial class PgpDecrypter
                 {
                     var parameters = new GoDecryptionParameters(
                         goDecryptionKeysPointer,
-                        (nuint)goDecryptionKeyHandles.Length,
+                        (nuint)decryptionKeyRing.Count,
                         goVerificationKeysPointer,
                         (nuint)goVerificationKeyHandles.Length,
                         sessionKey,

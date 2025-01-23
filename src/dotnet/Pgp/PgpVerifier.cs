@@ -12,7 +12,7 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
+        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
@@ -41,7 +41,7 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
+        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
@@ -76,7 +76,7 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goKeysPointer = keyRing.GoKeyHandles)
+        fixed (nint* goKeysPointer = keyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new VerificationParameters(goKeysPointer, (nuint)keyRing.Count, timeProviderOverride);
 
@@ -111,7 +111,7 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
+        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
@@ -139,7 +139,7 @@ public static partial class PgpVerifier
         Stream cleartextOutputStream,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.GoKeyHandles)
+        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 

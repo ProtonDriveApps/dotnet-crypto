@@ -29,7 +29,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
         SigningOutputType outputType = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (void* goSigningKeysPointer = signingKeyRing.GoKeyHandles)
+        fixed (void* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, timeProviderOverride);
 

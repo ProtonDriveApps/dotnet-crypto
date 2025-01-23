@@ -16,7 +16,7 @@ public class NativeLibraryResolutionFixture
         NativeLibrary.SetDllImportResolver(typeof(PgpEncrypter).Assembly, Resolve);
     }
 
-    private static IntPtr Resolve(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    private static nint Resolve(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         if (libraryName != LibraryName)
         {

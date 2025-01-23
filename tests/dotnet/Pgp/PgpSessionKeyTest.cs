@@ -6,7 +6,7 @@ public class PgpSessionKeyTest
     public void Generate_Succeeds()
     {
         // Act
-        using var sessionKey = PgpSessionKey.Generate(SymmetricCipher.Aes256);
+        using var sessionKey = PgpSessionKey.Generate(PgpSamples.SessionKeyCipher);
 
         // Assert
         sessionKey.GoSessionKey.IsInvalid.ShouldBeFalse();
