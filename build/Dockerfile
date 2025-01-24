@@ -1,7 +1,7 @@
 FROM ubuntu:24.10
 
 RUN apt update -qq && apt install -qqy --no-install-recommends \
-    ca-certificates wget tar xz-utils unzip && \
+    ca-certificates wget tar xz-utils unzip git-filter-repo && \
     update-ca-certificates -f && \
     apt clean -y && \
     rm -rf /var/lib/apt/lists/*
@@ -18,8 +18,9 @@ ENV LLVM_MINGW_ROOT=/opt/llvm-mingw
 #    ./buildall.sh ${LLVM_MINGW_ROOT} && \
 #    rm -rf /tmp/llvm-mingw
 
-ENV LLVM_MINGW_FILE_NAME=llvm-mingw-20241203-ucrt-ubuntu-20.04-x86_64.tar.xz
-RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/20241203/${LLVM_MINGW_FILE_NAME} && \
+ENV LLVM_MINGW_VERSION=20250114
+ENV LLVM_MINGW_FILE_NAME=llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-20.04-x86_64.tar.xz
+RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${LLVM_MINGW_FILE_NAME} && \
     mkdir -p ${LLVM_MINGW_ROOT} && \
     tar xf ${LLVM_MINGW_FILE_NAME} --strip-components=1 -C ${LLVM_MINGW_ROOT}
 
