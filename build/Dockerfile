@@ -40,3 +40,15 @@ RUN apt update -qq && apt install -qqy --no-install-recommends \
 WORKDIR /builds
 
 CMD ["bash"]
+
+# /!\ Keep those labels at the end of your Dockerfile /!\
+# To benefit from build cache feature
+ARG org_opencontainers_image_created
+ARG org_opencontainers_image_source
+ARG org_opencontainers_image_version
+ARG org_opencontainers_image_revision
+
+LABEL org.opencontainers.image.created=${org_opencontainers_image_created}
+LABEL org.opencontainers.image.source=${org_opencontainers_image_source}
+LABEL org.opencontainers.image.version=${org_opencontainers_image_version}
+LABEL org.opencontainers.image.revision=${org_opencontainers_image_revision}
