@@ -111,7 +111,7 @@ public static partial class PgpSigner
         fixed (byte* signatureOutputPointer = signatureOutput)
         {
             var outputWriter = new SpanWriter(signatureOutputPointer, signatureOutput.Length);
-            var goWriter = new GoExternalWriter(&outputWriter);
+            var goWriter = GoExternalWriter.FromSpanWriter(&outputWriter);
 
             Sign(input, signingKeyRing, goWriter, outputEncoding, outputType, timeProviderOverride);
 
@@ -160,7 +160,7 @@ public static partial class PgpSigner
         var outputStreamHandle = GCHandle.Alloc(outputStream);
         try
         {
-            var goWriter = new GoExternalWriter(outputStreamHandle);
+            var goWriter = GoExternalWriter.FromStreamHandle(outputStreamHandle);
 
             Sign(input, signingKeyRing, goWriter, outputEncoding, outputType, timeProviderOverride);
         }
@@ -183,7 +183,7 @@ public static partial class PgpSigner
             var outputStreamHandle = GCHandle.Alloc(outputStream);
             try
             {
-                var goWriter = new GoExternalWriter(outputStreamHandle);
+                var goWriter = GoExternalWriter.FromStreamHandle(outputStreamHandle);
 
                 using var goError = GoSignCleartext(parameters, MemoryMarshal.GetReference(input), (nuint)input.Length, goWriter);
                 goError.ThrowIfFailure();

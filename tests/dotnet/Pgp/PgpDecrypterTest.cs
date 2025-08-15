@@ -13,7 +13,7 @@ public class PgpDecrypterTest
 
         // Assert
         var outputString = Encoding.UTF8.GetString(output);
-        outputString.ShouldBe(PgpSamples.PlainText);
+        outputString.Should().Be(PgpSamples.PlainText);
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class PgpDecrypterTest
 
         // Assert
         var outputString = Encoding.UTF8.GetString(output);
-        outputString.ShouldBe(PgpSamples.PlainText);
+        outputString.Should().Be(PgpSamples.PlainText);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class PgpDecrypterTest
 
         // Assert
         var outputString = Encoding.UTF8.GetString(output);
-        outputString.ShouldBe(PgpSamples.LongPlainText);
+        outputString.Should().Be(PgpSamples.LongPlainText);
     }
 
     [Theory]
@@ -58,7 +58,7 @@ public class PgpDecrypterTest
         PgpDecrypter.DecryptAndVerify(input, PgpSamples.PrivateKey, PgpSamples.PublicKey, out var verificationResult, PgpEncoding.AsciiArmor);
 
         // Assert
-        verificationResult.Status.ShouldBe(expectedStatus);
+        verificationResult.Status.Should().Be(expectedStatus);
     }
 
     [Theory]
@@ -87,6 +87,6 @@ public class PgpDecrypterTest
             encryptionState);
 
         // Assert
-        verificationResult.Status.ShouldBe(expectedStatus);
+        verificationResult.Status.Should().Be(expectedStatus);
     }
 }

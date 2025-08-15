@@ -15,7 +15,7 @@ public sealed class PgpDecryptingStreamTest
         var output = streamReader.ReadToEnd();
 
         // Assert
-        output.ShouldBe(PgpSamples.PlainText);
+        output.Should().Be(PgpSamples.PlainText);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public sealed class PgpDecryptingStreamTest
         var output = streamReader.ReadToEnd();
 
         // Assert
-        output.ShouldBe(PgpSamples.PlainText);
+        output.Should().Be(PgpSamples.PlainText);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class PgpDecryptingStreamTest
         var output = streamReader.ReadToEnd();
 
         // Assert
-        output.ShouldBe(PgpSamples.LongPlainText);
+        output.Should().Be(PgpSamples.LongPlainText);
     }
 
     [Theory]
@@ -70,7 +70,7 @@ public sealed class PgpDecryptingStreamTest
         var result = stream.GetVerificationResult();
 
         // Assert
-        result.Status.ShouldBe(expectedStatus);
+        result.Status.Should().Be(expectedStatus);
     }
 
     [Theory]
@@ -103,6 +103,6 @@ public sealed class PgpDecryptingStreamTest
         var result = stream.GetVerificationResult();
 
         // Assert
-        result.Status.ShouldBe(expectedStatus);
+        result.Status.Should().Be(expectedStatus);
     }
 }

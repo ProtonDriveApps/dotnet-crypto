@@ -240,6 +240,17 @@ public static class EncryptionSecretsExtensions
         return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, timeProviderOverride);
     }
 
+    public static PgpEncryptingStream OpenEncryptingReadStream<T>(
+        this T encryptionSecretsSource,
+        Stream messageOutputStream,
+        PgpEncoding encoding = default,
+        PgpCompression compression = default,
+        TimeProvider? timeProviderOverride = null)
+        where T : IEncryptionSecretsSource
+    {
+        return PgpEncryptingStream.OpenRead(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, timeProviderOverride);
+    }
+
     public static PgpEncryptingStream OpenEncryptingAndSigningStream<T>(
         this T encryptionSecretsSource,
         Stream messageOutputStream,
@@ -250,6 +261,24 @@ public static class EncryptionSecretsExtensions
         where T : IEncryptionSecretsSource
     {
         return PgpEncryptingStream.Open(
+            messageOutputStream,
+            encryptionSecretsSource.EncryptionSecrets,
+            signingKeyRing,
+            encoding,
+            compression,
+            timeProviderOverride);
+    }
+
+    public static PgpEncryptingStream OpenEncryptingAndSigningReadStream<T>(
+        this T encryptionSecretsSource,
+        Stream messageOutputStream,
+        PgpPrivateKeyRing signingKeyRing,
+        PgpEncoding encoding = default,
+        PgpCompression compression = default,
+        TimeProvider? timeProviderOverride = null)
+        where T : IEncryptionSecretsSource
+    {
+        return PgpEncryptingStream.OpenRead(
             messageOutputStream,
             encryptionSecretsSource.EncryptionSecrets,
             signingKeyRing,
@@ -280,6 +309,28 @@ public static class EncryptionSecretsExtensions
             timeProviderOverride);
     }
 
+    public static PgpEncryptingStream OpenEncryptingAndSigningReadStream<T>(
+        this T encryptionSecretsSource,
+        Stream messageOutputStream,
+        Stream signatureOutputStream,
+        PgpPrivateKeyRing signingKeyRing,
+        PgpEncoding encoding = default,
+        PgpCompression messageCompression = default,
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
+        where T : IEncryptionSecretsSource
+    {
+        return PgpEncryptingStream.OpenRead(
+            messageOutputStream,
+            signatureOutputStream,
+            encryptionSecretsSource.EncryptionSecrets,
+            signingKeyRing,
+            encoding,
+            messageCompression,
+            signatureEncryptionState,
+            timeProviderOverride);
+    }
+
     public static PgpEncryptingStream OpenSplitEncryptingStream<T>(
         this T encryptionSecretsSource,
         Stream messageOutputStream,
@@ -289,6 +340,22 @@ public static class EncryptionSecretsExtensions
         where T : IEncryptionSecretsSource
     {
         return PgpEncryptingStream.OpenSplit(
+            messageOutputStream,
+            keyPacketsOutputStream,
+            encryptionSecretsSource.EncryptionSecrets,
+            messageCompression,
+            timeProviderOverride);
+    }
+
+    public static PgpEncryptingStream OpenSplitEncryptingReadStream<T>(
+        this T encryptionSecretsSource,
+        Stream messageOutputStream,
+        Stream keyPacketsOutputStream,
+        PgpCompression messageCompression = default,
+        TimeProvider? timeProviderOverride = null)
+        where T : IEncryptionSecretsSource
+    {
+        return PgpEncryptingStream.OpenSplitRead(
             messageOutputStream,
             keyPacketsOutputStream,
             encryptionSecretsSource.EncryptionSecrets,
@@ -308,6 +375,28 @@ public static class EncryptionSecretsExtensions
         where T : IEncryptionSecretsSource
     {
         return PgpEncryptingStream.OpenSplit(
+            messageOutputStream,
+            keyPacketsOutputStream,
+            signatureOutputStream,
+            encryptionSecretsSource.EncryptionSecrets,
+            signingKeyRing,
+            messageCompression,
+            signatureEncryptionState,
+            timeProviderOverride);
+    }
+
+    public static PgpEncryptingStream OpenSplitEncryptingReadStream<T>(
+        this T encryptionSecretsSource,
+        Stream messageOutputStream,
+        Stream keyPacketsOutputStream,
+        Stream signatureOutputStream,
+        PgpPrivateKeyRing signingKeyRing,
+        PgpCompression messageCompression = default,
+        EncryptionState signatureEncryptionState = default,
+        TimeProvider? timeProviderOverride = null)
+        where T : IEncryptionSecretsSource
+    {
+        return PgpEncryptingStream.OpenSplitRead(
             messageOutputStream,
             keyPacketsOutputStream,
             signatureOutputStream,

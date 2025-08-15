@@ -10,7 +10,7 @@ public sealed class PgpEncrypterTest
 
         // Assert
         var message = Encoding.UTF8.GetString(messageBytes);
-        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
+        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public sealed class PgpEncrypterTest
 
         // Assert
         var message = Encoding.UTF8.GetString(messageBytes);
-        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
+        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
     }
 
     [Fact]
@@ -43,8 +43,8 @@ public sealed class PgpEncrypterTest
         var message = Encoding.UTF8.GetString(messageBytes);
         var signature = Encoding.UTF8.GetString(signatureBytes);
 
-        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
-        signature.ShouldStartWith("-----BEGIN PGP SIGNATURE-----");
+        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
     }
 
     [Fact]
@@ -59,6 +59,6 @@ public sealed class PgpEncrypterTest
 
         // Assert
         var message = Encoding.UTF8.GetString(messageBytes);
-        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
+        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
     }
 }

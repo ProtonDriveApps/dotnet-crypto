@@ -49,7 +49,7 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
             var streamHandle = GCHandle.Alloc(outputStream);
             try
             {
-                var goWriter = new GoExternalWriter(streamHandle);
+                var goWriter = GoExternalWriter.FromStreamHandle(streamHandle);
 
                 using var goError = GoEncrypt(parameters, this, goWriter);
                 goError.ThrowIfFailure();

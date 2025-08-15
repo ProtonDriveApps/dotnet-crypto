@@ -11,7 +11,7 @@ public static partial class PgpArmorEncoder
         fixed (byte* outputPointer = output)
         {
             var outputWriter = new SpanWriter(outputPointer, output.Length);
-            var goWriter = new GoExternalWriter(&outputWriter);
+            var goWriter = GoExternalWriter.FromSpanWriter(&outputWriter);
 
             Encode(message, blockType, goWriter);
 
@@ -33,7 +33,7 @@ public static partial class PgpArmorEncoder
         var streamHandle = GCHandle.Alloc(outputStream);
         try
         {
-            var goWriter = new GoExternalWriter(streamHandle);
+            var goWriter = GoExternalWriter.FromStreamHandle(streamHandle);
 
             Encode(message, blockType, goWriter);
         }

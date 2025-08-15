@@ -62,7 +62,7 @@ public static partial class PgpEncrypter
         fixed (byte* signatureOutputPointer = signatureOutput)
         {
             var signatureOutputWriter = new SpanWriter(signatureOutputPointer, signatureOutput.Length);
-            var goSignatureWriter = new GoExternalWriter(&signatureOutputWriter);
+            var goSignatureWriter = GoExternalWriter.FromSpanWriter(&signatureOutputWriter);
 
             var outputLength = Encrypt(
                 input,
@@ -191,7 +191,7 @@ public static partial class PgpEncrypter
 
         try
         {
-            var goSignatureWriter = new GoExternalWriter(signatureOutputStreamHandle);
+            var goSignatureWriter = GoExternalWriter.FromStreamHandle(signatureOutputStreamHandle);
 
             Encrypt(
                 input,
@@ -305,7 +305,7 @@ public static partial class PgpEncrypter
         fixed (byte* outputPointer = output)
         {
             var outputWriter = new SpanWriter(outputPointer, output.Length);
-            var goOutputWriter = new GoExternalWriter(&outputWriter);
+            var goOutputWriter = GoExternalWriter.FromSpanWriter(&outputWriter);
 
             Encrypt(
                 input,
@@ -337,7 +337,7 @@ public static partial class PgpEncrypter
 
         try
         {
-            var goOutputWriter = new GoExternalWriter(outputStreamHandle);
+            var goOutputWriter = GoExternalWriter.FromStreamHandle(outputStreamHandle);
 
             Encrypt(
                 input,

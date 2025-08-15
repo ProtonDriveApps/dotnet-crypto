@@ -27,7 +27,7 @@ internal sealed partial class GoKey() : SafeHandleZeroOrMinusOneIsInvalid(ownsHa
 
         try
         {
-            var goWriter = new GoExternalWriter(streamHandle);
+            var goWriter = GoExternalWriter.FromStreamHandle(streamHandle);
 
             using var goError = GoExport(this, forcePublic: false, encoding == PgpEncoding.AsciiArmor, goWriter);
             goError.ThrowIfFailure();

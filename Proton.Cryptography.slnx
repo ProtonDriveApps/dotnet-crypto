@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path=".globalconfig" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/dotnet/Proton.Cryptography.csproj" />
+  <Project Path="tests/dotnet/Proton.Cryptography.Tests.csproj" />
+</Solution>

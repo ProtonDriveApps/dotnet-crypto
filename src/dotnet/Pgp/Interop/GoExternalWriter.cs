@@ -8,22 +8,28 @@ internal readonly unsafe struct GoExternalWriter
     public readonly nint OutputHandle;
     public readonly delegate* unmanaged[Cdecl]<nint, byte*, nuint, long> WriteFunctionPointer;
 
-    public GoExternalWriter(GCHandle outputStreamHandle)
+    private GoExternalWriter(nint outputHandle, delegate* unmanaged[Cdecl]<nint, byte*, nuint, long> writeFunctionPointer)
     {
-        OutputHandle = GCHandle.ToIntPtr(outputStreamHandle);
-        WriteFunctionPointer = &WriteToStream;
+        OutputHandle = outputHandle;
+        WriteFunctionPointer = writeFunctionPointer;
     }
 
-    public GoExternalWriter(SpanWriter* outputWriter)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static GoExternalWriter FromStreamHandle(GCHandle streamHandle)
     {
-        OutputHandle = new nint(outputWriter);
-        WriteFunctionPointer = &WriteToMemory;
+        return new GoExternalWriter(GCHandle.ToIntPtr(streamHandle), &WriteToStream);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static GoExternalWriter FromSpanWriter(SpanWriter* spanWriter)
+    {
+        return new GoExternalWriter(new nint(spanWriter), &WriteToSpan);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static long WriteToStream(nint outputHandle, byte* inputPointer, nuint inputLength)
+    private static long WriteToStream(nint streamHandle, byte* inputPointer, nuint inputLength)
     {
-        if (GCHandle.FromIntPtr(outputHandle).Target is not Stream outputStream)
+        if (GCHandle.FromIntPtr(streamHandle).Target is not Stream outputStream)
         {
             return -1;
         }
@@ -40,7 +46,7 @@ internal readonly unsafe struct GoExternalWriter
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static long WriteToMemory(nint outputHandle, byte* inputPointer, nuint inputLength)
+    private static long WriteToSpan(nint outputHandle, byte* inputPointer, nuint inputLength)
     {
         try
         {

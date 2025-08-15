@@ -1,17 +1,23 @@
 ﻿namespace Proton.Cryptography.Pgp.Interop;
 
-internal unsafe struct SpanWriter(byte* pointer, int length)
+internal unsafe struct SpanWriter(byte* destinationPointer, int destinationLength)
 {
     public int NumberOfBytesWritten;
 
-    public int Write(Span<byte> bytes)
+    public int Write(ReadOnlySpan<byte> bytes, bool allowPartial = false)
     {
-        var output = new Span<byte>(pointer + NumberOfBytesWritten, Math.Min(length - NumberOfBytesWritten, bytes.Length));
+        if (destinationLength == 0)
+        {
+            return 0;
+        }
 
-        bytes.CopyTo(output);
+        var destination = new Span<byte>(destinationPointer + NumberOfBytesWritten, Math.Min(destinationLength - NumberOfBytesWritten, bytes.Length));
+        var bytesToWrite = allowPartial ? bytes[..destination.Length] : bytes;
 
-        NumberOfBytesWritten += output.Length;
+        bytesToWrite.CopyTo(destination);
 
-        return output.Length;
+        NumberOfBytesWritten += bytesToWrite.Length;
+
+        return bytesToWrite.Length;
     }
 }

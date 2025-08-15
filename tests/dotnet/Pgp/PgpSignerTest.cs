@@ -12,8 +12,8 @@ public class PgpSignerTest
 
         // Assert
         var signature = Encoding.ASCII.GetString(signatureBytes);
-        signature.ShouldStartWith("-----BEGIN PGP SIGNATURE-----");
-        signature.ShouldEndWith("-----END PGP SIGNATURE-----");
+        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
+        signature.Should().EndWith("-----END PGP SIGNATURE-----");
     }
 
     [Fact]
@@ -28,8 +28,8 @@ public class PgpSignerTest
 
         // Assert
         var message = Encoding.ASCII.GetString(messageBytes);
-        message.ShouldStartWith("-----BEGIN PGP MESSAGE-----");
-        message.ShouldEndWith("-----END PGP MESSAGE-----");
+        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        message.Should().EndWith("-----END PGP MESSAGE-----");
     }
 
     [Fact]
@@ -45,8 +45,8 @@ public class PgpSignerTest
         // Assert
         outputStream.Seek(0, SeekOrigin.Begin);
         var message = messageReader.ReadToEnd();
-        message.ShouldStartWith("-----BEGIN PGP SIGNED MESSAGE-----");
-        message.ShouldEndWith("-----END PGP SIGNATURE-----");
+        message.Should().StartWith("-----BEGIN PGP SIGNED MESSAGE-----");
+        message.Should().EndWith("-----END PGP SIGNATURE-----");
     }
 
     [Theory]
@@ -70,7 +70,7 @@ public class PgpSignerTest
         var act = new Action(() => privateKey.Sign(Encoding.UTF8.GetBytes(PgpSamples.PlainText), timeProviderOverride: encryptionTimeProvider));
 
         // Assert
-        act.ShouldThrow<PgpException>().Message.ShouldContain("no valid signing keys");
+        act.Should().Throw<PgpException>().And.Message.Should().Contain("no valid signing keys");
     }
 
     [Theory]
@@ -94,6 +94,6 @@ public class PgpSignerTest
         var act = () => privateKey.Sign(Encoding.UTF8.GetBytes(PgpSamples.PlainText), timeProviderOverride: encryptionTimeProvider);
 
         // Assert
-        act.ShouldNotThrow();
+        act.Should().NotThrow();
     }
 }

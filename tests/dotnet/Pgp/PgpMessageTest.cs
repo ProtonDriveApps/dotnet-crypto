@@ -16,7 +16,7 @@ public class PgpMessageTest
         var keyPacketsLength = message.GetKeyPacketsLength();
 
         // Assert
-        keyPacketsLength.ShouldBe(PgpSamples.KeyPacket.Length);
+        keyPacketsLength.Should().Be(PgpSamples.KeyPacket.Length);
     }
 
     [Fact]
@@ -31,6 +31,6 @@ public class PgpMessageTest
         var keyPacketsLength = message.GetKeyPacketsLength();
 
         // Assert
-        keyPacketsLength.ShouldBe(PgpSamples.KeyPacket.Length);
+        keyPacketsLength.Should().Be(PgpSamples.KeyPacket.Length);
     }
 }

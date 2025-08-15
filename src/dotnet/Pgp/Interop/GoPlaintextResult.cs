@@ -12,11 +12,11 @@ internal unsafe struct GoPlaintextResult
 
     public GoPlaintextResult(SpanWriter* writer)
     {
-        Writer = new GoExternalWriter(writer);
+        Writer = GoExternalWriter.FromSpanWriter(writer);
     }
 
     public GoPlaintextResult(GCHandle streamHandle)
     {
-        Writer = new GoExternalWriter(streamHandle);
+        Writer = GoExternalWriter.FromStreamHandle(streamHandle);
     }
 }

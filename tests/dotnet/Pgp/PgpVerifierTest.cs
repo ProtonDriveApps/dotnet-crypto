@@ -16,7 +16,7 @@ public class PgpVerifierTest
         using var verificationResult = PgpVerifier.Verify(input, PgpSamples.PrivateKey, PgpEncoding.AsciiArmor);
 
         // Assert
-        verificationResult.Status.ShouldBe(expectedStatus);
+        verificationResult.Status.Should().Be(expectedStatus);
     }
 
     [Theory]
@@ -34,6 +34,6 @@ public class PgpVerifierTest
         using var verificationResult = PgpVerifier.Verify(input, detachedSignature, PgpSamples.PublicKey, encoding);
 
         // Assert
-        verificationResult.Status.ShouldBe(expectedStatus);
+        verificationResult.Status.Should().Be(expectedStatus);
     }
 }

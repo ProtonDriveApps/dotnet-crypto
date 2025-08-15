@@ -12,6 +12,6 @@ public sealed class PgpPublicKeyTest
         var act = new Action(() => publicKey.Export(Stream.Null, default));
 
         // Assert
-        act.ShouldThrow<Exception>();
+        act.Should().Throw<Exception>();
     }
 }

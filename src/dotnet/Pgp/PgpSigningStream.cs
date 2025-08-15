@@ -38,7 +38,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
             {
                 using var goError = GoOpen(
                     parameters,
-                    new GoExternalWriter(streamHandle),
+                    GoExternalWriter.FromStreamHandle(streamHandle),
                     encoding.ToGoEncoding(),
                     outputType == SigningOutputType.SignatureOnly,
                     out var unsafeGoWriteCloserHandle);

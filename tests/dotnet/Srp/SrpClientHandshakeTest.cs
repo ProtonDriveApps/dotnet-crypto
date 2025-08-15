@@ -25,6 +25,6 @@ public sealed class SrpClientHandshakeTest
         var isSuccess = clientHandshake.TryComputeSharedKey(serverProof!);
 
         // Assert
-        isSuccess.ShouldBeTrue();
+        isSuccess.Should().BeTrue();
     }
 }

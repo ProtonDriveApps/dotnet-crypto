@@ -27,7 +27,7 @@ public sealed partial class PgpArmorEncodingStream : BaseWriteOnlyStream
         var streamHandle = GCHandle.Alloc(outputStream);
         try
         {
-            var goWriter = new GoExternalWriter(streamHandle);
+            var goWriter = GoExternalWriter.FromStreamHandle(streamHandle);
 
             using var goError = GoOpen(goWriter, blockType, out var unsafeGoWriteCloserHandle);
             goError.ThrowIfFailure();
