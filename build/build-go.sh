@@ -8,7 +8,7 @@ build_modes=(
 )
 
 declare -A arch_rid_map=( ["386"]="x86" ["amd64"]="x64" ["arm64"]="arm64" )
-declare -A os_rid_map=( ["windows"]="win" ["darwin"]="osx" ["linux"]="linux" ["android"]="linux-bionic" ["ios"]="ios" )
+declare -A os_rid_map=( ["windows"]="win" ["darwin"]="osx" ["linux"]="linux" ["android"]="linux-bionic" ["ios"]="ios" ["iossimulator"]="iossimulator" )
 
 REPOPATH=$(dirname "$(dirname "$(readlink -f "$0")")")
 
@@ -94,7 +94,29 @@ for platform in "$@"; do
                     output_file_name="${lib_name}.a"
                 fi
 
-                export CC=""
+                export SDK=iphoneos
+                # export target and path to sdk
+                . ${REPOPATH}/build/ios-target.sh
+                # export necessary ios flags
+                export CC="$REPOPATH/build/ios-clangwrap.sh"
+                export CGO_LDFLAGS="-target ${TARGET} -syslibroot \"${SDK_PATH}\" -fembed-bitcode"
+                ;;
+            iossimulator)
+                if [ "$build_mode" == "c-shared" ]; then
+                    echo "Skipping unsupported $build_mode mode for $os/$arch"
+                    continue
+                else
+                    output_file_name="${lib_name}.a"
+                fi
+
+                export SDK=iphonesimulator
+                # export target and path to sdk
+                . ${REPOPATH}/build/ios-target.sh
+                # export necessary ios simulator flags
+                export GOOS=ios
+                export CC="$REPOPATH/build/ios-clangwrap.sh"
+                export CGO_LDFLAGS="-target ${TARGET} -syslibroot \"${SDK_PATH}\" -fembed-bitcode"
+                ;;
         esac
 
         echo "Building for $os/$arch in $build_mode mode -> $output_dir_path/$output_file_name"
