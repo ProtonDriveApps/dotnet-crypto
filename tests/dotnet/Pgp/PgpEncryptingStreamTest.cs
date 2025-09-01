@@ -154,6 +154,25 @@ public sealed class PgpEncryptingStreamTest
         decryptedData.Should().Equal(plainData);
     }
 
+    [Fact]
+    public void Read_DoesNotThrow_WhenUsingLegacyArrayOverload()
+    {
+        // Arrange
+        const int length = 16;
+
+        var plainData = RandomNumberGenerator.GetBytes(length);
+        using var inputStream = new MemoryStream(plainData, 0, plainData.Length, false, true);
+        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey);
+
+        var readBuffer = new byte[length];
+
+        // Act
+        var act = (Stream s) => s.Read(readBuffer, 0, length);
+
+        // Assert
+        stream.Invoking(act).Should().NotThrow();
+    }
+
     [Theory]
     [InlineData(1, 1)]
     [InlineData(1, 2)]

@@ -681,7 +681,7 @@ public partial class PgpEncryptingStream : Stream
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return base.Read(buffer.AsSpan(offset, count));
+            return Read(buffer.AsSpan(offset, count));
         }
 
         public override int Read(Span<byte> buffer)
