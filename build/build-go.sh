@@ -7,7 +7,7 @@ build_modes=(
     "c-archive"
 )
 
-declare -A arch_rid_map=( ["386"]="x86" ["amd64"]="x64" ["arm64"]="arm64" )
+declare -A arch_rid_map=( ["386"]="x86" ["amd64"]="x64" ["arm"]="arm" ["arm64"]="arm64" )
 declare -A os_rid_map=( ["windows"]="win" ["darwin"]="osx" ["linux"]="linux" ["android"]="linux-bionic" ["ios"]="ios" ["iossimulator"]="iossimulator" )
 
 REPOPATH=$(dirname "$(dirname "$(readlink -f "$0")")")
@@ -55,6 +55,8 @@ for platform in "$@"; do
                     export CC=i686-linux-gnu-gcc
                 elif [ $arch == "amd64" ]; then
                     export CC=x86_64-linux-gnu-gcc
+                elif [ $arch == "arm" ]; then
+                    export CC=arm-linux-gnueabihf-gcc
                 elif [ $arch == "arm64" ]; then
                     export CC=aarch64-linux-gnu-gcc
                 fi
@@ -71,6 +73,8 @@ for platform in "$@"; do
                     export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android35-clang
                 elif [ $arch == "amd64" ]; then
                     export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android35-clang
+                elif [ $arch == "arm" ]; then
+                    export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi35-clang
                 elif [ $arch == "arm64" ]; then
                     export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang
                 fi
