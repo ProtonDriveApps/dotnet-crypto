@@ -26,7 +26,7 @@ RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_V
 
 ENV ANDROID_NDK_VERSION=r29
 ENV ANDROID_NDK_URL=https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux.zip
-ENV NDK_ROOT=/opt/android-ndk-${ANDROID_NDK_VERSION}
+ENV ANDROID_NDK_ROOT=/opt/android-ndk-${ANDROID_NDK_VERSION}
 
 RUN wget -q ${ANDROID_NDK_URL} -O /tmp/android-ndk.zip && \
     unzip -q /tmp/android-ndk.zip -d /opt && \

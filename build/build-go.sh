@@ -70,13 +70,13 @@ for platform in "$@"; do
                 fi
 
                 if [ $arch == "386" ]; then
-                    export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android35-clang
+                    export CC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android35-clang
                 elif [ $arch == "amd64" ]; then
-                    export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android35-clang
+                    export CC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android35-clang
                 elif [ $arch == "arm" ]; then
-                    export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi35-clang
+                    export CC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi35-clang
                 elif [ $arch == "arm64" ]; then
-                    export CC=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang
+                    export CC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang
                 fi
 
                 export CGO_LDFLAGS="-Wl,-soname,$output_file_name"
