@@ -2,12 +2,16 @@
 
 public static class EncryptionKeyRingSourceExtensions
 {
-    public static ArraySegment<byte> EncryptSessionKey<T>(this T encryptionKeyRingSource, PgpSessionKey sessionKey, TimeProvider? timeProviderOverride = null)
+    public static ArraySegment<byte> EncryptSessionKey<T>(
+        this T encryptionKeyRingSource,
+        PgpSessionKey sessionKey,
+        PgpProfile pgpProfile = default,
+        TimeProvider? timeProviderOverride = null)
         where T : IEncryptionKeyRingSource
     {
         var keyPacketStream = MemoryProvider.GetMemoryStreamForKeyPackets(encryptionKeyRingSource.EncryptionKeyRing.Count);
 
-        sessionKey.ToKeyPackets(encryptionKeyRingSource.EncryptionKeyRing, keyPacketStream, timeProviderOverride);
+        sessionKey.ToKeyPackets(encryptionKeyRingSource.EncryptionKeyRing, keyPacketStream, pgpProfile, timeProviderOverride);
 
         return keyPacketStream.TryGetBuffer(out var arraySegment) ? arraySegment : keyPacketStream.ToArray();
     }
@@ -16,9 +20,10 @@ public static class EncryptionKeyRingSourceExtensions
         this T encryptionKeyRingSource,
         PgpSessionKey sessionKey,
         Stream keyPacketOutputStream,
+        PgpProfile pgpProfile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionKeyRingSource
     {
-        sessionKey.ToKeyPackets(encryptionKeyRingSource.EncryptionKeyRing, keyPacketOutputStream, timeProviderOverride);
+        sessionKey.ToKeyPackets(encryptionKeyRingSource.EncryptionKeyRing, keyPacketOutputStream, pgpProfile, timeProviderOverride);
     }
 }

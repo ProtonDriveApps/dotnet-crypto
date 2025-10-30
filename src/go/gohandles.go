@@ -142,6 +142,7 @@ func handleListToKeyRing(handles *C.uintptr_t, num_handles C.size_t) (*crypto.Ke
 }
 
 func handleInListToKey(handles *C.uintptr_t, index int) *crypto.Key {
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 	handle := *(*C.uintptr_t)(unsafe.Pointer(uintptr(unsafe.Pointer(handles)) + uintptr(index*C.sizeof_uintptr_t)))
 	return handleToKey(handle)
 }
@@ -175,7 +176,7 @@ func handleToPGPMessage(handle C.uintptr_t) *crypto.PGPMessage {
 }
 
 func handleToDecryptor(handle *C.PGP_CDecryptionHandle) (crypto.PGPDecryption, error) {
-	decryptorBuilder := pgp.Decryption()
+	decryptorBuilder := defaultPgpHandle().Decryption()
 	decryptorBuilder.DisableAutomaticTextSanitize()
 	decryptorBuilder.DisableStrictMessageParsing()
 	decryptorBuilder.DisableIntendedRecipients()
@@ -208,6 +209,7 @@ func handleToDecryptor(handle *C.PGP_CDecryptionHandle) (crypto.PGPDecryption, e
 		decryptorBuilder.SessionKey(sessionKey)
 	}
 	if C.int(handle.password_len) > 0 {
+		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 		goPassword := unsafe.Slice((*byte)(handle.password), (C.int)(handle.password_len))
 		decryptorBuilder.Password(goPassword)
 	}
@@ -228,6 +230,7 @@ func handleToDecryptor(handle *C.PGP_CDecryptionHandle) (crypto.PGPDecryption, e
 }
 
 func handleToEncryptor(handle *C.PGP_CEncryptionHandle) (crypto.PGPEncryption, error) {
+	pgp := pgpHandleWithSizeHint(handle.profile, handle.message_size_hint)
 	encryptorBuilder := pgp.Encryption()
 	// Allow to encrypt with keys in the future
 	encryptorBuilder.EncryptionTime(0)
@@ -260,6 +263,7 @@ func handleToEncryptor(handle *C.PGP_CEncryptionHandle) (crypto.PGPEncryption, e
 		encryptorBuilder.SessionKey(sessionKey)
 	}
 	if C.int(handle.password_len) > 0 {
+		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 		goPassword := unsafe.Slice((*byte)(handle.password), (C.int)(handle.password_len))
 		encryptorBuilder.Password(goPassword)
 	}
@@ -287,7 +291,7 @@ func handleToEncryptor(handle *C.PGP_CEncryptionHandle) (crypto.PGPEncryption, e
 }
 
 func handleToVerifier(handle *C.PGP_CVerificationHandle) (crypto.PGPVerify, error) {
-	verifierBuilder := pgp.Verify()
+	verifierBuilder := defaultPgpHandle().Verify()
 	verifierBuilder.DisableStrictMessageParsing()
 	verifierBuilder.DisableAutomaticTextSanitize()
 	if handle.verification_keys_len > 0 {
@@ -313,7 +317,7 @@ func handleToVerifier(handle *C.PGP_CVerificationHandle) (crypto.PGPVerify, erro
 }
 
 func handleToSigner(handle *C.PGP_CSignHandle, detached bool) (crypto.PGPSign, error) {
-	signerBuilder := pgp.Sign()
+	signerBuilder := defaultPgpHandle().Sign()
 	if handle.signing_keys_len > 0 {
 		if handle.signing_keys_len == 1 {
 			key := handleInListToKey(handle.signing_keys, 0)
@@ -343,6 +347,7 @@ func handleToSigner(handle *C.PGP_CSignHandle, detached bool) (crypto.PGPSign, e
 }
 
 func handleToKeyGenerator(handle *C.PGP_CPGP_KeyGeneration) (crypto.PGPKeyGeneration, error) {
+	pgp := pgpHandle(handle.profile)
 	keyGenerationBuilder := pgp.KeyGeneration()
 	if bool(handle.has_generation_time) {
 		keyGenerationBuilder.GenerationTime(int64(handle.generation_time))

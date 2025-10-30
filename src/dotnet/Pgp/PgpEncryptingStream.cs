@@ -39,6 +39,7 @@ public partial class PgpEncryptingStream : Stream
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         var goStream = CreateGoStream(
@@ -52,6 +53,7 @@ public partial class PgpEncryptingStream : Stream
             encoding,
             compression,
             default,
+            profile,
             timeProviderOverride);
 
         return new PgpEncryptingStream(goStream);
@@ -62,9 +64,10 @@ public partial class PgpEncryptingStream : Stream
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
-        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, encoding, compression, timeProviderOverride);
+        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, encoding, compression, profile, timeProviderOverride);
     }
 
     public static PgpEncryptingStream Open(
@@ -73,6 +76,7 @@ public partial class PgpEncryptingStream : Stream
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         var goStream = CreateGoStream(
@@ -86,6 +90,7 @@ public partial class PgpEncryptingStream : Stream
             encoding,
             compression,
             default,
+            profile,
             timeProviderOverride);
 
         return new PgpEncryptingStream(goStream);
@@ -97,9 +102,10 @@ public partial class PgpEncryptingStream : Stream
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
-        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, signingKeyRing, encoding, compression, timeProviderOverride);
+        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, signingKeyRing, encoding, compression, profile, timeProviderOverride);
     }
 
     public static PgpEncryptingStream Open(
@@ -110,6 +116,7 @@ public partial class PgpEncryptingStream : Stream
         PgpEncoding encoding = default,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
@@ -128,6 +135,7 @@ public partial class PgpEncryptingStream : Stream
                 encoding,
                 messageCompression,
                 signatureEncryptionState,
+                profile,
                 timeProviderOverride);
 
             return new PgpEncryptingStream(goStream);
@@ -147,6 +155,7 @@ public partial class PgpEncryptingStream : Stream
         PgpEncoding encoding = default,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         return ReadModeStream.Create(
@@ -157,6 +166,7 @@ public partial class PgpEncryptingStream : Stream
             encoding,
             messageCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -165,6 +175,7 @@ public partial class PgpEncryptingStream : Stream
         Stream keyPacketsOutputStream,
         in EncryptionSecrets encryptionSecrets,
         PgpCompression messageCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
@@ -183,6 +194,7 @@ public partial class PgpEncryptingStream : Stream
                 default,
                 messageCompression,
                 default,
+                profile,
                 timeProviderOverride);
 
             return new PgpEncryptingStream(goStream);
@@ -199,6 +211,7 @@ public partial class PgpEncryptingStream : Stream
         Stream keyPacketsOutputStream,
         in EncryptionSecrets encryptionSecrets,
         PgpCompression messageCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         return ReadModeStream.CreateSplit(
@@ -206,6 +219,7 @@ public partial class PgpEncryptingStream : Stream
             keyPacketsOutputStream,
             encryptionSecrets,
             messageCompression,
+            profile,
             timeProviderOverride);
     }
 
@@ -217,6 +231,7 @@ public partial class PgpEncryptingStream : Stream
         PgpPrivateKeyRing signingKeyRing,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
@@ -240,6 +255,7 @@ public partial class PgpEncryptingStream : Stream
                     default,
                     messageCompression,
                     signatureEncryptionState,
+                    profile,
                     timeProviderOverride);
 
                 return new PgpEncryptingStream(goStream);
@@ -265,6 +281,7 @@ public partial class PgpEncryptingStream : Stream
         PgpPrivateKeyRing signingKeyRing,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         return ReadModeStream.CreateSplit(
@@ -275,6 +292,7 @@ public partial class PgpEncryptingStream : Stream
             signingKeyRing,
             messageCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -352,6 +370,7 @@ public partial class PgpEncryptingStream : Stream
         PgpEncoding encoding,
         PgpCompression dataCompression,
         EncryptionState signatureEncryptionState,
+        PgpProfile profile,
         TimeProvider? timeProviderOverride)
     {
         var (goEncryptionKeyRing, sessionKey, password) = encryptionSecrets;
@@ -363,6 +382,7 @@ public partial class PgpEncryptingStream : Stream
                 fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
                 {
                     var parameters = new GoEncryptionParameters(
+                        profile,
                         goEncryptionKeysPointer,
                         (nuint)goEncryptionKeyRing.Count,
                         goSigningKeysPointer,
@@ -373,6 +393,7 @@ public partial class PgpEncryptingStream : Stream
                         signatureOutputStreamHandle.HasValue,
                         signatureEncryptionState == EncryptionState.Encrypted,
                         dataCompression != PgpCompression.None,
+                        0,
                         timeProviderOverride);
 
                     var messageOutputStreamHandle = GCHandle.Alloc(messageOutputStream);
@@ -503,6 +524,7 @@ public partial class PgpEncryptingStream : Stream
             in EncryptionSecrets encryptionSecrets,
             PgpEncoding encoding = default,
             PgpCompression compression = default,
+            PgpProfile profile = default,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -519,6 +541,7 @@ public partial class PgpEncryptingStream : Stream
                 encoding,
                 compression,
                 default,
+                profile,
                 timeProviderOverride);
 
             return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -530,6 +553,7 @@ public partial class PgpEncryptingStream : Stream
             PgpPrivateKeyRing signingKeyRing,
             PgpEncoding encoding = default,
             PgpCompression compression = default,
+            PgpProfile profile = default,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -546,6 +570,7 @@ public partial class PgpEncryptingStream : Stream
                 encoding,
                 compression,
                 default,
+                profile,
                 timeProviderOverride);
 
             return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -559,6 +584,7 @@ public partial class PgpEncryptingStream : Stream
             PgpEncoding encoding = default,
             PgpCompression messageCompression = default,
             EncryptionState signatureEncryptionState = default,
+            PgpProfile profile = default,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -580,6 +606,7 @@ public partial class PgpEncryptingStream : Stream
                     encoding,
                     messageCompression,
                     signatureEncryptionState,
+                    profile,
                     timeProviderOverride);
 
                 return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -596,6 +623,7 @@ public partial class PgpEncryptingStream : Stream
             Stream keyPacketsOutputStream,
             in EncryptionSecrets encryptionSecrets,
             PgpCompression messageCompression = default,
+            PgpProfile profile = default,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -617,6 +645,7 @@ public partial class PgpEncryptingStream : Stream
                     default,
                     messageCompression,
                     default,
+                    profile,
                     timeProviderOverride);
 
                 return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, default);
@@ -636,6 +665,7 @@ public partial class PgpEncryptingStream : Stream
             PgpPrivateKeyRing signingKeyRing,
             PgpCompression messageCompression = default,
             EncryptionState signatureEncryptionState = default,
+            PgpProfile profile = default,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -662,6 +692,7 @@ public partial class PgpEncryptingStream : Stream
                         default,
                         messageCompression,
                         signatureEncryptionState,
+                        profile,
                         timeProviderOverride);
 
                     return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, default);

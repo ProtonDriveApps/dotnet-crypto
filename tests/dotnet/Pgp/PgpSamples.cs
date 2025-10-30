@@ -24,6 +24,29 @@ internal static class PgpSamples
         -----END PGP PRIVATE KEY BLOCK-----
         """;
 
+    public const string ArmoredLockedPrivateKeyV6 =
+        """
+        -----BEGIN PGP PRIVATE KEY BLOCK-----
+
+        xYIGaPEh9BsAAAAgj9JlnRNDbtqEXY2twISClTBJxo7ZTuhYpnhiZB8+BcP9JgcC
+        FASciERRcaztPm1bsYRGAgQbAwQQ5Ndp1lyX/VA9pUDA23FnewAXIripaa26Na+P
+        DT6Ge6tN2JWuGjlW7eHv/Nt/04o5/TrsVQPxbJBoUCo/NYgpwrAGHxsKAAAAQQWC
+        aPEh9AMLCQcDFQoIAxYAAgKbAwIeCSKhBtflCBDrT0r/UAY0vU3jG6uMGZUtpxi9
+        cGw4/y9UuKJ4BScJAgcCAAAAAN87IMbx2L2Sxl5la/xBL+i9JzeJMGBe6MzLN6hq
+        sf6+MFVIhR1GwW7x6VctqXVUFV4HiUHF7JKRBDN2HQcBFNpj3a8Lh4sj+1YXhWxW
+        1SOu3wJn3nMw5tMv+6e84TVnLNPhCM0JZHJpdmUga2V5wpsGExsKAAAALAWCaPEh
+        9AIZASKhBtflCBDrT0r/UAY0vU3jG6uMGZUtpxi9cGw4/y9UuKJ4AAAAAL5rIOIk
+        zZAoKnSKTP8UY0/bUIxGOkGVadLO5nSEZCqeLb1ufnom+D+LsC+F7lCm1EqSPZio
+        J33UWiVwhPSVUM5wEkAEXOXzgtRS7PmX30aJo2aFH2C9slNJnXKWDDpNLU/GCseC
+        BmjxIfQZAAAAIAp6FpcGSCITQcA11UkYJcTyTgrJ1S1TV68CLyftZ4wG/SYHAhQE
+        nIhEUXGs7T5tW7GERgIEGwMEEFoUR6S+5jUIUnvIJf5d8BqoZK5RafHbLtw7rBlU
+        yjCRIJUfAEGsN1XXI4HcnFQDm10v6YVRVYl83pgG9kokZcKbBhgbCgAAACwFgmjx
+        IfQCmwwioQbX5QgQ609K/1AGNL1N4xurjBmVLacYvXBsOP8vVLiieAAAAAAIliBA
+        TtsEPv6uncQSWHUpVIltgZ+jKieCah4ApExDyoYfup36qZVq/t66r//TF51sSYWx
+        QM/NoVWBQR4zSYOfq+HngwbFRiweCRdW+Q7P6+f2++HyO9stE2Lduok1zPRrzg8=
+        -----END PGP PRIVATE KEY BLOCK-----
+        """;
+
     public const string ArmoredPublicKey =
         """
         -----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -40,6 +63,26 @@ internal static class PgpSamples
         gesrWxQ36DgbUNecWRS1etrNG0N3RrnvHFoA/jMryCkROnXeoJXp2ihEPgs/aD8g
         AH79/5WK1Hclim0D
         =HWbV
+        -----END PGP PUBLIC KEY BLOCK-----
+        """;
+
+    public const string ArmoredPublicKeyV6 =
+        """
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        xioGaPEh9BsAAAAgj9JlnRNDbtqEXY2twISClTBJxo7ZTuhYpnhiZB8+BcPCsAYf
+        GwoAAABBBYJo8SH0AwsJBwMVCggDFgACApsDAh4JIqEG1+UIEOtPSv9QBjS9TeMb
+        q4wZlS2nGL1wbDj/L1S4ongFJwkCBwIAAAAA3zsgxvHYvZLGXmVr/EEv6L0nN4kw
+        YF7ozMs3qGqx/r4wVUiFHUbBbvHpVy2pdVQVXgeJQcXskpEEM3YdBwEU2mPdrwuH
+        iyP7VheFbFbVI67fAmfeczDm0y/7p7zhNWcs0+EIzQlkcml2ZSBrZXnCmwYTGwoA
+        AAAsBYJo8SH0AhkBIqEG1+UIEOtPSv9QBjS9TeMbq4wZlS2nGL1wbDj/L1S4ongA
+        AAAAvmsg4iTNkCgqdIpM/xRjT9tQjEY6QZVp0s7mdIRkKp4tvW5+eib4P4uwL4Xu
+        UKbUSpI9mKgnfdRaJXCE9JVQznASQARc5fOC1FLs+ZffRomjZoUfYL2yU0mdcpYM
+        Ok0tT8YKzioGaPEh9BkAAAAgCnoWlwZIIhNBwDXVSRglxPJOCsnVLVNXrwIvJ+1n
+        jAbCmwYYGwoAAAAsBYJo8SH0ApsMIqEG1+UIEOtPSv9QBjS9TeMbq4wZlS2nGL1w
+        bDj/L1S4ongAAAAACJYgQE7bBD7+rp3EElh1KVSJbYGfoyongmoeAKRMQ8qGH7qd
+        +qmVav7euq//0xedbEmFsUDPzaFVgUEeM0mDn6vh54MGxUYsHgkXVvkOz+vn9vvh
+        8jvbLRNi3bqJNcz0a84P
         -----END PGP PUBLIC KEY BLOCK-----
         """;
 
@@ -71,6 +114,18 @@ internal static class PgpSamples
         0jsBbWP3h5vTcIoYylnxpwNugpuZz8/ocvGzrBxuS4avxpeyMORou4x2qCiKcGrR
         7DrUSz9LxMH3CSd1Xg==
         =44WS
+        -----END PGP MESSAGE-----
+        """;
+
+    public const string KeyBasedArmoredUnsignedAeadMessage =
+        """
+        -----BEGIN PGP MESSAGE-----
+
+        wW0GIQbNb35HeSGiAre0tV/GbIJ0RBH987TnwoaMdi3gNaAmORkx0kHNrD1gZFGR
+        9NlcZzK5Pbf3zoufV4hi4UmnUTXUKyiwgZN+HdGHUw64Y4EfBXBI9UT1XhTpOxWv
+        2+Hy3o+GdsbMoXmUnyV00lYCCQIMm5Q0gCcycqvZsP8LGVmVtX56seKN7udAbGZY
+        odkSSFS90G603l3ka5JE9uIew/44k/mMVDgK6X0wpvLQ9/N0Uqa/dKToC6AX+4N3
+        W573Un1hNw==
         -----END PGP MESSAGE-----
         """;
 
@@ -201,6 +256,10 @@ internal static class PgpSamples
     public static readonly byte[] KeyPacket = Convert.FromBase64String(
         "wV4DQBQ9k/1PHwwSAQdAE3UTz3w3FEZ3Hta9V7a5ZuOk31K4aJNcN/mQ95g84jswwpd3vQphTgzyRatGz6fIxUfO78gCNbXjPMf6vz/TgLXhmrWelq3riy9u+c5Fltvh");
 
+    // From PgpSamples.SessionKeyToken, encrypted with PgpSample.PublicKeyV6
+    public static readonly byte[] KeyPacketV6 = Convert.FromBase64String(
+        "wW0GIQbNb35HeSGiAre0tV/GbIJ0RBH987TnwoaMdi3gNaAmORn/ESULWgQ39JOymZj+V0ARqBJKGuqLuEPlimvXnX8bYCg0rMjyNZoHZqxyqe3pL+YB6dKYUGAqt1GhhWQjM3A8OhBl8hB4LWA5");
+
     public static readonly byte[] DataPacket = Convert.FromBase64String("0jsBXraUQc4tquMvg+UUBdgPwCUsf4pASSMeo3T5ofcq7qch4grucRVK1R+LoR2OMtLT9KHKutuCa+l1rQ==");
 
     public static readonly byte[] SessionKeyToken = Convert.FromBase64String("E4sPzqVRQkoPVe/30kYuE9CRjMqg3nTK5Izt6hTfDWI=");
@@ -211,7 +270,13 @@ internal static class PgpSamples
         Passphrase,
         PgpEncoding.AsciiArmor);
 
+    public static readonly PgpPrivateKey PrivateKeyV6 = PgpPrivateKey.ImportAndUnlock(
+        Encoding.ASCII.GetBytes(ArmoredLockedPrivateKeyV6),
+        Passphrase,
+        PgpEncoding.AsciiArmor);
+
     public static readonly PgpPublicKey PublicKey = PgpPublicKey.Import(Encoding.ASCII.GetBytes(ArmoredPublicKey), PgpEncoding.AsciiArmor);
+    public static readonly PgpPublicKey PublicKeyV6 = PgpPublicKey.Import(Encoding.ASCII.GetBytes(ArmoredPublicKeyV6), PgpEncoding.AsciiArmor);
     public static readonly PgpSessionKey SessionKey = PgpSessionKey.Import(SessionKeyToken, SessionKeyCipher);
 
     public static ReadOnlySpan<byte> Password => "password"u8;

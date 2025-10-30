@@ -27,11 +27,12 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
         SigningOutputType outputType = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (void* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
         {
-            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, timeProviderOverride);
+            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
 
             var streamHandle = GCHandle.Alloc(outputStream);
             try

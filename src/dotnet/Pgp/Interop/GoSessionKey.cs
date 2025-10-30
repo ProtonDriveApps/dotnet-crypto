@@ -29,11 +29,12 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
         return (token, (SymmetricCipher)cipher);
     }
 
-    public unsafe void ToKeyPackets(Stream outputStream, PgpKeyRing encryptionKeyRing, TimeProvider? timeProviderOverride = null)
+    public unsafe void ToKeyPackets(Stream outputStream, PgpKeyRing encryptionKeyRing, PgpProfile profile = default, TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* goEncryptionKeysPointer = encryptionKeyRing.DangerousGetGoKeyHandles())
         {
             var parameters = new GoEncryptionParameters(
+                profile,
                 goEncryptionKeysPointer,
                 (nuint)encryptionKeyRing.Count,
                 null,
@@ -44,6 +45,7 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
                 false,
                 false,
                 false,
+                0,
                 timeProviderOverride);
 
             var streamHandle = GCHandle.Alloc(outputStream);
@@ -59,6 +61,13 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
                 streamHandle.Free();
             }
         }
+    }
+
+    public unsafe bool IsAead()
+    {
+        GoIsAead(this, out var aead);
+
+        return aead;
     }
 
     protected override bool ReleaseHandle()
@@ -79,6 +88,10 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_session_key_get_algorithm")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static unsafe partial GoError GoGetCipher(GoSessionKey goSessionKey, out byte cipher);
+
+    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_session_key_is_aead")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    private static unsafe partial void GoIsAead(GoSessionKey goSessionKey, [MarshalAs(UnmanagedType.I1)] out bool Aead);
 
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_session_key_destroy")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

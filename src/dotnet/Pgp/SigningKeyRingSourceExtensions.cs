@@ -28,10 +28,11 @@ public static class SigningKeyRingSourceExtensions
         ReadOnlySpan<byte> input,
         PgpEncoding outputEncoding = default,
         SigningOutputType signingOutputType = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : ISigningKeyRingSource
     {
-        return PgpSigner.Sign(input, signingKeyRingSource.SigningKeyRing, outputEncoding, signingOutputType, timeProviderOverride);
+        return PgpSigner.Sign(input, signingKeyRingSource.SigningKeyRing, outputEncoding, signingOutputType, profile, timeProviderOverride);
     }
 
     public static int Sign<T>(
@@ -63,10 +64,11 @@ public static class SigningKeyRingSourceExtensions
         Span<byte> output,
         PgpEncoding outputEncoding = default,
         SigningOutputType outputType = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : ISigningKeyRingSource
     {
-        return PgpSigner.Sign(input, signingKeyRingSource.SigningKeyRing, output, outputEncoding, outputType, timeProviderOverride);
+        return PgpSigner.Sign(input, signingKeyRingSource.SigningKeyRing, output, outputEncoding, outputType, profile, timeProviderOverride);
     }
 
     public static void Sign<T>(
@@ -75,10 +77,11 @@ public static class SigningKeyRingSourceExtensions
         Stream outputStream,
         PgpEncoding outputEncoding = default,
         SigningOutputType outputType = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : ISigningKeyRingSource
     {
-        PgpSigner.Sign(inputStream, signingKeyRingSource.SigningKeyRing, outputStream, outputEncoding, outputType, timeProviderOverride);
+        PgpSigner.Sign(inputStream, signingKeyRingSource.SigningKeyRing, outputStream, outputEncoding, outputType, profile, timeProviderOverride);
     }
 
     public static Task SignAsync<T>(
@@ -88,6 +91,7 @@ public static class SigningKeyRingSourceExtensions
         CancellationToken cancellationToken,
         PgpEncoding outputEncoding = default,
         SigningOutputType outputType = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : ISigningKeyRingSource
     {
@@ -98,6 +102,7 @@ public static class SigningKeyRingSourceExtensions
             cancellationToken,
             outputEncoding,
             outputType,
+            profile,
             timeProviderOverride);
     }
 
@@ -107,10 +112,11 @@ public static class SigningKeyRingSourceExtensions
         Stream outputStream,
         PgpEncoding outputEncoding = default,
         SigningOutputType outputType = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : ISigningKeyRingSource
     {
-        PgpSigner.Sign(input, signingKeyRingSource.SigningKeyRing, outputStream, outputEncoding, outputType, timeProviderOverride);
+        PgpSigner.Sign(input, signingKeyRingSource.SigningKeyRing, outputStream, outputEncoding, outputType, profile, timeProviderOverride);
     }
 
     public static PgpSigningStream OpenSigningStream<T>(
@@ -118,9 +124,10 @@ public static class SigningKeyRingSourceExtensions
         Stream outputStream,
         PgpEncoding encoding = default,
         SigningOutputType outputType = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : ISigningKeyRingSource
     {
-        return PgpSigningStream.Open(outputStream, signingKeyRingSource.SigningKeyRing, encoding, outputType, timeProviderOverride);
+        return PgpSigningStream.Open(outputStream, signingKeyRingSource.SigningKeyRing, encoding, outputType, profile, timeProviderOverride);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Proton.Cryptography.Interop;
 using Proton.Cryptography.Pgp.Interop;
 
@@ -26,9 +27,24 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
         return new PgpSessionKey(new GoSessionKey(unsafeHandle));
     }
 
+    public static PgpSessionKey GenerateForAead(SymmetricCipher cipher = SymmetricCipher.Aes256)
+    {
+        using var goError = GoGenerateForAead(cipher, out var unsafeHandle);
+        goError.ThrowIfFailure();
+
+        return new PgpSessionKey(new GoSessionKey(unsafeHandle));
+    }
+
     public static PgpSessionKey Import(ReadOnlySpan<byte> token, SymmetricCipher cipher)
     {
         var handle = GoImport(MemoryMarshal.GetReference(token), (nuint)token.Length, cipher);
+
+        return new PgpSessionKey(handle);
+    }
+
+    public static PgpSessionKey ImportForAead(ReadOnlySpan<byte> token, SymmetricCipher cipher)
+    {
+        var handle = GoImportForAead(MemoryMarshal.GetReference(token), (nuint)token.Length, cipher);
 
         return new PgpSessionKey(handle);
     }
@@ -38,9 +54,14 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
         return GoSessionKey.Export();
     }
 
-    public void ToKeyPackets(PgpKeyRing encryptionKeyRing, Stream outputStream, TimeProvider? timeProviderOverride = null)
+    public void ToKeyPackets(PgpKeyRing encryptionKeyRing, Stream outputStream, PgpProfile pgpProfile = default, TimeProvider? timeProviderOverride = null)
     {
-        GoSessionKey.ToKeyPackets(outputStream, encryptionKeyRing, timeProviderOverride);
+        GoSessionKey.ToKeyPackets(outputStream, encryptionKeyRing, pgpProfile, timeProviderOverride);
+    }
+
+    public bool IsAead()
+    {
+        return GoSessionKey.IsAead();
     }
 
     public void Dispose()
@@ -52,7 +73,15 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static partial GoSessionKey GoImport(in byte token, nuint tokenLength, SymmetricCipher cipher);
 
+    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_new_session_key_from_token_aead")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    private static partial GoSessionKey GoImportForAead(in byte token, nuint tokenLength, SymmetricCipher cipher);
+
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_generate_session_key")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static partial GoError GoGenerate(SymmetricCipher cipher, out nint sessionKeyHandle);
+
+    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_generate_session_key_aead")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    private static partial GoError GoGenerateForAead(SymmetricCipher cipher, out nint sessionKeyHandle);
 }

@@ -21,7 +21,31 @@ import (
 */
 import "C"
 
-var pgp = crypto.PGPWithProfile(profile.ProtonV1())
+// TODO: This should be moved to the GopenPGP API.
+func pgpHandleWithSizeHint(profileType C.uchar_t, sizeHint C.uint64_t) *crypto.PGPHandle {
+	switch profileType {
+	case C.PROTON_AEAD:
+		aeadProfile := profile.ProtonAeadV1()
+
+		if uint64(sizeHint) > 0 {
+			aeadProfile.AeadEncryption.ChunkSize = uint64(sizeHint)
+		}
+		return crypto.PGPWithProfile(aeadProfile)
+	}
+	return crypto.PGPWithProfile(profile.ProtonV1())
+}
+
+func pgpHandle(profileType C.uchar_t) *crypto.PGPHandle {
+	switch profileType {
+	case C.PROTON_AEAD:
+		return crypto.PGPWithProfile(profile.ProtonAeadV1())
+	}
+	return crypto.PGPWithProfile(profile.ProtonV1())
+}
+
+func defaultPgpHandle() *crypto.PGPHandle {
+	return crypto.PGPWithProfile(profile.ProtonV1())
+}
 
 //export pgp_armor_message
 func pgp_armor_message(
@@ -30,6 +54,7 @@ func pgp_armor_message(
 	armor_type C.uchar_t,
 	result_buffer C.PGP_ExtWriter,
 ) C.PGP_Error {
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 	messageGo := unsafe.Slice((*byte)(message), (C.int)(message_len))
 	var header string
 	switch armor_type {
@@ -137,6 +162,7 @@ func (p PGPExtBufferWriter) Write(data []byte) (n int, err error) {
 	if len(data) < 1 {
 		return 0, nil
 	}
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 	dataPtr := unsafe.Pointer(&data[0])
 	dataLen := (C.size_t)(len(data))
 	r := C.pgp_ext_buffer_write(&p.buffer, dataPtr, dataLen)
@@ -163,6 +189,7 @@ func (r *ExternalReader) Read(b []byte) (n int, err error) {
 	if len(b) < 1 {
 		return 0, nil
 	}
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 	ptr := unsafe.Pointer(unsafe.Pointer(&b[0]))
 	var code C.int
 	read := C.pgp_ext_reader_read(&r.external, ptr, C.size_t(len(b)), &code)
@@ -210,7 +237,8 @@ func pgp_verification_reader_read(
 		}
 	}()
 	reader := handleToVerifyReader(r)
-	bufferSlice := unsafe.Slice((*byte)(buffer), buffer_len)
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
+	bufferSlice := unsafe.Slice((*byte)(buffer), (C.int)(buffer_len))
 	n, err := reader.Read(bufferSlice)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return errorToPGPError(err)
@@ -256,7 +284,8 @@ func pgp_message_write_closer_write(
 		}
 	}()
 	writer := handleToWriteCloser(w)
-	bufferSlice := unsafe.Slice((*byte)(buffer), buffer_len)
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
+	bufferSlice := unsafe.Slice((*byte)(buffer), (C.int)(buffer_len))
 	n, err := writer.Write(bufferSlice)
 	if err != nil {
 		return errorToPGPError(err)
@@ -302,6 +331,7 @@ func (p *PGPExtBufferCopyWriter) Write(data []byte) (n int, err error) {
 		return 0, nil
 	}
 	var written int
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 	dataPtr := unsafe.Pointer(&p.buffer[0])
 	for pos := 0; pos < len(data); pos += bufferSize {
 		// Copy data to avoid cgo pinning errors at runtime for pgp_ext_buffer_write

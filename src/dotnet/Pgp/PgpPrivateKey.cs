@@ -28,7 +28,12 @@ public readonly partial struct PgpPrivateKey
 
     internal GoKey GoKey => _goKey ?? throw new InvalidOperationException("Invalid handle");
 
-    public static unsafe PgpPrivateKey Generate(string name, string emailAddress, KeyGenerationAlgorithm algorithm, TimeProvider? timeProviderOverride = null)
+    public static unsafe PgpPrivateKey Generate(
+        string name,
+        string emailAddress,
+        KeyGenerationAlgorithm algorithm,
+        PgpProfile profile = default,
+        TimeProvider? timeProviderOverride = null)
     {
         GoKey? goPrivateKey;
 
@@ -63,6 +68,7 @@ public readonly partial struct PgpPrivateKey
                             emailAddressUtf8BytesPointer,
                             (nuint)emailAddressUtf8BytesLength,
                             algorithm,
+                            profile,
                             timeProviderOverride);
 
                         using var goError = GoGenerate(parameters, out var unsafePrivateKeyHandle);
@@ -166,6 +172,7 @@ public readonly partial struct PgpPrivateKey
     [StructLayout(LayoutKind.Sequential)]
     private unsafe ref struct KeyGenerationParameters
     {
+        public byte Profile;
         public bool HasGenerationTime;
         public bool HasUserId;
         public byte* Name;
@@ -181,8 +188,10 @@ public readonly partial struct PgpPrivateKey
             byte* emailAddress,
             nuint emailAddressLength,
             KeyGenerationAlgorithm algorithm,
+            PgpProfile profile,
             TimeProvider? timeProviderOverride)
         {
+            Profile = (byte)profile;
             HasUserId = true;
             Name = name;
             NameLength = nameLength;

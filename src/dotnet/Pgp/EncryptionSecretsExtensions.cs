@@ -14,10 +14,11 @@ public static class EncryptionSecretsExtensions
         ReadOnlySpan<byte> output,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, output, outputEncoding, outputCompression, timeProviderOverride);
+        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, output, outputEncoding, outputCompression, profile, timeProviderOverride);
     }
 
     public static int EncryptAndSign<T>(
@@ -27,6 +28,7 @@ public static class EncryptionSecretsExtensions
         ReadOnlySpan<byte> output,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -37,6 +39,7 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             outputEncoding,
             outputCompression,
+            profile,
             timeProviderOverride);
     }
 
@@ -50,6 +53,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -63,6 +67,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -71,10 +76,11 @@ public static class EncryptionSecretsExtensions
         ReadOnlySpan<byte> input,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, timeProviderOverride);
+        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, profile, timeProviderOverride);
     }
 
     public static ArraySegment<byte> EncryptAndSign<T>(
@@ -83,6 +89,7 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -92,6 +99,7 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             outputEncoding,
             outputCompression,
+            profile,
             timeProviderOverride);
     }
 
@@ -103,6 +111,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -114,6 +123,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -123,10 +133,18 @@ public static class EncryptionSecretsExtensions
         Stream outputStream,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        PgpEncrypter.EncryptToStream(input, encryptionSecretsSource.EncryptionSecrets, outputStream, outputEncoding, outputCompression, timeProviderOverride);
+        PgpEncrypter.EncryptToStream(
+            input,
+            encryptionSecretsSource.EncryptionSecrets,
+            outputStream,
+            outputEncoding,
+            outputCompression,
+            profile,
+            timeProviderOverride);
     }
 
     public static void EncryptAndSignToStream<T>(
@@ -136,6 +154,7 @@ public static class EncryptionSecretsExtensions
         Stream outputStream,
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -146,6 +165,7 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             outputEncoding,
             outputCompression,
+            profile,
             timeProviderOverride);
     }
 
@@ -158,6 +178,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -170,6 +191,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -179,10 +201,18 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         Encoding? textEncoding = null,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.EncryptText(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, textEncoding, timeProviderOverride);
+        return PgpEncrypter.EncryptText(
+            input,
+            encryptionSecretsSource.EncryptionSecrets,
+            outputEncoding,
+            outputCompression,
+            textEncoding,
+            profile,
+            timeProviderOverride);
     }
 
     public static ArraySegment<byte> EncryptAndSignText<T>(
@@ -192,6 +222,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         Encoding? textEncoding = null,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -202,6 +233,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             textEncoding,
+            profile,
             timeProviderOverride);
     }
 
@@ -214,6 +246,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
         Encoding? textEncoding = null,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -226,6 +259,7 @@ public static class EncryptionSecretsExtensions
             outputCompression,
             signatureEncryptionState,
             textEncoding,
+            profile,
             timeProviderOverride);
     }
 
@@ -234,10 +268,11 @@ public static class EncryptionSecretsExtensions
         Stream messageOutputStream,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, timeProviderOverride);
+        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, profile, timeProviderOverride);
     }
 
     public static PgpEncryptingStream OpenEncryptingReadStream<T>(
@@ -245,10 +280,17 @@ public static class EncryptionSecretsExtensions
         Stream messageOutputStream,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncryptingStream.OpenRead(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, timeProviderOverride);
+        return PgpEncryptingStream.OpenRead(
+            messageOutputStream,
+            encryptionSecretsSource.EncryptionSecrets,
+            encoding,
+            compression,
+            profile,
+            timeProviderOverride);
     }
 
     public static PgpEncryptingStream OpenEncryptingAndSigningStream<T>(
@@ -257,6 +299,7 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -266,6 +309,7 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             encoding,
             compression,
+            profile,
             timeProviderOverride);
     }
 
@@ -275,6 +319,7 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding = default,
         PgpCompression compression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -284,6 +329,7 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             encoding,
             compression,
+            profile,
             timeProviderOverride);
     }
 
@@ -295,6 +341,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding encoding = default,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -306,6 +353,7 @@ public static class EncryptionSecretsExtensions
             encoding,
             messageCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -317,6 +365,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding encoding = default,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -328,6 +377,7 @@ public static class EncryptionSecretsExtensions
             encoding,
             messageCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -336,6 +386,7 @@ public static class EncryptionSecretsExtensions
         Stream messageOutputStream,
         Stream keyPacketsOutputStream,
         PgpCompression messageCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -344,6 +395,7 @@ public static class EncryptionSecretsExtensions
             keyPacketsOutputStream,
             encryptionSecretsSource.EncryptionSecrets,
             messageCompression,
+            profile,
             timeProviderOverride);
     }
 
@@ -352,6 +404,7 @@ public static class EncryptionSecretsExtensions
         Stream messageOutputStream,
         Stream keyPacketsOutputStream,
         PgpCompression messageCompression = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -360,6 +413,7 @@ public static class EncryptionSecretsExtensions
             keyPacketsOutputStream,
             encryptionSecretsSource.EncryptionSecrets,
             messageCompression,
+            profile,
             timeProviderOverride);
     }
 
@@ -371,6 +425,7 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -382,6 +437,7 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             messageCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 
@@ -393,6 +449,7 @@ public static class EncryptionSecretsExtensions
         PgpPrivateKeyRing signingKeyRing,
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
+        PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -404,6 +461,7 @@ public static class EncryptionSecretsExtensions
             signingKeyRing,
             messageCompression,
             signatureEncryptionState,
+            profile,
             timeProviderOverride);
     }
 }

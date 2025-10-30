@@ -33,7 +33,13 @@ typedef enum SymmetricCiphers {
   AES_256 = 9
 } PGP_SYMMETRIC_CIPHERS;
 
+typedef enum Profile {
+  PROTON = 0,
+  PROTON_AEAD = 1,
+} PGP_PROFILE;
+
 typedef struct {
+  uchar_t profile;
   size_t encryption_keys_len;
   size_t signing_keys_len;
   bool_t has_session_key;
@@ -48,6 +54,7 @@ typedef struct {
   uintptr_t session_key;
   uintptr_t signing_context;
   uint64_t encryption_time;
+  uint64_t message_size_hint;
   size_t password_len;
   cuchar_t* password;
 } PGP_EncryptionHandle;
@@ -75,6 +82,7 @@ typedef struct {
 typedef const PGP_DecryptionHandle PGP_CDecryptionHandle;
 
 typedef struct {
+  uchar_t profile;
   size_t signing_keys_len;
   bool_t has_signing_context;
   bool_t has_sign_time;
@@ -142,6 +150,7 @@ typedef struct {
 typedef const PGP_Signatures CPGP_Signatures;
 
 typedef struct {
+  uchar_t profile;
   bool_t has_generation_time;
   bool_t has_user_id;
   cchar_t* name;

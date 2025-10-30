@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"unsafe"
 )
 
@@ -9,9 +10,16 @@ import (
 */
 import "C"
 
+func init() {
+	// This is hacky and we should remove it once we have a better solution.
+	// We must support 1023 bit RSA keys with go >= 1.24.
+	os.Setenv("GODEBUG", "rsa1024min=0")
+}
+
 //export libc_free
 func libc_free(ptr *C.void) {
 	if ptr != nil {
+		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 		C.free(unsafe.Pointer(ptr))
 	}
 }
@@ -19,6 +27,7 @@ func libc_free(ptr *C.void) {
 //export libc_cfree
 func libc_cfree(ptr *C.cvoid_t) {
 	if ptr != nil {
+		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 		C.free(unsafe.Pointer(ptr))
 	}
 }
@@ -36,6 +45,7 @@ func stringCMem(value string) (*C.char_t, C.size_t) {
 func stringSliceCMem(values []string) C.PGP_StringArray {
 	array := C.malloc(C.sizeof_charptr_t * C.size_t(len(values)))
 	for index := 0; index < len(values); index++ {
+		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 		location := (*C.charptr_t)(unsafe.Pointer(uintptr(array) + uintptr(index*C.sizeof_charptr_t)))
 		*location = C.CString(values[index])
 	}

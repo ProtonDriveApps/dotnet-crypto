@@ -64,7 +64,7 @@ public class PgpSignerTest
             ? new FakeTimeProvider(new DateTimeOffset(encryptionTimeOverrideYear.Value, 1, 1, 0, 0, 0, TimeSpan.Zero))
             : TimeProvider.System;
 
-        var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, keyGenerationTimeProvider);
+        var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, timeProviderOverride: keyGenerationTimeProvider);
 
         // Act
         var act = new Action(() => privateKey.Sign(Encoding.UTF8.GetBytes(PgpSamples.PlainText), timeProviderOverride: encryptionTimeProvider));
@@ -88,7 +88,7 @@ public class PgpSignerTest
             ? new FakeTimeProvider(new DateTimeOffset(encryptionTimeOverrideYear.Value, 1, 1, 0, 0, 0, TimeSpan.Zero))
             : TimeProvider.System;
 
-        var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, keyGenerationTimeProvider);
+        var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, timeProviderOverride: keyGenerationTimeProvider);
 
         // Act
         var act = () => privateKey.Sign(Encoding.UTF8.GetBytes(PgpSamples.PlainText), timeProviderOverride: encryptionTimeProvider);

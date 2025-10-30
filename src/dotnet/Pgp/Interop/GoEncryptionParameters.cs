@@ -1,8 +1,9 @@
-﻿namespace Proton.Cryptography.Pgp.Interop;
+namespace Proton.Cryptography.Pgp.Interop;
 
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe readonly struct GoEncryptionParameters
 {
+    public readonly byte Profile;
     public readonly nuint EncryptionKeysLength;
     public readonly nuint SigningKeysLength;
     public readonly bool HasSessionKey;
@@ -17,10 +18,12 @@ internal unsafe readonly struct GoEncryptionParameters
     public readonly nint SessionKey;
     public readonly nint SigningContext;
     public readonly long EncryptionTime;
+    public readonly ulong MessageSizeHint;
     public readonly nuint PasswordLength;
     public readonly byte* Password;
 
     public GoEncryptionParameters(
+        PgpProfile profile,
         nint* encryptionKeys,
         nuint encryptionKeysLength,
         nint* signingKeys,
@@ -31,8 +34,11 @@ internal unsafe readonly struct GoEncryptionParameters
         bool detachSignature,
         bool detachedSignatureIsEncrypted,
         bool compress,
+        ulong messageSizeHint,
         TimeProvider? timeProviderOverride)
     {
+        Profile = (byte)profile;
+
         EncryptionKeys = encryptionKeys;
         EncryptionKeysLength = encryptionKeysLength;
 
@@ -52,6 +58,8 @@ internal unsafe readonly struct GoEncryptionParameters
         DetachedSignatureIsEncrypted = detachedSignatureIsEncrypted;
 
         Compress = compress;
+
+        MessageSizeHint = messageSizeHint;
 
         var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
 

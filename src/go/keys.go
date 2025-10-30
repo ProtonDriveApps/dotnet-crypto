@@ -58,12 +58,15 @@ func pgp_key_unlock_with_token(
 			cErr = errorToPGPError(fmt.Errorf("go panic: %v", err))
 		}
 	}()
+	pgp := defaultPgpHandle()
 	keyRing, err := handleListToKeyRing(keys, keys_len)
 	if err != nil {
 		return errorToPGPError(fmt.Errorf("failed create key ring: %w", err))
 	}
 
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	goMessage := unsafe.Slice((*byte)(message), (C.int)(message_len))
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	goSignature := unsafe.Slice((*byte)(signature), (C.int)(signature_len))
 
 	decryptor, err := pgp.Decryption().DecryptionKeys(keyRing).New()
@@ -89,6 +92,7 @@ func pgp_key_unlock_with_token(
 		return errorToPGPError(fmt.Errorf("signature verification for token failed:%w", err))
 	}
 
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	privateKey := unsafe.Slice((*byte)(private_key), (C.int)(private_key_len))
 	key, err := crypto.NewKeyFromReaderExplicit(bytes.NewReader(privateKey), crypto.Armor)
 	if err != nil {
@@ -121,6 +125,7 @@ func pgp_private_key_import(
 			cErr = errorToPGPError(fmt.Errorf("go panic: %v", err))
 		}
 	}()
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	privateKey := unsafe.Slice((*byte)(private_key), (C.int)(private_key_len))
 	key, err := crypto.NewKeyFromReaderExplicit(bytes.NewReader(privateKey), int8(encoding))
 	if err != nil {
@@ -131,6 +136,7 @@ func pgp_private_key_import(
 
 	var goPassphrase []byte
 	if passphrase_len > 0 {
+		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 		goPassphrase = unsafe.Slice((*byte)(passphrase), (C.int)(passphrase_len))
 	}
 
@@ -156,6 +162,7 @@ func pgp_public_key_import(
 			cErr = errorToPGPError(fmt.Errorf("go panic: %v", err))
 		}
 	}()
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	publicKey := unsafe.Slice((*byte)(public_key), (C.int)(public_key_len))
 	key, err := crypto.NewKeyFromReaderExplicit(bytes.NewReader(publicKey), int8(encoding))
 	if err != nil {
@@ -301,8 +308,9 @@ func pgp_key_lock(
 	passphrase_len C.size_t,
 	out_locked_key *C.uintptr_t,
 ) C.PGP_Error {
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	passphraseGo := unsafe.Slice((*byte)(passphrase), (C.int)(passphrase_len))
-	lockedKey, err := pgp.LockKey(handleToKey(key), passphraseGo)
+	lockedKey, err := defaultPgpHandle().LockKey(handleToKey(key), passphraseGo)
 	if err != nil {
 		return errorToPGPError(fmt.Errorf("failed lock key: %w", err))
 	}
@@ -342,10 +350,25 @@ func pgp_new_session_key_from_token(
 	token_len C.size_t,
 	algorithm C.PGP_SYMMETRIC_CIPHERS,
 ) C.uintptr_t {
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	goToken := unsafe.Slice((*byte)(token), (C.int)(token_len))
 	goAlgorithm := algorithmToStrID(algorithm)
 	// NewSessionKeyFromToken clones the goToken.
 	sessionKey := crypto.NewSessionKeyFromToken(goToken, goAlgorithm)
+	return (C.uintptr_t)(cgo.NewHandle(sessionKey))
+}
+
+//export pgp_new_session_key_from_token_aead
+func pgp_new_session_key_from_token_aead(
+	token *C.cuchar_t,
+	token_len C.size_t,
+	algorithm C.PGP_SYMMETRIC_CIPHERS,
+) C.uintptr_t {
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
+	goToken := unsafe.Slice((*byte)(token), (C.int)(token_len))
+	goAlgorithm := algorithmToStrID(algorithm)
+	// NewSessionKeyFromToken clones the goToken.
+	sessionKey := crypto.NewSessionKeyFromTokenWithAead(goToken, goAlgorithm, true)
 	return (C.uintptr_t)(cgo.NewHandle(sessionKey))
 }
 
@@ -362,8 +385,28 @@ func pgp_generate_session_key(
 	goAlgorithm := algorithmToStrID(algorithm)
 	sessionKey, err := crypto.GenerateSessionKeyAlgo(goAlgorithm)
 	if err != nil {
-		return errorToPGPError(fmt.Errorf("failed create decryptor: %w", err))
+		return errorToPGPError(fmt.Errorf("failed generate session key: %w", err))
 	}
+	*out_session_key = (C.uintptr_t)(cgo.NewHandle(sessionKey))
+	return errorToPGPError(nil)
+}
+
+//export pgp_generate_session_key_aead
+func pgp_generate_session_key_aead(
+	algorithm C.PGP_SYMMETRIC_CIPHERS,
+	out_session_key *C.uintptr_t,
+) (cErr C.PGP_Error) {
+	defer func() {
+		if err := recover(); err != nil {
+			cErr = errorToPGPError(fmt.Errorf("go panic: %v", err))
+		}
+	}()
+	goAlgorithm := algorithmToStrID(algorithm)
+	sessionKey, err := crypto.GenerateSessionKeyAlgo(goAlgorithm)
+	if err != nil {
+		return errorToPGPError(fmt.Errorf("failed generate session key: %w", err))
+	}
+	sessionKey = crypto.NewSessionKeyFromTokenWithAead(sessionKey.Key, sessionKey.Algo, true)
 	*out_session_key = (C.uintptr_t)(cgo.NewHandle(sessionKey))
 	return errorToPGPError(nil)
 }
@@ -387,10 +430,19 @@ func pgp_session_key_get_algorithm(
 	sessionKey := handleToSessionKey(handle)
 	data, err := sessionKey.GetCipherFunc()
 	if err != nil {
-		return errorToPGPError(fmt.Errorf("failed lock key: %w", err))
+		return errorToPGPError(fmt.Errorf("failed to retrieve algorithm: %w", err))
 	}
 	*out_code = C.uchar_t(int8(data))
 	return errorToPGPError(nil)
+}
+
+//export pgp_session_key_is_aead
+func pgp_session_key_is_aead(
+	handle C.uintptr_t,
+	out_code *C.bool_t,
+) {
+	sessionKey := handleToSessionKey(handle)
+	*out_code = C.bool_t(sessionKey.IsV6())
 }
 
 //export pgp_session_key_destroy

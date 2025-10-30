@@ -3,6 +3,7 @@
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe readonly struct GoSigningParameters
 {
+    public readonly byte Profile;
     public readonly nuint SigningKeysLength;
     public readonly bool HasSigningContext;
     public readonly bool HasSigningTime;
@@ -11,8 +12,9 @@ internal unsafe readonly struct GoSigningParameters
     public readonly nint SigningContext = 0;
     public readonly long SigningTime;
 
-    public GoSigningParameters(void* signingKeys, nuint signingKeysLength, TimeProvider? timeProviderOverride)
+    public GoSigningParameters(void* signingKeys, nuint signingKeysLength, PgpProfile profile, TimeProvider? timeProviderOverride)
     {
+        Profile = (byte)profile;
         SigningKeysLength = signingKeysLength;
         SigningKeys = signingKeys;
 

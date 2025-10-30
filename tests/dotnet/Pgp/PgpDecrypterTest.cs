@@ -17,6 +17,20 @@ public class PgpDecrypterTest
     }
 
     [Fact]
+    public void Decrypt_DecryptsMessage_WithPrivateKeyV6()
+    {
+        // Arrange
+        var input = Encoding.ASCII.GetBytes(PgpSamples.KeyBasedArmoredUnsignedAeadMessage);
+
+        // Act
+        var output = PgpDecrypter.Decrypt(input, PgpSamples.PrivateKeyV6, PgpEncoding.AsciiArmor);
+
+        // Assert
+        var outputString = Encoding.UTF8.GetString(output);
+        outputString.Should().Be(PgpSamples.PlainText);
+    }
+
+    [Fact]
     public void Decrypt_DecryptsMessage_WithPassword()
     {
         // Arrange
