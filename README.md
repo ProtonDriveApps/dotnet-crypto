@@ -53,7 +53,7 @@ build/build-go.sh darwin/amd64 darwin/arm64 ios/arm64
 
 3. Pack into NuGet package
 ```sh
-dotnet pack -c Release -p:Version=1.0.0 src/dotnet/Proton.Cryptograpy.csproj --output ~/local-nuget-repository
+dotnet pack -c Release -p:Version=1.0.0 src/dotnet/Proton.Cryptography.csproj --output ~/local-nuget-repository
 ```
 
 ## Usage
