@@ -1,4 +1,4 @@
-FROM ubuntu:24.10
+FROM ubuntu:24.04
 
 RUN apt update -qq && apt install -qqy --no-install-recommends \
     ca-certificates wget tar xz-utils unzip git-filter-repo && \
