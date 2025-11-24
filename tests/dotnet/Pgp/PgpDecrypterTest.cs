@@ -2,6 +2,38 @@
 
 public class PgpDecrypterTest
 {
+    [Theory]
+    [InlineData(PgpProfile.Proton)]
+    [InlineData(PgpProfile.ProtonAead)]
+    public void DecryptSessionKey_DecryptsSessionKey(PgpProfile profile)
+    {
+        // Arrange
+        var privateKey = profile == PgpProfile.Proton ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
+        var keyPacket = profile == PgpProfile.Proton ? PgpSamples.KeyPacket : PgpSamples.KeyPacketV6;
+
+        // Act
+        var sessionKey = PgpDecrypter.DecryptSessionKey(keyPacket, privateKey);
+
+        // Assert
+        sessionKey.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData(PgpProfile.Proton)]
+    [InlineData(PgpProfile.ProtonAead)]
+    public void DecryptSessionKey_DecryptsSessionKeyWithExtensionMethod(PgpProfile profile)
+    {
+        // Arrange
+        var privateKey = profile == PgpProfile.Proton ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
+        var keyPacket = profile == PgpProfile.Proton ? PgpSamples.KeyPacket : PgpSamples.KeyPacketV6;
+
+        // Act
+        var sessionKey = privateKey.DecryptSessionKey(keyPacket);
+
+        // Assert
+        sessionKey.Should().NotBeNull();
+    }
+
     [Fact]
     public void Decrypt_DecryptsMessage_WithPrivateKey()
     {

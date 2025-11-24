@@ -15,10 +15,11 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, output, outputEncoding, outputCompression, profile, timeProviderOverride);
+        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, output, outputEncoding, outputCompression, profile, aeadStreamingChunkLength, timeProviderOverride);
     }
 
     public static int EncryptAndSign<T>(
@@ -29,6 +30,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -40,6 +42,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -54,6 +57,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -68,6 +72,7 @@ public static class EncryptionSecretsExtensions
             outputCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -77,10 +82,11 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, profile, timeProviderOverride);
+        return PgpEncrypter.Encrypt(input, encryptionSecretsSource.EncryptionSecrets, outputEncoding, outputCompression, profile, aeadStreamingChunkLength, timeProviderOverride);
     }
 
     public static ArraySegment<byte> EncryptAndSign<T>(
@@ -90,6 +96,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -100,6 +107,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -112,6 +120,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -124,6 +133,7 @@ public static class EncryptionSecretsExtensions
             outputCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -134,6 +144,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -144,6 +155,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -155,6 +167,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding outputEncoding = default,
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -166,6 +179,7 @@ public static class EncryptionSecretsExtensions
             outputEncoding,
             outputCompression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -179,6 +193,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression outputCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -192,6 +207,7 @@ public static class EncryptionSecretsExtensions
             outputCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -202,6 +218,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression outputCompression = default,
         Encoding? textEncoding = null,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -212,6 +229,7 @@ public static class EncryptionSecretsExtensions
             outputCompression,
             textEncoding,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -223,6 +241,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression outputCompression = default,
         Encoding? textEncoding = null,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -234,6 +253,7 @@ public static class EncryptionSecretsExtensions
             outputCompression,
             textEncoding,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -247,6 +267,7 @@ public static class EncryptionSecretsExtensions
         EncryptionState signatureEncryptionState = default,
         Encoding? textEncoding = null,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -260,6 +281,7 @@ public static class EncryptionSecretsExtensions
             signatureEncryptionState,
             textEncoding,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -269,10 +291,11 @@ public static class EncryptionSecretsExtensions
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
-        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, profile, timeProviderOverride);
+        return PgpEncryptingStream.Open(messageOutputStream, encryptionSecretsSource.EncryptionSecrets, encoding, compression, profile, aeadStreamingChunkLength, timeProviderOverride);
     }
 
     public static PgpEncryptingStream OpenEncryptingReadStream<T>(
@@ -281,6 +304,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -290,6 +314,7 @@ public static class EncryptionSecretsExtensions
             encoding,
             compression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -300,6 +325,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -310,6 +336,7 @@ public static class EncryptionSecretsExtensions
             encoding,
             compression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -320,6 +347,7 @@ public static class EncryptionSecretsExtensions
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -330,6 +358,7 @@ public static class EncryptionSecretsExtensions
             encoding,
             compression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -342,6 +371,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -354,6 +384,7 @@ public static class EncryptionSecretsExtensions
             messageCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -366,6 +397,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -378,6 +410,7 @@ public static class EncryptionSecretsExtensions
             messageCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -387,6 +420,7 @@ public static class EncryptionSecretsExtensions
         Stream keyPacketsOutputStream,
         PgpCompression messageCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -396,6 +430,7 @@ public static class EncryptionSecretsExtensions
             encryptionSecretsSource.EncryptionSecrets,
             messageCompression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -405,6 +440,7 @@ public static class EncryptionSecretsExtensions
         Stream keyPacketsOutputStream,
         PgpCompression messageCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -414,6 +450,7 @@ public static class EncryptionSecretsExtensions
             encryptionSecretsSource.EncryptionSecrets,
             messageCompression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -426,6 +463,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -438,6 +476,7 @@ public static class EncryptionSecretsExtensions
             messageCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -450,6 +489,7 @@ public static class EncryptionSecretsExtensions
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
         where T : IEncryptionSecretsSource
     {
@@ -462,6 +502,7 @@ public static class EncryptionSecretsExtensions
             messageCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 }

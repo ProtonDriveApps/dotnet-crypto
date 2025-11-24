@@ -40,6 +40,7 @@ public partial class PgpEncryptingStream : Stream
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         var goStream = CreateGoStream(
@@ -54,6 +55,7 @@ public partial class PgpEncryptingStream : Stream
             compression,
             default,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
 
         return new PgpEncryptingStream(goStream);
@@ -65,9 +67,10 @@ public partial class PgpEncryptingStream : Stream
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
-        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, encoding, compression, profile, timeProviderOverride);
+        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, encoding, compression, profile, aeadStreamingChunkLength, timeProviderOverride);
     }
 
     public static PgpEncryptingStream Open(
@@ -77,6 +80,7 @@ public partial class PgpEncryptingStream : Stream
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         var goStream = CreateGoStream(
@@ -91,6 +95,7 @@ public partial class PgpEncryptingStream : Stream
             compression,
             default,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
 
         return new PgpEncryptingStream(goStream);
@@ -103,9 +108,10 @@ public partial class PgpEncryptingStream : Stream
         PgpEncoding encoding = default,
         PgpCompression compression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
-        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, signingKeyRing, encoding, compression, profile, timeProviderOverride);
+        return ReadModeStream.Create(plainDataInputStream, encryptionSecrets, signingKeyRing, encoding, compression, profile, aeadStreamingChunkLength, timeProviderOverride);
     }
 
     public static PgpEncryptingStream Open(
@@ -117,6 +123,7 @@ public partial class PgpEncryptingStream : Stream
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
@@ -136,6 +143,7 @@ public partial class PgpEncryptingStream : Stream
                 messageCompression,
                 signatureEncryptionState,
                 profile,
+                aeadStreamingChunkLength,
                 timeProviderOverride);
 
             return new PgpEncryptingStream(goStream);
@@ -156,6 +164,7 @@ public partial class PgpEncryptingStream : Stream
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         return ReadModeStream.Create(
@@ -167,6 +176,7 @@ public partial class PgpEncryptingStream : Stream
             messageCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -176,6 +186,7 @@ public partial class PgpEncryptingStream : Stream
         in EncryptionSecrets encryptionSecrets,
         PgpCompression messageCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
@@ -195,6 +206,7 @@ public partial class PgpEncryptingStream : Stream
                 messageCompression,
                 default,
                 profile,
+                aeadStreamingChunkLength,
                 timeProviderOverride);
 
             return new PgpEncryptingStream(goStream);
@@ -212,6 +224,7 @@ public partial class PgpEncryptingStream : Stream
         in EncryptionSecrets encryptionSecrets,
         PgpCompression messageCompression = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         return ReadModeStream.CreateSplit(
@@ -220,6 +233,7 @@ public partial class PgpEncryptingStream : Stream
             encryptionSecrets,
             messageCompression,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -232,6 +246,7 @@ public partial class PgpEncryptingStream : Stream
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
@@ -256,6 +271,7 @@ public partial class PgpEncryptingStream : Stream
                     messageCompression,
                     signatureEncryptionState,
                     profile,
+                    aeadStreamingChunkLength,
                     timeProviderOverride);
 
                 return new PgpEncryptingStream(goStream);
@@ -282,6 +298,7 @@ public partial class PgpEncryptingStream : Stream
         PgpCompression messageCompression = default,
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
+        long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         return ReadModeStream.CreateSplit(
@@ -293,6 +310,7 @@ public partial class PgpEncryptingStream : Stream
             messageCompression,
             signatureEncryptionState,
             profile,
+            aeadStreamingChunkLength,
             timeProviderOverride);
     }
 
@@ -371,6 +389,7 @@ public partial class PgpEncryptingStream : Stream
         PgpCompression dataCompression,
         EncryptionState signatureEncryptionState,
         PgpProfile profile,
+        long? aeadStreamingChunkLength,
         TimeProvider? timeProviderOverride)
     {
         var (goEncryptionKeyRing, sessionKey, password) = encryptionSecrets;
@@ -393,7 +412,7 @@ public partial class PgpEncryptingStream : Stream
                         signatureOutputStreamHandle.HasValue,
                         signatureEncryptionState == EncryptionState.Encrypted,
                         dataCompression != PgpCompression.None,
-                        0,
+                        aeadStreamingChunkLength,
                         timeProviderOverride);
 
                     var messageOutputStreamHandle = GCHandle.Alloc(messageOutputStream);
@@ -525,6 +544,7 @@ public partial class PgpEncryptingStream : Stream
             PgpEncoding encoding = default,
             PgpCompression compression = default,
             PgpProfile profile = default,
+            long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -542,6 +562,7 @@ public partial class PgpEncryptingStream : Stream
                 compression,
                 default,
                 profile,
+                aeadStreamingChunkLength,
                 timeProviderOverride);
 
             return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -554,6 +575,7 @@ public partial class PgpEncryptingStream : Stream
             PgpEncoding encoding = default,
             PgpCompression compression = default,
             PgpProfile profile = default,
+            long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -571,6 +593,7 @@ public partial class PgpEncryptingStream : Stream
                 compression,
                 default,
                 profile,
+                aeadStreamingChunkLength,
                 timeProviderOverride);
 
             return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -585,6 +608,7 @@ public partial class PgpEncryptingStream : Stream
             PgpCompression messageCompression = default,
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
+            long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -607,6 +631,7 @@ public partial class PgpEncryptingStream : Stream
                     messageCompression,
                     signatureEncryptionState,
                     profile,
+                    aeadStreamingChunkLength,
                     timeProviderOverride);
 
                 return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -624,6 +649,7 @@ public partial class PgpEncryptingStream : Stream
             in EncryptionSecrets encryptionSecrets,
             PgpCompression messageCompression = default,
             PgpProfile profile = default,
+            long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -646,6 +672,7 @@ public partial class PgpEncryptingStream : Stream
                     messageCompression,
                     default,
                     profile,
+                    aeadStreamingChunkLength,
                     timeProviderOverride);
 
                 return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, default);
@@ -666,6 +693,7 @@ public partial class PgpEncryptingStream : Stream
             PgpCompression messageCompression = default,
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
+            long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
             var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -693,6 +721,7 @@ public partial class PgpEncryptingStream : Stream
                         messageCompression,
                         signatureEncryptionState,
                         profile,
+                        aeadStreamingChunkLength,
                         timeProviderOverride);
 
                     return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, default);

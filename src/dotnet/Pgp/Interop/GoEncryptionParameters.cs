@@ -34,7 +34,7 @@ internal unsafe readonly struct GoEncryptionParameters
         bool detachSignature,
         bool detachedSignatureIsEncrypted,
         bool compress,
-        ulong messageSizeHint,
+        long? aeadStreamingChunkLength,
         TimeProvider? timeProviderOverride)
     {
         Profile = (byte)profile;
@@ -59,7 +59,7 @@ internal unsafe readonly struct GoEncryptionParameters
 
         Compress = compress;
 
-        MessageSizeHint = messageSizeHint;
+        MessageSizeHint = (ulong)(aeadStreamingChunkLength ?? PgpEnvironment.DefaultAeadStreamingChunkLength);
 
         var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
 
