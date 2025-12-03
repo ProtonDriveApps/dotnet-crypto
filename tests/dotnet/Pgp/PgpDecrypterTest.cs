@@ -21,6 +21,23 @@ public class PgpDecrypterTest
     [Theory]
     [InlineData(PgpProfile.Proton)]
     [InlineData(PgpProfile.ProtonAead)]
+    public void DecryptSessionKey_DecryptedSessionKeyCanBeExported(PgpProfile profile)
+    {
+        // Arrange
+        var privateKey = profile == PgpProfile.Proton ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
+        var keyPacket = profile == PgpProfile.Proton ? PgpSamples.KeyPacket : PgpSamples.KeyPacketV6;
+        var sessionKey = PgpDecrypter.DecryptSessionKey(keyPacket, privateKey);
+
+        // Act
+        var act = () => sessionKey.Export();
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
+    [Theory]
+    [InlineData(PgpProfile.Proton)]
+    [InlineData(PgpProfile.ProtonAead)]
     public void DecryptSessionKey_DecryptsSessionKeyWithExtensionMethod(PgpProfile profile)
     {
         // Arrange

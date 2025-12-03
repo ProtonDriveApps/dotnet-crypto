@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Proton.Cryptography.Interop;
 using Proton.Cryptography.Pgp.Interop;
 
@@ -49,9 +48,14 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
         return new PgpSessionKey(handle);
     }
 
-    public (byte[] Token, SymmetricCipher Cipher) Export()
+    public byte[] Export()
     {
         return GoSessionKey.Export();
+    }
+
+    public bool TryGetCipher([NotNullWhen(true)] out SymmetricCipher? cipher)
+    {
+        return GoSessionKey.TryGetCipher(out cipher);
     }
 
     public void ToKeyPackets(PgpKeyRing encryptionKeyRing, Stream outputStream, PgpProfile pgpProfile = default, TimeProvider? timeProviderOverride = null)

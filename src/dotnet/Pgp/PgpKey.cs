@@ -9,9 +9,9 @@ public readonly struct PgpKey : IVerificationKeyRingSource, IEncryptionKeyRingSo
         GoKey = privateKey.GoKey;
     }
 
-    public PgpKey(PgpPublicKey privateKey)
+    public PgpKey(PgpPublicKey publicKey)
     {
-        GoKey = privateKey.GoKey;
+        GoKey = publicKey.GoKey;
     }
 
     PgpKeyRing IVerificationKeyRingSource.VerificationKeyRing => this;

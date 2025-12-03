@@ -12,7 +12,7 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
         SetHandle(handle);
     }
 
-    public unsafe (byte[] Token, SymmetricCipher Cipher) Export()
+    public unsafe byte[] Export()
     {
         GoExport(this, out var tokenPointer, out var tokenLength);
 
@@ -21,12 +21,24 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
             throw new CryptographicException("Failed to export session key");
         }
 
-        var token = CMemory.ConvertToArray<byte>(tokenPointer, tokenLength);
+        return CMemory.ConvertToArray<byte>(tokenPointer, tokenLength);
+    }
 
-        using var goError = GoGetCipher(this, out var cipher);
+    public bool TryGetCipher([NotNullWhen(true)] out SymmetricCipher? cipher)
+    {
+        using var goError = GoGetCipher(this, out var goCipher);
+
+        // For PKESKv6, the algorithm is not always set
+        if (!goError.IsSuccess && IsAead())
+        {
+            cipher = null;
+            return false;
+        }
+
         goError.ThrowIfFailure();
 
-        return (token, (SymmetricCipher)cipher);
+        cipher = (SymmetricCipher)goCipher;
+        return true;
     }
 
     public unsafe void ToKeyPackets(Stream outputStream, PgpKeyRing encryptionKeyRing, PgpProfile profile = default, TimeProvider? timeProviderOverride = null)
@@ -63,11 +75,11 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
         }
     }
 
-    public unsafe bool IsAead()
+    public bool IsAead()
     {
-        GoIsAead(this, out var aead);
+        GoIsAead(this, out var isAead);
 
-        return aead;
+        return isAead;
     }
 
     protected override bool ReleaseHandle()
@@ -91,7 +103,7 @@ internal sealed partial class GoSessionKey() : SafeHandleZeroOrMinusOneIsInvalid
 
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_session_key_is_aead")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial void GoIsAead(GoSessionKey goSessionKey, [MarshalAs(UnmanagedType.I1)] out bool Aead);
+    private static unsafe partial void GoIsAead(GoSessionKey goSessionKey, [MarshalAs(UnmanagedType.I1)] out bool isAead);
 
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_session_key_destroy")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

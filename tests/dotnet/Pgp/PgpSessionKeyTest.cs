@@ -49,11 +49,24 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.Import(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
 
         // Act
-        var (token, cipher) = sessionKey.Export();
+        var token = sessionKey.Export();
 
         // Assert
         token.Should().Equal(PgpSamples.SessionKeyToken);
+    }
+
+    [Fact]
+    public void TryGetCipher_Succeeds()
+    {
+        // Arrange
+        using var sessionKey = PgpSessionKey.Import(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
+
+        // Act
+        var success = sessionKey.TryGetCipher(out var cipher);
+
+        // Assert
         cipher.Should().Be(PgpSamples.SessionKeyCipher);
+        success.Should().BeTrue();
     }
 
     [Fact]
@@ -63,10 +76,23 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.ImportForAead(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
 
         // Act
-        var (token, cipher) = sessionKey.Export();
+        var token = sessionKey.Export();
 
         // Assert
         token.Should().Equal(PgpSamples.SessionKeyToken);
+    }
+
+    [Fact]
+    public void TryGetCipher_WithAead_Succeeds()
+    {
+        // Arrange
+        using var sessionKey = PgpSessionKey.ImportForAead(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
+
+        // Act
+        var success = sessionKey.TryGetCipher(out var cipher);
+
+        // Assert
+        success.Should().BeTrue();
         cipher.Should().Be(PgpSamples.SessionKeyCipher);
     }
 
