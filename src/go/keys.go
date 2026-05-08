@@ -115,6 +115,30 @@ func pgp_key_unlock_with_token(
 func pgp_private_key_import(
 	private_key *C.cuchar_t,
 	private_key_len C.size_t,
+	encoding C.uchar_t,
+	out_key *C.uintptr_t,
+) (cErr C.PGP_Error) {
+	defer func() {
+		if err := recover(); err != nil {
+			cErr = errorToPGPError(fmt.Errorf("go panic: %v", err))
+		}
+	}()
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
+	privateKey := unsafe.Slice((*byte)(private_key), (C.int)(private_key_len))
+	key, err := crypto.NewKeyFromReaderExplicit(bytes.NewReader(privateKey), int8(encoding))
+	if err != nil {
+		return errorToPGPError(fmt.Errorf("failed construct private key: %w", err))
+	}
+
+	*out_key = (C.uintptr_t)(cgo.NewHandle(key))
+
+	return errorToPGPError(nil)
+}
+
+//export pgp_private_key_import_unlock
+func pgp_private_key_import_unlock(
+	private_key *C.cuchar_t,
+	private_key_len C.size_t,
 	passphrase *C.cuchar_t,
 	passphrase_len C.size_t,
 	encoding C.uchar_t,
@@ -312,9 +336,26 @@ func pgp_key_lock(
 	passphraseGo := unsafe.Slice((*byte)(passphrase), (C.int)(passphrase_len))
 	lockedKey, err := defaultPgpHandle().LockKey(handleToKey(key), passphraseGo)
 	if err != nil {
-		return errorToPGPError(fmt.Errorf("failed lock key: %w", err))
+		return errorToPGPError(fmt.Errorf("failed to lock key: %w", err))
 	}
 	*out_locked_key = (C.uintptr_t)(cgo.NewHandle(lockedKey))
+	return errorToPGPError(nil)
+}
+
+//export pgp_key_unlock
+func pgp_key_unlock(
+	key C.uintptr_t,
+	passphrase *C.cuchar_t,
+	passphrase_len C.size_t,
+	out_unlocked_key *C.uintptr_t,
+) C.PGP_Error {
+	// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
+	passphraseGo := unsafe.Slice((*byte)(passphrase), (C.int)(passphrase_len))
+	unlockedKey, err := handleToKey(key).Unlock(passphraseGo)
+	if err != nil {
+		return errorToPGPError(fmt.Errorf("failed to unlock key: %w", err))
+	}
+	*out_unlocked_key = (C.uintptr_t)(cgo.NewHandle(unlockedKey))
 	return errorToPGPError(nil)
 }
 

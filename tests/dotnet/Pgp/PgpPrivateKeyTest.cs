@@ -15,12 +15,42 @@ public sealed class PgpPrivateKeyTest
     [Fact]
     public void Lock_Succeeds()
     {
-        // Act
+        // Arrange
         using var privateKey = PgpPrivateKey.Generate("Test", "test@example.com", KeyGenerationAlgorithm.Ecc);
-        using var lockedPrivateKey = privateKey.Lock(PgpSamples.Passphrase);
+
+        // Act
+        using var lockedKey = privateKey.Lock(PgpSamples.Passphrase);
 
         // Assert
-        lockedPrivateKey.GoKey.IsInvalid.Should().BeFalse();
+        lockedKey.GoKey.IsInvalid.Should().BeFalse();
+        var unlock = () => lockedKey.Unlock(PgpSamples.Passphrase);
+        unlock.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Unlock_Succeeds()
+    {
+        // Arrange
+        using var privateKey = PgpPrivateKey.Import(Encoding.ASCII.GetBytes(PgpSamples.ArmoredLockedPrivateKey), PgpEncoding.AsciiArmor);
+
+        // Act
+        using var unlockedKey = privateKey.Unlock(PgpSamples.Passphrase);
+
+        // Assert
+        unlockedKey.GoKey.IsInvalid.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ImportAndUnlock_Succeeds()
+    {
+        // Act
+        using var unlockedKey = PgpPrivateKey.ImportAndUnlock(
+            Encoding.ASCII.GetBytes(PgpSamples.ArmoredLockedPrivateKey),
+            PgpSamples.Passphrase,
+            PgpEncoding.AsciiArmor);
+
+        // Assert
+        unlockedKey.GoKey.IsInvalid.Should().BeFalse();
     }
 
     [Fact]
