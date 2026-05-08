@@ -1,4 +1,4 @@
-FROM harbor.protontech.ch/docker.io/ubuntu:25.10
+FROM harbor.protontech.ch/docker.io/ubuntu:26.04
 
 RUN apt update -qq && apt install -qqy --no-install-recommends \
     ca-certificates wget tar xz-utils unzip git-filter-repo && \
@@ -18,7 +18,7 @@ ENV LLVM_MINGW_ROOT=/opt/llvm-mingw
 #    ./buildall.sh ${LLVM_MINGW_ROOT} && \
 #    rm -rf /tmp/llvm-mingw
 
-ENV LLVM_MINGW_VERSION=20251007
+ENV LLVM_MINGW_VERSION=20260505
 ENV LLVM_MINGW_FILE_NAME=llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz
 RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${LLVM_MINGW_FILE_NAME} && \
     mkdir -p ${LLVM_MINGW_ROOT} && \
