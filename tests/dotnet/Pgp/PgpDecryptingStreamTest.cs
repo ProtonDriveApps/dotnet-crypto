@@ -50,6 +50,23 @@ public sealed class PgpDecryptingStreamTest
         output.Should().Be(Encoding.UTF8.GetString(PgpSamples.LongPlainText));
     }
 
+    [Fact(Timeout = 1000)]
+    public void Read_OutputsPartiallyDecryptedDataPacket_WithSessionKey_WhenBufferSmallerThanPlainData()
+    {
+        // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.LongDataPacket, writable: false);
+
+        using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.SessionKey);
+
+        var buffer = new byte[16];
+
+        // Act
+        var numberOfBytesRead = stream.Read(buffer);
+
+        // Assert
+        numberOfBytesRead.Should().Be(buffer.Length);
+    }
+
     [Theory]
     [MemberData(nameof(VerificationTestData.EncryptedMessagesWithInlineSignatures), MemberType = typeof(VerificationTestData))]
     public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsInline(
