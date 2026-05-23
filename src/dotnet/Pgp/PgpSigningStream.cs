@@ -6,14 +6,14 @@ namespace Proton.Cryptography.Pgp;
 
 public sealed partial class PgpSigningStream : BaseWriteOnlyStream
 {
-    private readonly GoWriteCloser _goWriteCloser;
+    private readonly ForeignWriter _inputWriter;
 
     private GCHandle _outputStreamHandle;
     private bool _isClosed;
 
-    private PgpSigningStream(GoWriteCloser goWriteCloser, GCHandle outputStreamHandle)
+    private PgpSigningStream(ForeignWriter inputWriter, GCHandle outputStreamHandle)
     {
-        _goWriteCloser = goWriteCloser;
+        _inputWriter = inputWriter;
         _outputStreamHandle = outputStreamHandle;
     }
 
@@ -30,22 +30,23 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
         PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (void* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
+        fixed (void* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
+            var parameters = new InteropSigningParameters(signingKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
 
             var streamHandle = GCHandle.Alloc(outputStream);
             try
             {
-                using var goError = GoOpen(
+                using var error = ForeignFunctions.OpenStream(
                     parameters,
-                    GoExternalWriter.FromStreamHandle(streamHandle),
-                    encoding.ToGoEncoding(),
+                    InteropWriter.FromStreamHandle(streamHandle),
+                    encoding.ToInteropEncoding(),
                     outputType == SigningOutputType.SignatureOnly,
-                    out var unsafeGoWriteCloserHandle);
-                goError.ThrowIfFailure();
+                    out var inputWriterHandle);
 
-                return new PgpSigningStream(new GoWriteCloser(unsafeGoWriteCloserHandle), streamHandle);
+                error.ThrowPgpExceptionIfAny();
+
+                return new PgpSigningStream(new ForeignWriter(inputWriterHandle), streamHandle);
             }
             catch
             {
@@ -59,7 +60,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
     {
         while (buffer.Length > 0)
         {
-            var numberOfBytesWritten = _goWriteCloser.Write(MemoryMarshal.GetReference(buffer), (nuint)buffer.Length);
+            var numberOfBytesWritten = _inputWriter.Write(buffer);
 
             buffer = buffer[numberOfBytesWritten..];
         }
@@ -81,7 +82,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
 
             _isClosed = true;
 
-            _goWriteCloser.WriteEnd();
+            _inputWriter.WriteEnd();
         }
         finally
         {
@@ -96,7 +97,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
         {
             if (disposing)
             {
-                _goWriteCloser.Dispose();
+                _inputWriter.Dispose();
             }
 
             _outputStreamHandle.Free();
@@ -105,12 +106,15 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
         base.Dispose(disposing);
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_sign_stream")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoOpen(
-        in GoSigningParameters parameters,
-        GoExternalWriter outputWriter,
-        GoPgpEncoding encoding,
-        [MarshalAs(UnmanagedType.U1)] bool isDetached,
-        out nint writeCloserHandle);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_sign_stream")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError OpenStream(
+            in InteropSigningParameters parameters,
+            InteropWriter outputWriter,
+            InteropPgpEncoding encoding,
+            [MarshalAs(UnmanagedType.U1)] bool isDetached,
+            out nint inputWriterHandle);
+    }
 }

@@ -12,61 +12,63 @@ namespace Proton.Cryptography.Pgp;
 /// </remarks>
 public readonly partial struct PgpSecretKey : IDisposable
 {
-    internal PgpSecretKey(GoKey goKey)
+    internal PgpSecretKey(nint foreignHandle)
     {
-        GoKey = goKey;
+        Base = new PgpKey(foreignHandle);
     }
 
-    public int Version => GoKey.Version;
-    public nint Id => GoKey.Id;
+    public nint Id => Base.Id;
+    public int Version => Base.Version;
 
-    internal GoKey GoKey => field ?? throw new InvalidOperationException("Invalid handle");
+    internal PgpKey Base { get; }
 
     public static PgpSecretKey Import(ReadOnlySpan<byte> key, PgpEncoding? encoding = null)
     {
-        using var goError = GoImport(
-            MemoryMarshal.GetReference(key),
-            (nuint)key.Length,
-            encoding.ToGoEncoding(),
-            out var privateKeyHandle);
+        using var error = ForeignFunctions.Import(MemoryMarshal.GetReference(key), (nuint)key.Length, encoding.ToInteropEncoding(), out var keyHandle);
 
-        goError.ThrowIfFailure();
+        error.ThrowPgpExceptionIfAny();
 
-        return new PgpSecretKey(new GoKey(privateKeyHandle));
+        return new PgpSecretKey(keyHandle);
     }
+
+    public void Export(Stream stream, PgpEncoding encoding) => Base.Export(stream, encoding);
 
     public PgpPrivateKey Unlock(ReadOnlySpan<byte> passphrase)
     {
-        using var goError = GoUnlock(GoKey, MemoryMarshal.GetReference(passphrase), (nuint)passphrase.Length, out var unsafeUnlockedPrivateKeyHandle);
-        goError.ThrowIfFailure();
+        using var error = ForeignFunctions.Unlock(
+            Base.ForeignHandle,
+            MemoryMarshal.GetReference(passphrase),
+            (nuint)passphrase.Length,
+            out var unlockedKeyHandle);
 
-        return new PgpPrivateKey(new GoKey(unsafeUnlockedPrivateKeyHandle));
+        error.ThrowPgpExceptionIfAny();
+
+        return new PgpPrivateKey(unlockedKeyHandle);
     }
 
-    public override string ToString()
-    {
-        return GoKey.ToString();
-    }
+    public override string ToString() => Base.ToString();
 
     public void Dispose()
     {
-        GoKey.Dispose();
+        Base.Dispose();
     }
 
-    internal void Export(Stream stream, PgpEncoding encoding)
+    private static partial class ForeignFunctions
     {
-        GoKey.Export(stream, encoding);
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_private_key_import")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial InteropError Import(
+            in byte key,
+            nuint keyLength,
+            InteropPgpEncoding encoding,
+            out nint importedKeyHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_key_unlock")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial InteropError Unlock(
+            ForeignKeySafeHandle lockedKeyHandle,
+            in byte passphrase,
+            nuint passphraseLength,
+            out nint unlockedKeyHandle);
     }
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_key_unlock")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoUnlock(GoKey goPrivateKey, in byte passphrase, nuint passphraseLength, out nint unlockedPrivateKeyHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_private_key_import")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoImport(
-        in byte key,
-        nuint keyLength,
-        GoPgpEncoding encoding,
-        out nint privateKeyHandle);
 }

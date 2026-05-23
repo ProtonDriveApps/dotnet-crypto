@@ -176,6 +176,22 @@ internal static class PgpSamples
         -----END PGP MESSAGE-----
         """u8.ToArray();
 
+    public static readonly byte[] ArmoredSignedCleartextMessage =
+        """
+        -----BEGIN PGP SIGNED MESSAGE-----
+        Hash: SHA256
+
+        plain text
+        -----BEGIN PGP SIGNATURE-----
+
+        wqsEARYIAF0FgmoSFvIJEOE/bnKDTkKRNRQAAAAAABwAEHNhbHRAbm90YXRpb25z
+        Lm9wZW5wZ3Bqcy5vcmcdXoUPq2AnTyU2L3WKkWN2FiEEL8kg4K5LYNzoAqRu4T9u
+        coNOQpEAAEMCAQDmECewFjAIs6GOD+V8Id/O0VepTbWDGTY7Udbhz1qCuAEA5/ga
+        69pyCEi2ckuXsug6I6xrAR5kqnxQDPJuDozXfgY=
+        =wL0x
+        -----END PGP SIGNATURE-----
+        """u8.ToArray();
+
     public static readonly byte[] Signature = Convert.FromBase64String(
         "wnUEABYKACcFAmBGWJkJEOE/bnKDTkKRFiEEL8kg4K5LYNzoAqRu4T9ucoNOQpEAACwDAP4ut6l46bH8j8w1odrkNVHGj7VXtzyS+HLb0am6Yihq9AD+K8TqreY0kdrmU0WKS4Codk2FnOBAr2Fp8mU17GKQjwo=");
 
@@ -252,8 +268,8 @@ internal static class PgpSamples
     public static readonly byte[] SessionKeyToken = Convert.FromBase64String("E4sPzqVRQkoPVe/30kYuE9CRjMqg3nTK5Izt6hTfDWI=");
     public static readonly SymmetricCipher SessionKeyCipher = SymmetricCipher.Aes256;
 
-    public static readonly PgpPrivateKey UnlockedPrivateKey = PgpPrivateKey.Import(ArmoredLockedPrivateKey, Passphrase, PgpEncoding.AsciiArmor);
-    public static readonly PgpPrivateKey UnlockedPrivateKeyV6 = PgpPrivateKey.Import(ArmoredLockedPrivateKeyV6, Passphrase, PgpEncoding.AsciiArmor);
+    public static readonly PgpPrivateKey UnlockedPrivateKey = PgpPrivateKey.ImportAndUnlock(ArmoredLockedPrivateKey, Passphrase, PgpEncoding.AsciiArmor);
+    public static readonly PgpPrivateKey UnlockedPrivateKeyV6 = PgpPrivateKey.ImportAndUnlock(ArmoredLockedPrivateKeyV6, Passphrase, PgpEncoding.AsciiArmor);
 
     public static readonly PgpPublicKey PublicKey = PgpPublicKey.Import(ArmoredPublicKey, PgpEncoding.AsciiArmor);
     public static readonly PgpPublicKey PublicKeyV6 = PgpPublicKey.Import(ArmoredPublicKeyV6, PgpEncoding.AsciiArmor);

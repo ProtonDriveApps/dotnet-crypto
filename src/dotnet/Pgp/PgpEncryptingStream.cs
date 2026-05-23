@@ -8,13 +8,13 @@ namespace Proton.Cryptography.Pgp;
 
 public partial class PgpEncryptingStream : Stream
 {
-    private GoEncryptionStream _goStream;
+    private ForeignEncryptionStream _foreignStream;
 
     private bool _endWritten;
 
-    private PgpEncryptingStream(GoEncryptionStream goStream)
+    private PgpEncryptingStream(ForeignEncryptionStream foreignStream)
     {
-        _goStream = goStream;
+        _foreignStream = foreignStream;
     }
 
     ~PgpEncryptingStream()
@@ -24,7 +24,7 @@ public partial class PgpEncryptingStream : Stream
 
     public override bool CanRead => false;
     public override bool CanSeek => false;
-    public override bool CanWrite => _goStream.CanWrite;
+    public override bool CanWrite => _foreignStream.CanWrite;
 
     public override long Length => throw new NotSupportedException();
 
@@ -43,12 +43,12 @@ public partial class PgpEncryptingStream : Stream
         long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var goStream = CreateGoStream(
+        var foreignStream = CreateForeignStream(
             messageOutputStream,
             null,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             null,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             encryptionSecrets,
             default,
             encoding,
@@ -58,7 +58,7 @@ public partial class PgpEncryptingStream : Stream
             aeadStreamingChunkLength,
             timeProviderOverride);
 
-        return new PgpEncryptingStream(goStream);
+        return new PgpEncryptingStream(foreignStream);
     }
 
     public static PgpEncryptingStream OpenRead(
@@ -83,12 +83,12 @@ public partial class PgpEncryptingStream : Stream
         long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var goStream = CreateGoStream(
+        var foreignStream = CreateForeignStream(
             messageOutputStream,
             null,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             null,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             encryptionSecrets,
             signingKeyRing,
             encoding,
@@ -98,7 +98,7 @@ public partial class PgpEncryptingStream : Stream
             aeadStreamingChunkLength,
             timeProviderOverride);
 
-        return new PgpEncryptingStream(goStream);
+        return new PgpEncryptingStream(foreignStream);
     }
 
     public static PgpEncryptingStream OpenRead(
@@ -129,14 +129,14 @@ public partial class PgpEncryptingStream : Stream
         var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
         try
         {
-            var goSignatureWriter = GoExternalWriter.FromStreamHandle(signatureOutputStreamHandle);
+            var signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
 
-            var goStream = CreateGoStream(
+            var foreignStream = CreateForeignStream(
                 messageOutputStream,
                 null,
-                Unsafe.NullRef<GoExternalWriter>(),
+                Unsafe.NullRef<InteropWriter>(),
                 signatureOutputStreamHandle,
-                goSignatureWriter,
+                signatureWriter,
                 encryptionSecrets,
                 signingKeyRing,
                 encoding,
@@ -146,7 +146,7 @@ public partial class PgpEncryptingStream : Stream
                 aeadStreamingChunkLength,
                 timeProviderOverride);
 
-            return new PgpEncryptingStream(goStream);
+            return new PgpEncryptingStream(foreignStream);
         }
         catch
         {
@@ -192,14 +192,14 @@ public partial class PgpEncryptingStream : Stream
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
         try
         {
-            var goKeyPacketWriter = GoExternalWriter.FromStreamHandle(keyPacketOutputStreamHandle);
+            var keyPacketWriter = InteropWriter.FromStreamHandle(keyPacketOutputStreamHandle);
 
-            var goStream = CreateGoStream(
+            var foreignStream = CreateForeignStream(
                 messageOutputStream,
                 keyPacketOutputStreamHandle,
-                goKeyPacketWriter,
+                keyPacketWriter,
                 null,
-                Unsafe.NullRef<GoExternalWriter>(),
+                Unsafe.NullRef<InteropWriter>(),
                 encryptionSecrets,
                 default,
                 default,
@@ -209,7 +209,7 @@ public partial class PgpEncryptingStream : Stream
                 aeadStreamingChunkLength,
                 timeProviderOverride);
 
-            return new PgpEncryptingStream(goStream);
+            return new PgpEncryptingStream(foreignStream);
         }
         catch
         {
@@ -252,19 +252,19 @@ public partial class PgpEncryptingStream : Stream
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
         try
         {
-            var goKeyPacketWriter = GoExternalWriter.FromStreamHandle(keyPacketOutputStreamHandle);
+            var keyPacketWriter = InteropWriter.FromStreamHandle(keyPacketOutputStreamHandle);
 
             var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
             try
             {
-                var goSignatureWriter = GoExternalWriter.FromStreamHandle(signatureOutputStreamHandle);
+                var signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
 
-                var goStream = CreateGoStream(
+                var foreignStream = CreateForeignStream(
                     messageOutputStream,
                     keyPacketOutputStreamHandle,
-                    goKeyPacketWriter,
+                    keyPacketWriter,
                     signatureOutputStreamHandle,
-                    goSignatureWriter,
+                    signatureWriter,
                     encryptionSecrets,
                     signingKeyRing,
                     default,
@@ -274,7 +274,7 @@ public partial class PgpEncryptingStream : Stream
                     aeadStreamingChunkLength,
                     timeProviderOverride);
 
-                return new PgpEncryptingStream(goStream);
+                return new PgpEncryptingStream(foreignStream);
             }
             catch
             {
@@ -345,7 +345,7 @@ public partial class PgpEncryptingStream : Stream
 
     public override void Write(ReadOnlySpan<byte> buffer)
     {
-        _goStream.Write(buffer);
+        _foreignStream.Write(buffer);
     }
 
     public override void Close()
@@ -357,7 +357,7 @@ public partial class PgpEncryptingStream : Stream
                 return;
             }
 
-            _goStream.WriteEnd();
+            _foreignStream.WriteEnd();
 
             _endWritten = true;
         }
@@ -371,18 +371,18 @@ public partial class PgpEncryptingStream : Stream
     {
         if (disposing)
         {
-            _goStream.Dispose();
+            _foreignStream.Dispose();
         }
 
         base.Dispose(disposing);
     }
 
-    private static unsafe GoEncryptionStream CreateGoStream(
+    private static unsafe ForeignEncryptionStream CreateForeignStream(
         Stream messageOutputStream,
         GCHandle? keyPacketOutputStreamHandle,
-        in GoExternalWriter goKeyPacketWriter,
+        in InteropWriter keyPacketWriter,
         GCHandle? signatureOutputStreamHandle,
-        in GoExternalWriter goSignatureWriter,
+        in InteropWriter interopSignatureWriter,
         in EncryptionSecrets encryptionSecrets,
         PgpPrivateKeyRing signingKeyRing,
         PgpEncoding encoding,
@@ -392,19 +392,19 @@ public partial class PgpEncryptingStream : Stream
         long? aeadStreamingChunkLength,
         TimeProvider? timeProviderOverride)
     {
-        var (goEncryptionKeyRing, sessionKey, password) = encryptionSecrets;
+        var (encryptionKeyRing, sessionKey, password) = encryptionSecrets;
 
-        fixed (nint* goEncryptionKeysPointer = goEncryptionKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* foreignEncryptionKeysPointer = encryptionKeyRing.DangerousGetForeignKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
-                fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
+                fixed (nint* foreignSigningKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
                 {
-                    var parameters = new GoEncryptionParameters(
+                    var parameters = new InteropEncryptionParameters(
                         profile,
-                        goEncryptionKeysPointer,
-                        (nuint)goEncryptionKeyRing.Count,
-                        goSigningKeysPointer,
+                        foreignEncryptionKeysPointer,
+                        (nuint)encryptionKeyRing.Count,
+                        foreignSigningKeysPointer,
                         (nuint)signingKeyRing.Count,
                         sessionKey,
                         passwordPointer,
@@ -418,21 +418,17 @@ public partial class PgpEncryptingStream : Stream
                     var messageOutputStreamHandle = GCHandle.Alloc(messageOutputStream);
                     try
                     {
-                        var goWriter = GoExternalWriter.FromStreamHandle(messageOutputStreamHandle);
-                        var goEncoding = encoding.ToGoEncoding();
+                        var interopWriter = InteropWriter.FromStreamHandle(messageOutputStreamHandle);
+                        var interopEncoding = encoding.ToInteropEncoding();
 
-                        using var goError = Unsafe.IsNullRef(in goKeyPacketWriter)
-                            ? GoOpen(parameters, goWriter, goSignatureWriter, goEncoding, out var unsafeGoWriteCloserHandle)
-                            : GoOpen(parameters, goWriter, goSignatureWriter, goKeyPacketWriter, out unsafeGoWriteCloserHandle);
+                        using var error = Unsafe.IsNullRef(in keyPacketWriter)
+                            ? ForeignFunctions.OpenStream(parameters, interopWriter, interopSignatureWriter, interopEncoding, out var inputWriterHandle)
+                            : ForeignFunctions.OpenStream(parameters, interopWriter, interopSignatureWriter, keyPacketWriter, out inputWriterHandle);
 
-                        goError.ThrowIfFailure();
+                        error.ThrowPgpExceptionIfAny();
 
-#pragma warning disable CA2000 // False positive: ownership is transferred to another disposable
-                        var goWriteCloser = new GoWriteCloser(unsafeGoWriteCloserHandle);
-#pragma warning restore CA2000
-
-                        return new GoEncryptionStream(
-                            goWriteCloser,
+                        return new ForeignEncryptionStream(
+                            new ForeignWriter(inputWriterHandle),
                             messageOutputStreamHandle,
                             keyPacketOutputStreamHandle,
                             signatureOutputStreamHandle);
@@ -447,31 +443,13 @@ public partial class PgpEncryptingStream : Stream
         }
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_encrypt_stream")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoOpen(
-        in GoEncryptionParameters parameters,
-        GoExternalWriter outputWriter,
-        in GoExternalWriter signatureWriter,
-        GoPgpEncoding encoding,
-        out nint writeCloserHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_encrypt_stream_split")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoOpen(
-        in GoEncryptionParameters parameters,
-        GoExternalWriter outputWriter,
-        in GoExternalWriter signatureWriter,
-        GoExternalWriter keyPacketWriter,
-        out nint writeCloserHandle);
-
-    private struct GoEncryptionStream(
-        GoWriteCloser goWriteCloser,
+    private struct ForeignEncryptionStream(
+        ForeignWriter foreignWriter,
         GCHandle dataOutputStreamHandle,
         GCHandle? keyPacketOutputStreamHandle,
         GCHandle? signatureOutputStreamHandle) : IDisposable
     {
-        private readonly GoWriteCloser _goWriteCloser = goWriteCloser;
+        private readonly ForeignWriter _foreignWriter = foreignWriter;
         private readonly GCHandle? _keyPacketOutputStreamHandle = keyPacketOutputStreamHandle;
         private readonly GCHandle? _signatureOutputStreamHandle = signatureOutputStreamHandle;
         private GCHandle _dataOutputStreamHandle = dataOutputStreamHandle;
@@ -482,7 +460,7 @@ public partial class PgpEncryptingStream : Stream
         {
             while (buffer.Length > 0)
             {
-                var numberOfBytesWritten = _goWriteCloser.Write(MemoryMarshal.GetReference(buffer), (nuint)buffer.Length);
+                var numberOfBytesWritten = _foreignWriter.Write(buffer);
 
                 buffer = buffer[numberOfBytesWritten..];
             }
@@ -490,7 +468,7 @@ public partial class PgpEncryptingStream : Stream
 
         public readonly void WriteEnd()
         {
-            _goWriteCloser.WriteEnd();
+            _foreignWriter.WriteEnd();
         }
 
         public void Dispose()
@@ -501,11 +479,32 @@ public partial class PgpEncryptingStream : Stream
                 return;
             }
 
-            _goWriteCloser.Dispose();
+            _foreignWriter.Dispose();
             _dataOutputStreamHandle.Free();
             _keyPacketOutputStreamHandle?.Free();
             _signatureOutputStreamHandle?.Free();
         }
+    }
+
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_encrypt_stream")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError OpenStream(
+            in InteropEncryptionParameters parameters,
+            InteropWriter outputWriter,
+            in InteropWriter signatureWriter,
+            InteropPgpEncoding encoding,
+            out nint inputWriterHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_encrypt_stream_split")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError OpenStream(
+            in InteropEncryptionParameters parameters,
+            InteropWriter outputWriter,
+            in InteropWriter signatureWriter,
+            InteropWriter keyPacketWriter,
+            out nint inputWriterHandle);
     }
 
     private sealed class ReadModeStream : PgpEncryptingStream
@@ -520,12 +519,12 @@ public partial class PgpEncryptingStream : Stream
         private byte[]? _readBuffer;
 
         private ReadModeStream(
-            GoEncryptionStream goStream,
+            ForeignEncryptionStream foreignStream,
             Stream plainDataInputStream,
             InternalOutputStream internalOutputStream,
             MemoryStream overflowStream,
             PgpEncoding encoding)
-            : base(goStream)
+            : base(foreignStream)
         {
             _plainDataInputStream = plainDataInputStream;
             _internalOutputStream = internalOutputStream;
@@ -550,12 +549,12 @@ public partial class PgpEncryptingStream : Stream
             var overflowStream = new MemoryStream(OverflowBufferLength);
             var internalOutputStream = new InternalOutputStream(overflowStream);
 
-            var goStream = CreateGoStream(
+            var foreignStream = CreateForeignStream(
                 internalOutputStream,
                 null,
-                Unsafe.NullRef<GoExternalWriter>(),
+                Unsafe.NullRef<InteropWriter>(),
                 null,
-                Unsafe.NullRef<GoExternalWriter>(),
+                Unsafe.NullRef<InteropWriter>(),
                 encryptionSecrets,
                 default,
                 encoding,
@@ -565,7 +564,7 @@ public partial class PgpEncryptingStream : Stream
                 aeadStreamingChunkLength,
                 timeProviderOverride);
 
-            return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
+            return new ReadModeStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
         }
 
         public static PgpEncryptingStream Create(
@@ -581,12 +580,12 @@ public partial class PgpEncryptingStream : Stream
             var overflowStream = new MemoryStream(OverflowBufferLength);
             var internalOutputStream = new InternalOutputStream(overflowStream);
 
-            var goStream = CreateGoStream(
+            var foreignStream = CreateForeignStream(
                 internalOutputStream,
                 null,
-                Unsafe.NullRef<GoExternalWriter>(),
+                Unsafe.NullRef<InteropWriter>(),
                 null,
-                Unsafe.NullRef<GoExternalWriter>(),
+                Unsafe.NullRef<InteropWriter>(),
                 encryptionSecrets,
                 signingKeyRing,
                 encoding,
@@ -596,7 +595,7 @@ public partial class PgpEncryptingStream : Stream
                 aeadStreamingChunkLength,
                 timeProviderOverride);
 
-            return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
+            return new ReadModeStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
         }
 
         public static PgpEncryptingStream Create(
@@ -617,14 +616,14 @@ public partial class PgpEncryptingStream : Stream
             var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
             try
             {
-                var goSignatureWriter = GoExternalWriter.FromStreamHandle(signatureOutputStreamHandle);
+                var signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
 
-                var goStream = CreateGoStream(
+                var foreignStream = CreateForeignStream(
                     internalOutputStream,
                     null,
-                    Unsafe.NullRef<GoExternalWriter>(),
+                    Unsafe.NullRef<InteropWriter>(),
                     signatureOutputStreamHandle,
-                    goSignatureWriter,
+                    signatureWriter,
                     encryptionSecrets,
                     signingKeyRing,
                     encoding,
@@ -634,7 +633,7 @@ public partial class PgpEncryptingStream : Stream
                     aeadStreamingChunkLength,
                     timeProviderOverride);
 
-                return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
+                return new ReadModeStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
             }
             catch
             {
@@ -658,14 +657,14 @@ public partial class PgpEncryptingStream : Stream
             var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
             try
             {
-                var goKeyPacketWriter = GoExternalWriter.FromStreamHandle(keyPacketOutputStreamHandle);
+                var keyPacketWriter = InteropWriter.FromStreamHandle(keyPacketOutputStreamHandle);
 
-                var goStream = CreateGoStream(
+                var foreignStream = CreateForeignStream(
                     internalOutputStream,
                     keyPacketOutputStreamHandle,
-                    goKeyPacketWriter,
+                    keyPacketWriter,
                     null,
-                    Unsafe.NullRef<GoExternalWriter>(),
+                    Unsafe.NullRef<InteropWriter>(),
                     encryptionSecrets,
                     default,
                     default,
@@ -675,7 +674,7 @@ public partial class PgpEncryptingStream : Stream
                     aeadStreamingChunkLength,
                     timeProviderOverride);
 
-                return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, default);
+                return new ReadModeStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
             }
             catch
             {
@@ -702,19 +701,19 @@ public partial class PgpEncryptingStream : Stream
             var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
             try
             {
-                var goKeyPacketWriter = GoExternalWriter.FromStreamHandle(keyPacketOutputStreamHandle);
+                var keyPacketWriter = InteropWriter.FromStreamHandle(keyPacketOutputStreamHandle);
 
                 var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
                 try
                 {
-                    var goSignatureWriter = GoExternalWriter.FromStreamHandle(signatureOutputStreamHandle);
+                    var signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
 
-                    var goStream = CreateGoStream(
+                    var foreignStream = CreateForeignStream(
                         internalOutputStream,
                         keyPacketOutputStreamHandle,
-                        goKeyPacketWriter,
+                        keyPacketWriter,
                         signatureOutputStreamHandle,
-                        goSignatureWriter,
+                        signatureWriter,
                         encryptionSecrets,
                         signingKeyRing,
                         default,
@@ -724,7 +723,7 @@ public partial class PgpEncryptingStream : Stream
                         aeadStreamingChunkLength,
                         timeProviderOverride);
 
-                    return new ReadModeStream(goStream, plainDataInputStream, internalOutputStream, overflowStream, default);
+                    return new ReadModeStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
                 }
                 catch
                 {
@@ -847,7 +846,7 @@ public partial class PgpEncryptingStream : Stream
 
                     if (plainDataInput.IsEmpty)
                     {
-                        _goStream.WriteEnd();
+                        _foreignStream.WriteEnd();
                         _endWritten = true;
                     }
                     else

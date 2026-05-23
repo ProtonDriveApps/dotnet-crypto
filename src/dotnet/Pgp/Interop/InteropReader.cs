@@ -3,7 +3,7 @@
 namespace Proton.Cryptography.Pgp.Interop;
 
 [StructLayout(LayoutKind.Sequential)]
-internal readonly unsafe struct GoExternalReader(GCHandle streamHandle)
+internal readonly unsafe struct InteropReader(GCHandle streamHandle)
 {
     private readonly nint _streamHandlePointer = GCHandle.ToIntPtr(streamHandle);
     private readonly delegate* unmanaged[Cdecl]<nint, byte*, nuint, ErrorCode*, long> _writeFunctionPointer = &Read;
@@ -26,6 +26,7 @@ internal readonly unsafe struct GoExternalReader(GCHandle streamHandle)
 
         try
         {
+            // TODO: Make this compatible with async streams
             var numberOfBytesRead = stream.Read(new Span<byte>(buffer, (int)bufferLength));
             *errorCode = numberOfBytesRead > 0 ? ErrorCode.NoError : ErrorCode.EndOfFile;
             return numberOfBytesRead;

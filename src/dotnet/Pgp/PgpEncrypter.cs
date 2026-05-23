@@ -24,7 +24,7 @@ public static partial class PgpEncrypter
             output,
             default,
             default,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
             timeProviderOverride);
@@ -49,7 +49,7 @@ public static partial class PgpEncrypter
             output,
             signingKeyRing,
             default,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
             timeProviderOverride);
@@ -71,8 +71,8 @@ public static partial class PgpEncrypter
     {
         fixed (byte* signatureOutputPointer = signatureOutput)
         {
-            var signatureOutputWriter = new SpanWriter(signatureOutputPointer, signatureOutput.Length);
-            var goSignatureWriter = GoExternalWriter.FromSpanWriter(&signatureOutputWriter);
+            var signatureSpanWriter = new SpanWriter(signatureOutputPointer, signatureOutput.Length);
+            var signatureWriter = InteropWriter.FromSpanWriter(&signatureSpanWriter);
 
             var outputLength = Encrypt(
                 input,
@@ -82,12 +82,12 @@ public static partial class PgpEncrypter
                 output,
                 signingKeyRing,
                 signatureEncryptionState,
-                goSignatureWriter,
+                signatureWriter,
                 profile,
                 aeadStreamingChunkLength,
                 timeProviderOverride);
 
-            signatureLength = signatureOutputWriter.NumberOfBytesWritten;
+            signatureLength = signatureSpanWriter.NumberOfBytesWritten;
 
             return outputLength;
         }
@@ -173,7 +173,7 @@ public static partial class PgpEncrypter
             outputStream,
             default,
             default,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
             timeProviderOverride);
@@ -198,7 +198,7 @@ public static partial class PgpEncrypter
             outputStream,
             signingKeyRing,
             default,
-            Unsafe.NullRef<GoExternalWriter>(),
+            Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
             timeProviderOverride);
@@ -221,7 +221,7 @@ public static partial class PgpEncrypter
 
         try
         {
-            var goSignatureWriter = GoExternalWriter.FromStreamHandle(signatureOutputStreamHandle);
+            var signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
 
             Encrypt(
                 input,
@@ -231,7 +231,7 @@ public static partial class PgpEncrypter
                 outputStream,
                 signingKeyRing,
                 signatureEncryptionState,
-                goSignatureWriter,
+                signatureWriter,
                 profile,
                 aeadStreamingChunkLength,
                 timeProviderOverride);
@@ -347,30 +347,30 @@ public static partial class PgpEncrypter
         ReadOnlySpan<byte> output,
         PgpPrivateKeyRing signingKeyRing,
         EncryptionState signatureEncryptionState,
-        in GoExternalWriter goSignatureWriterPointer,
+        in InteropWriter signatureWriterPointer,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* outputPointer = output)
         {
-            var outputWriter = new SpanWriter(outputPointer, output.Length);
-            var goOutputWriter = GoExternalWriter.FromSpanWriter(&outputWriter);
+            var outputSpanWriter = new SpanWriter(outputPointer, output.Length);
+            var outputWriter = InteropWriter.FromSpanWriter(&outputSpanWriter);
 
             Encrypt(
                 input,
                 encryptionSecrets,
                 outputEncoding,
                 outputCompression,
-                goOutputWriter,
+                outputWriter,
                 signingKeyRing,
                 signatureEncryptionState,
-                goSignatureWriterPointer,
+                signatureWriterPointer,
                 profile,
                 aeadStreamingChunkLength,
                 timeProviderOverride);
 
-            return outputWriter.NumberOfBytesWritten;
+            return outputSpanWriter.NumberOfBytesWritten;
         }
     }
 
@@ -382,7 +382,7 @@ public static partial class PgpEncrypter
         Stream outputStream,
         PgpPrivateKeyRing signingKeyRing,
         EncryptionState signatureEncryptionState,
-        in GoExternalWriter goSignatureWriter,
+        in InteropWriter signatureWriter,
         PgpProfile profile,
         long? aeadStreamingChunkLength,
         TimeProvider? timeProviderOverride)
@@ -391,17 +391,17 @@ public static partial class PgpEncrypter
 
         try
         {
-            var goOutputWriter = GoExternalWriter.FromStreamHandle(outputStreamHandle);
+            var outputWriter = InteropWriter.FromStreamHandle(outputStreamHandle);
 
             Encrypt(
                 input,
                 encryptionSecrets,
                 outputEncoding,
                 outputCompression,
-                goOutputWriter,
+                outputWriter,
                 signingKeyRing,
                 signatureEncryptionState,
-                goSignatureWriter,
+                signatureWriter,
                 profile,
                 aeadStreamingChunkLength,
                 timeProviderOverride);
@@ -417,60 +417,61 @@ public static partial class PgpEncrypter
         in EncryptionSecrets encryptionSecrets,
         PgpEncoding outputEncoding,
         PgpCompression outputCompression,
-        in GoExternalWriter goOutputWriter,
+        in InteropWriter outputWriter,
         PgpPrivateKeyRing signingKeyRing,
         EncryptionState signatureEncryptionState,
-        in GoExternalWriter goSignatureWriter,
+        in InteropWriter signatureWriter,
         PgpProfile profile,
         long? aeadStreamingChunkLength,
         TimeProvider? timeProviderOverride)
     {
         var (encryptionKeyRing, sessionKey, password) = encryptionSecrets;
 
-        fixed (nint* goEncryptionKeysPointer = encryptionKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* encryptionKeysPointer = encryptionKeyRing.DangerousGetForeignKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
-                fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
+                fixed (nint* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
                 {
-                    var parameters = new GoEncryptionParameters(
+                    var parameters = new InteropEncryptionParameters(
                         profile,
-                        goEncryptionKeysPointer,
+                        encryptionKeysPointer,
                         (nuint)encryptionKeyRing.Count,
-                        goSigningKeysPointer,
+                        signingKeysPointer,
                         (nuint)signingKeyRing.Count,
                         sessionKey,
                         passwordPointer,
                         (nuint)password.Length,
-                        !Unsafe.IsNullRef(in goSignatureWriter),
+                        !Unsafe.IsNullRef(in signatureWriter),
                         signatureEncryptionState == EncryptionState.Encrypted,
                         outputCompression != PgpCompression.None,
                         aeadStreamingChunkLength,
                         timeProviderOverride);
 
-                    var goEncoding = outputEncoding.ToGoEncoding();
-
-                    using var goError = Encrypt(
+                    using var error = ForeignFunctions.Encrypt(
                         parameters,
                         MemoryMarshal.GetReference(input),
                         (nuint)input.Length,
-                        goEncoding,
-                        goSignatureWriter,
-                        goOutputWriter);
+                        outputEncoding.ToInteropEncoding(),
+                        signatureWriter,
+                        outputWriter);
 
-                    goError.ThrowIfFailure();
+                    error.ThrowPgpExceptionIfAny();
                 }
             }
         }
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_encrypt")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError Encrypt(
-        in GoEncryptionParameters parameters,
-        in byte message,
-        nuint messageLength,
-        GoPgpEncoding encoding,
-        in GoExternalWriter signatureWriter,
-        GoExternalWriter outputWriter);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_encrypt")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError Encrypt(
+            in InteropEncryptionParameters parameters,
+            in byte message,
+            nuint messageLength,
+            InteropPgpEncoding encoding,
+            in InteropWriter signatureWriter,
+            InteropWriter outputWriter);
+    }
 }

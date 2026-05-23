@@ -7,14 +7,14 @@ namespace Proton.Cryptography.Pgp;
 
 public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
 {
-    private readonly GoReader _goReader;
+    private readonly ForeignReader _outputReader;
 
     private GCHandle _inputStreamHandle;
     private MemoryHandle _detachedSignatureMemoryHandle;
 
-    private PgpDecryptingStream(GoReader goReader, GCHandle inputStreamHandle, MemoryHandle detachedSignatureMemoryHandle)
+    private PgpDecryptingStream(ForeignReader outputReader, GCHandle inputStreamHandle, MemoryHandle detachedSignatureMemoryHandle)
     {
-        _goReader = goReader;
+        _outputReader = outputReader;
         _inputStreamHandle = inputStreamHandle;
         _detachedSignatureMemoryHandle = detachedSignatureMemoryHandle;
     }
@@ -66,7 +66,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
 
     public override int Read(Span<byte> buffer)
     {
-        return _goReader.Read(MemoryMarshal.GetReference(buffer), (nuint)buffer.Length);
+        return _outputReader.Read(buffer);
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -76,10 +76,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
 
     public PgpVerificationResult GetVerificationResult()
     {
-        using var goError = GoGetVerificationResult(_goReader, out var unsafeHandle);
-        goError.ThrowIfFailure();
-
-        return new PgpVerificationResult(new GoVerificationResult(unsafeHandle));
+        return _outputReader.GetVerificationResult();
     }
 
     protected override void Dispose(bool disposing)
@@ -89,7 +86,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         {
             if (disposing)
             {
-                _goReader.Dispose();
+                _outputReader.Dispose();
             }
 
             _inputStreamHandle.Free();
@@ -106,26 +103,26 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         ReadOnlyMemory<byte> signature,
         PgpEncoding signatureEncoding,
         EncryptionState signatureEncryptionState,
-        PgpKeyRing goVerificationKeyRing,
+        PgpKeyRing verificationKeyRing,
         TimeProvider? timeProviderOverride)
     {
         var (decryptionKeyRing, sessionKey, password) = secrets;
 
-        fixed (nint* goDecryptionKeysPointer = decryptionKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* decryptionKeysPointer = decryptionKeyRing.DangerousGetForeignKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
-                fixed (nint* goVerificationKeysPointer = goVerificationKeyRing.DangerousGetGoKeyHandles())
+                fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
                 {
                     var detachedSignatureMemoryHandle = signature.Pin();
 
                     try
                     {
-                        var parameters = new GoDecryptionParameters(
-                            goDecryptionKeysPointer,
+                        var parameters = new InteropDecryptionParameters(
+                            decryptionKeysPointer,
                             (nuint)decryptionKeyRing.Count,
-                            goVerificationKeysPointer,
-                            (nuint)goVerificationKeyRing.Count,
+                            verificationKeysPointer,
+                            (nuint)verificationKeyRing.Count,
                             sessionKey,
                             passwordPointer,
                             (nuint)password.Length,
@@ -139,11 +136,15 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
 
                         try
                         {
-                            var interopReader = new GoExternalReader(streamHandle);
-                            using var goError = GoOpen(parameters, interopReader, inputEncoding.ToGoEncoding(), out var unsafeGoReaderHandle);
-                            goError.ThrowIfFailure();
+                            using var error = ForeignFunctions.OpenStream(
+                                parameters,
+                                new InteropReader(streamHandle),
+                                inputEncoding.ToInteropEncoding(),
+                                out var outputReaderHandle);
 
-                            return new PgpDecryptingStream(new GoReader(unsafeGoReaderHandle), streamHandle, detachedSignatureMemoryHandle);
+                            error.ThrowPgpExceptionIfAny();
+
+                            return new PgpDecryptingStream(new ForeignReader(outputReaderHandle), streamHandle, detachedSignatureMemoryHandle);
                         }
                         catch
                         {
@@ -161,15 +162,14 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         }
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_decrypt_stream")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoOpen(
-        in GoDecryptionParameters parameters,
-        GoExternalReader inputReader,
-        GoPgpEncoding encoding,
-        out nint readerHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_verification_reader_get_verify_result")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoGetVerificationResult(GoReader goReader, out nint verificationResultHandle);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_decrypt_stream")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError OpenStream(
+            in InteropDecryptionParameters parameters,
+            InteropReader inputReader,
+            InteropPgpEncoding encoding,
+            out nint outputReaderHandle);
+    }
 }

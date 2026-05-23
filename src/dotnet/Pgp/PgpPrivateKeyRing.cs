@@ -8,18 +8,18 @@ public readonly struct PgpPrivateKeyRing : IDecryptionKeyRingSource, IVerificati
     {
         if (keys.Count == 1)
         {
-            SingleGoKey = keys[0].GoKey;
+            SingleKeyHandle = keys[0].Base.ForeignHandle;
             return;
         }
 
-        var multipleGoKeys = new GoKey[keys.Count];
-        multipleGoKeys.AsSpan().FillWithTransform(keys, key => key.GoKey);
-        MultipleGoKeys = multipleGoKeys;
+        var keyHandles = new ForeignKeySafeHandle[keys.Count];
+        keyHandles.AsSpan().FillWithTransform(keys, key => key.Base.ForeignHandle);
+        MultipleKeyHandles = keyHandles;
     }
 
     public PgpPrivateKeyRing(PgpPrivateKey key)
     {
-        SingleGoKey = key.GoKey;
+        SingleKeyHandle = key.Base.ForeignHandle;
     }
 
     PgpPrivateKeyRing IDecryptionKeyRingSource.DecryptionKeyRing => this;
@@ -27,34 +27,34 @@ public readonly struct PgpPrivateKeyRing : IDecryptionKeyRingSource, IVerificati
     PgpKeyRing IEncryptionKeyRingSource.EncryptionKeyRing => this;
     PgpPrivateKeyRing ISigningKeyRingSource.SigningKeyRing => this;
 
-    public int Count => SingleGoKey is not null ? 1 : MultipleGoKeys?.Length ?? 0;
+    public int Count => SingleKeyHandle is not null ? 1 : MultipleKeyHandles?.Length ?? 0;
 
-    private GoKey? SingleGoKey { get; }
-    private GoKey[]? MultipleGoKeys { get; }
+    private ForeignKeySafeHandle? SingleKeyHandle { get; }
+    private ForeignKeySafeHandle[]? MultipleKeyHandles { get; }
 
     public static implicit operator PgpPrivateKeyRing(PgpPrivateKey privateKey) => new(privateKey);
-    public static implicit operator PgpKeyRing(PgpPrivateKeyRing keyRing) => new(keyRing.SingleGoKey, keyRing.MultipleGoKeys);
+    public static implicit operator PgpKeyRing(PgpPrivateKeyRing keyRing) => new(keyRing.SingleKeyHandle, keyRing.MultipleKeyHandles);
 
     /// <summary>
-    /// Gets the native Go handles for the keys.
+    /// Gets the foreign handles for the keys.
     /// </summary>
     /// <remarks>
-    /// Only call this just before calling a native function.
+    /// Only call this just before calling a foreign function.
     /// </remarks>
-    internal ReadOnlySpan<nint> DangerousGetGoKeyHandles()
+    internal ReadOnlySpan<nint> DangerousGetForeignKeyHandles()
     {
-        if (SingleGoKey is not null)
+        if (SingleKeyHandle is not null)
         {
-            return MemoryMarshal.CreateReadOnlySpan(ref SingleGoKey.DangerousGetHandleRef(), 1);
+            return MemoryMarshal.CreateReadOnlySpan(ref SingleKeyHandle.DangerousGetHandleRef(), 1);
         }
 
-        if (MultipleGoKeys is null)
+        if (MultipleKeyHandles is null)
         {
             return [];
         }
 
-        var goKeyHandles = new nint[MultipleGoKeys.Length];
-        goKeyHandles.AsSpan().FillWithTransform(MultipleGoKeys, key => key.DangerousGetHandle());
-        return goKeyHandles;
+        var keyHandles = new nint[MultipleKeyHandles.Length];
+        keyHandles.AsSpan().FillWithTransform(MultipleKeyHandles, key => key.DangerousGetHandle());
+        return keyHandles;
     }
 }

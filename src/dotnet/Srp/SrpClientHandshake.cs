@@ -1,15 +1,14 @@
-﻿using Proton.Cryptography.Srp.Interop;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.Win32.SafeHandles;
+using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Srp;
 
-public readonly struct SrpClientHandshake : IDisposable
+public readonly partial struct SrpClientHandshake : IDisposable
 {
-    private readonly GoSrpClientHandshake? _goSrpClientHandshake;
-
-    internal SrpClientHandshake(nint unsafeGoClientHandshakeHandle, byte[] proof, byte[] ephemeral)
+    internal SrpClientHandshake(nint foreignHandle, byte[] proof, byte[] ephemeral)
     {
-        _goSrpClientHandshake = new GoSrpClientHandshake(unsafeGoClientHandshakeHandle);
-
+        ForeignHandle = new ForeignSrpClientHandshakeSafeHandle(foreignHandle);
         Proof = proof;
         Ephemeral = ephemeral;
     }
@@ -18,15 +17,49 @@ public readonly struct SrpClientHandshake : IDisposable
 
     public byte[] Ephemeral { get; }
 
-    private GoSrpClientHandshake GoSrpClientHandshake => _goSrpClientHandshake ?? throw new InvalidOperationException("Invalid handle");
+    private ForeignSrpClientHandshakeSafeHandle ForeignHandle => field ?? throw new InvalidOperationException("Invalid handle");
 
     public bool TryComputeSharedKey(ReadOnlySpan<byte> serverProof)
     {
-        return GoSrpClientHandshake.TryComputeSharedKey(serverProof);
+        using var error = ForeignFunctions.VerifyProof(ForeignHandle, MemoryMarshal.GetReference(serverProof), (nuint)serverProof.Length, out var isValid);
+        error.ThrowSrpExceptionIfAny();
+
+        return isValid;
     }
 
     public void Dispose()
     {
-        _goSrpClientHandshake?.Dispose();
+        ForeignHandle.Dispose();
+    }
+
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "srp_client_handshake_verify_proof")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError VerifyProof(
+            ForeignSrpClientHandshakeSafeHandle clientHandshakeHandle,
+            in byte serverProof,
+            nuint serverProofLength,
+            [MarshalAs(UnmanagedType.U1)] out bool isValid);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "srp_client_handshake_destroy")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial void ReleaseHandle(nint handle);
+    }
+
+    private sealed class ForeignSrpClientHandshakeSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    {
+        public ForeignSrpClientHandshakeSafeHandle(nint handle)
+            : this()
+        {
+            SetHandle(handle);
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            ForeignFunctions.ReleaseHandle(handle);
+
+            return true;
+        }
     }
 }

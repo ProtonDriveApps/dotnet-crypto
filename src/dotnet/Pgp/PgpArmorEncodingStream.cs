@@ -6,14 +6,14 @@ namespace Proton.Cryptography.Pgp;
 
 public sealed partial class PgpArmorEncodingStream : BaseWriteOnlyStream
 {
-    private readonly GoWriteCloser _goWriteCloser;
+    private readonly ForeignWriter _inputWriter;
 
     private GCHandle _outputStreamHandle;
     private bool _isClosed;
 
-    private PgpArmorEncodingStream(GoWriteCloser goWriteCloser, GCHandle outputStreamHandle)
+    private PgpArmorEncodingStream(ForeignWriter inputWriter, GCHandle outputStreamHandle)
     {
-        _goWriteCloser = goWriteCloser;
+        _inputWriter = inputWriter;
         _outputStreamHandle = outputStreamHandle;
     }
 
@@ -27,12 +27,12 @@ public sealed partial class PgpArmorEncodingStream : BaseWriteOnlyStream
         var streamHandle = GCHandle.Alloc(outputStream);
         try
         {
-            var goWriter = GoExternalWriter.FromStreamHandle(streamHandle);
+            var outputWriter = InteropWriter.FromStreamHandle(streamHandle);
 
-            using var goError = GoOpen(goWriter, blockType, out var unsafeGoWriteCloserHandle);
-            goError.ThrowIfFailure();
+            using var error = ForeignFunctions.OpenStream(outputWriter, blockType, out var inputWriterHandle);
+            error.ThrowPgpExceptionIfAny();
 
-            return new PgpArmorEncodingStream(new GoWriteCloser(unsafeGoWriteCloserHandle), streamHandle);
+            return new PgpArmorEncodingStream(new ForeignWriter(inputWriterHandle), streamHandle);
         }
         catch
         {
@@ -45,7 +45,7 @@ public sealed partial class PgpArmorEncodingStream : BaseWriteOnlyStream
     {
         while (buffer.Length > 0)
         {
-            var numberOfBytesWritten = _goWriteCloser.Write(MemoryMarshal.GetReference(buffer), (nuint)buffer.Length);
+            var numberOfBytesWritten = _inputWriter.Write(buffer);
 
             buffer = buffer[numberOfBytesWritten..];
         }
@@ -67,7 +67,7 @@ public sealed partial class PgpArmorEncodingStream : BaseWriteOnlyStream
 
             _isClosed = true;
 
-            _goWriteCloser.WriteEnd();
+            _inputWriter.WriteEnd();
         }
         finally
         {
@@ -82,7 +82,7 @@ public sealed partial class PgpArmorEncodingStream : BaseWriteOnlyStream
         {
             if (disposing)
             {
-                _goWriteCloser.Dispose();
+                _inputWriter.Dispose();
             }
 
             _outputStreamHandle.Free();
@@ -91,7 +91,10 @@ public sealed partial class PgpArmorEncodingStream : BaseWriteOnlyStream
         base.Dispose(disposing);
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_armor_message_stream")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoOpen(GoExternalWriter outputWriter, PgpBlockType blockType, out nint writeCloserHandle);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_armor_message_stream")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError OpenStream(InteropWriter outputWriter, PgpBlockType blockType, out nint inputWriterHandle);
+    }
 }

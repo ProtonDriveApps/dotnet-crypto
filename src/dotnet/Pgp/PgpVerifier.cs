@@ -12,20 +12,28 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
             var messageStreamHandle = GCHandle.Alloc(messageStream);
 
             try
             {
-                var goReader = new GoExternalReader(messageStreamHandle);
+                var inputReader = new InteropReader(messageStreamHandle);
 
-                using var goError = GoVerifyInlineStream(parameters, goReader, encoding.ToGoEncoding(), out var unsafeGoVerificationResultHandle);
-                goError.ThrowIfFailure();
+                using var error = ForeignFunctions.VerifyInlineStream(parameters, inputReader, encoding.ToInteropEncoding(), out var outputReaderHandle);
+                error.ThrowPgpExceptionIfAny();
 
-                return new PgpVerificationResult(new GoVerificationResult(unsafeGoVerificationResultHandle));
+                using var outputReader = new ForeignReader(outputReaderHandle);
+
+                // TODO: expose the output reader as a stream and let the caller read from it instead of reading everything here and discarding it
+                Span<byte> buffer = stackalloc byte[4096];
+                while (outputReader.Read(buffer) > 0)
+                {
+                }
+
+                return outputReader.GetVerificationResult();
             }
             finally
             {
@@ -41,27 +49,27 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
             var messageStreamHandle = GCHandle.Alloc(inputStream);
 
             try
             {
-                var goReader = new GoExternalReader(messageStreamHandle);
+                var inputReader = new InteropReader(messageStreamHandle);
 
-                using var goError = GoVerifyDetachedStream(
+                using var error = ForeignFunctions.VerifyDetachedStream(
                     parameters,
-                    goReader,
+                    inputReader,
                     MemoryMarshal.GetReference(signature),
                     (nuint)signature.Length,
-                    encoding.ToGoEncoding(),
-                    out var unsafeGoVerificationResultHandle);
+                    encoding.ToInteropEncoding(),
+                    out var verificationResultHandle);
 
-                goError.ThrowIfFailure();
+                error.ThrowPgpExceptionIfAny();
 
-                return new PgpVerificationResult(new GoVerificationResult(unsafeGoVerificationResultHandle));
+                return new PgpVerificationResult(verificationResultHandle);
             }
             finally
             {
@@ -76,26 +84,26 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goKeysPointer = keyRing.DangerousGetGoKeyHandles())
+        fixed (nint* keysPointer = keyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new VerificationParameters(goKeysPointer, (nuint)keyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(keysPointer, (nuint)keyRing.Count, timeProviderOverride);
 
             var streamHandle = GCHandle.Alloc(Stream.Null);
 
             try
             {
-                var goPlaintextResult = new GoPlaintextResult(streamHandle);
+                var plaintextResult = new InteropPlaintextResult(streamHandle);
 
-                using var goError = GoVerifyInline(
+                using var error = ForeignFunctions.VerifyInline(
                     parameters,
                     MemoryMarshal.GetReference(message),
                     (nuint)message.Length,
-                    encoding.ToGoEncoding(),
-                    ref goPlaintextResult);
+                    encoding.ToInteropEncoding(),
+                    ref plaintextResult);
 
-                goError.ThrowIfFailure();
+                error.ThrowPgpExceptionIfAny();
 
-                return new PgpVerificationResult(new GoVerificationResult(goPlaintextResult.VerificationResultHandle));
+                return new PgpVerificationResult(plaintextResult.VerificationResultHandle);
             }
             finally
             {
@@ -111,25 +119,25 @@ public static partial class PgpVerifier
         PgpEncoding encoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
-            using var goError = GoVerifyDetached(
+            using var error = ForeignFunctions.VerifyDetached(
                 parameters,
                 MemoryMarshal.GetReference(input),
                 (nuint)input.Length,
                 MemoryMarshal.GetReference(signature),
                 (nuint)signature.Length,
-                encoding.ToGoEncoding(),
-                out var unsafeGoVerificationResultHandle);
+                encoding.ToInteropEncoding(),
+                out var verificationResultHandle);
 
-            if (unsafeGoVerificationResultHandle == 0)
+            if (verificationResultHandle == 0)
             {
-                goError.ThrowIfFailure();
+                error.ThrowPgpExceptionIfAny();
             }
 
-            return new PgpVerificationResult(new GoVerificationResult(unsafeGoVerificationResultHandle));
+            return new PgpVerificationResult(verificationResultHandle);
         }
     }
 
@@ -139,21 +147,26 @@ public static partial class PgpVerifier
         Stream cleartextOutputStream,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goVerificationKeysPointer = verificationKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new VerificationParameters(goVerificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
 
             var cleartextOutputStreamHandle = GCHandle.Alloc(cleartextOutputStream);
 
             try
             {
-                var goResult = new GoPlaintextResult(cleartextOutputStreamHandle);
+                var plaintextResult = new InteropPlaintextResult(cleartextOutputStreamHandle);
 
-                using var goError = GoVerifyCleartext(parameters, MemoryMarshal.GetReference(message), (nuint)message.Length, ref goResult);
-                goError.ThrowIfFailure();
+                using var error = ForeignFunctions.VerifyCleartext(
+                    parameters,
+                    MemoryMarshal.GetReference(message),
+                    (nuint)message.Length,
+                    ref plaintextResult);
 
-                return goResult.HasVerificationResult
-                    ? new PgpVerificationResult(new GoVerificationResult(goResult.VerificationResultHandle))
+                error.ThrowPgpExceptionIfAny();
+
+                return plaintextResult.HasVerificationResult
+                    ? new PgpVerificationResult(plaintextResult.VerificationResultHandle)
                     : throw new PgpException("Missing verification result");
             }
             finally
@@ -163,54 +176,8 @@ public static partial class PgpVerifier
         }
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_verify_detached")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoVerifyDetached(
-        in VerificationParameters parameters,
-        in byte data,
-        nuint dataLength,
-        in byte signature,
-        nuint signatureLength,
-        GoPgpEncoding encoding,
-        out nint verificationResultHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_verify_detached_stream")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoVerifyDetachedStream(
-        in VerificationParameters parameters,
-        GoExternalReader inputReader,
-        in byte signature,
-        nuint signatureLength,
-        GoPgpEncoding encoding,
-        out nint verificationResultHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_verify_inline")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoVerifyInline(
-        in VerificationParameters parameters,
-        in byte data,
-        nuint dataLength,
-        GoPgpEncoding encoding,
-        ref GoPlaintextResult plaintextResult);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_verify_inline_stream")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoVerifyInlineStream(
-        in VerificationParameters parameters,
-        GoExternalReader inputReader,
-        GoPgpEncoding encoding,
-        out nint readerHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_verify_cleartext")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoVerifyCleartext(
-        in VerificationParameters parameters,
-        in byte message,
-        nuint messageLength,
-        ref GoPlaintextResult plaintextResult);
-
     [StructLayout(LayoutKind.Sequential)]
-    private unsafe readonly struct VerificationParameters
+    private unsafe readonly struct InteropVerificationParameters
     {
         public readonly nuint KeysLength;
         public readonly bool HasVerificationTime;
@@ -220,7 +187,7 @@ public static partial class PgpVerifier
         public readonly nint VerificationContext;
         public readonly long VerificationTime;
 
-        public VerificationParameters(nint* verificationKeys, nuint verificationKeysLength, TimeProvider? timeProviderOverride)
+        public InteropVerificationParameters(nint* verificationKeys, nuint verificationKeysLength, TimeProvider? timeProviderOverride)
         {
             Keys = verificationKeys;
             KeysLength = verificationKeysLength;
@@ -233,5 +200,54 @@ public static partial class PgpVerifier
                 VerificationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
             }
         }
+    }
+
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verify_detached")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError VerifyDetached(
+            in InteropVerificationParameters parameters,
+            in byte data,
+            nuint dataLength,
+            in byte signature,
+            nuint signatureLength,
+            InteropPgpEncoding encoding,
+            out nint verificationResultHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verify_detached_stream")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError VerifyDetachedStream(
+            in InteropVerificationParameters parameters,
+            InteropReader inputReader,
+            in byte signature,
+            nuint signatureLength,
+            InteropPgpEncoding encoding,
+            out nint verificationResultHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verify_inline")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError VerifyInline(
+            in InteropVerificationParameters parameters,
+            in byte data,
+            nuint dataLength,
+            InteropPgpEncoding encoding,
+            ref InteropPlaintextResult plaintextResult);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verify_inline_stream")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError VerifyInlineStream(
+            in InteropVerificationParameters parameters,
+            InteropReader inputReader,
+            InteropPgpEncoding encoding,
+            out nint readerHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verify_cleartext")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError VerifyCleartext(
+            in InteropVerificationParameters parameters,
+            in byte message,
+            nuint messageLength,
+            ref InteropPlaintextResult plaintextResult);
     }
 }

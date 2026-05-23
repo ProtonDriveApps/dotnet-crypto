@@ -9,7 +9,7 @@ public sealed class PgpSecretKeyTest
         using var importedKey = PgpSecretKey.Import(PgpSamples.ArmoredLockedPrivateKey, PgpEncoding.AsciiArmor);
 
         // Assert
-        importedKey.GoKey.IsInvalid.Should().BeFalse();
+        importedKey.Base.ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class PgpSecretKeyTest
         using var unlockedKey = secretKey.Unlock(PgpSamples.Passphrase);
 
         // Assert
-        unlockedKey.GoKey.IsInvalid.Should().BeFalse();
+        unlockedKey.Base.ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]

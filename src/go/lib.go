@@ -16,16 +16,16 @@ func init() {
 	os.Setenv("GODEBUG", "rsa1024min=0")
 }
 
-//export libc_free
-func libc_free(ptr *C.void) {
+//export interop_memory_free
+func interop_memory_free(ptr *C.void) {
 	if ptr != nil {
 		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 		C.free(unsafe.Pointer(ptr))
 	}
 }
 
-//export libc_cfree
-func libc_cfree(ptr *C.cvoid_t) {
+//export interop_memory_free_clear
+func interop_memory_free_clear(ptr *C.cvoid_t) {
 	if ptr != nil {
 		// nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block, gitlab.gosec.G103-1
 		C.free(unsafe.Pointer(ptr))

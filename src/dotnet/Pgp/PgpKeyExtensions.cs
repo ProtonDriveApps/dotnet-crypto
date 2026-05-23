@@ -2,21 +2,39 @@
 
 public static class PgpKeyExtensions
 {
-    public static ArraySegment<byte> ToBytes(this PgpSecretKey secretKey, PgpEncoding encoding = default)
+    extension(PgpSecretKey secretKey)
     {
-        using var stream = new MemoryStream();
+        public ArraySegment<byte> ToBytes(PgpEncoding encoding = default)
+        {
+            using var stream = new MemoryStream();
 
-        secretKey.Export(stream, encoding);
+            secretKey.Export(stream, encoding);
 
-        return stream.TryGetBuffer(out var buffer) ? buffer : stream.ToArray();
+            return stream.TryGetBuffer(out var buffer) ? buffer : stream.ToArray();
+        }
     }
 
-    public static ArraySegment<byte> ToBytes(this PgpPublicKey publicKey, PgpEncoding encoding = default)
+    extension(PgpPrivateKey privateKey)
     {
-        using var stream = new MemoryStream();
+        public ArraySegment<byte> ToBytes(PgpEncoding encoding = default)
+        {
+            using var stream = new MemoryStream();
 
-        publicKey.Export(stream, encoding);
+            privateKey.Export(stream, encoding);
 
-        return stream.TryGetBuffer(out var buffer) ? buffer : stream.ToArray();
+            return stream.TryGetBuffer(out var buffer) ? buffer : stream.ToArray();
+        }
+    }
+
+    extension(PgpPublicKey publicKey)
+    {
+        public ArraySegment<byte> ToBytes(PgpEncoding encoding = default)
+        {
+            using var stream = new MemoryStream();
+
+            publicKey.Export(stream, encoding);
+
+            return stream.TryGetBuffer(out var buffer) ? buffer : stream.ToArray();
+        }
     }
 }

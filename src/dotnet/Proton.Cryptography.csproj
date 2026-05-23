@@ -17,8 +17,8 @@
     <Owners>Proton AG</Owners>
     <Authors>Proton AG</Authors>
     <Company>Proton AG</Company>
-    <PackageTags>SRP Secure Remote Password Go-SRP PGP GopenPGP Cryptography</PackageTags>
-    <Description>Package that wraps GoSRP and GopenPGP to provide SRP (Secure Remote Password) and PGP features to .NET projects.</Description>
+    <PackageTags>SRP Secure Remote Password PGP OpenPGP Cryptography</PackageTags>
+    <Description>Package that provides SRP (Secure Remote Password) and OpenPGP features to .NET projects.</Description>
     <EmbedAllSources>true</EmbedAllSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

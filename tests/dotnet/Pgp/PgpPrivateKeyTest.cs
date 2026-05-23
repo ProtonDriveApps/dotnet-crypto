@@ -9,7 +9,7 @@ public sealed class PgpPrivateKeyTest
         using var privateKey = PgpPrivateKey.Generate("Test", "test@example.com", KeyGenerationAlgorithm.Ecc);
 
         // Assert
-        privateKey.GoKey.IsInvalid.Should().BeFalse();
+        privateKey.Base.ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class PgpPrivateKeyTest
         using var lockedKey = privateKey.Lock(PgpSamples.Passphrase);
 
         // Assert
-        lockedKey.GoKey.IsInvalid.Should().BeFalse();
+        lockedKey.Base.ForeignHandle.IsInvalid.Should().BeFalse();
         var unlock = () => lockedKey.Unlock(PgpSamples.Passphrase);
         unlock.Should().NotThrow();
     }
@@ -31,10 +31,10 @@ public sealed class PgpPrivateKeyTest
     public void Import_Succeeds()
     {
         // Act
-        using var unlockedKey = PgpPrivateKey.Import(PgpSamples.ArmoredLockedPrivateKey, PgpSamples.Passphrase, PgpEncoding.AsciiArmor);
+        using var unlockedKey = PgpPrivateKey.ImportAndUnlock(PgpSamples.ArmoredLockedPrivateKey, PgpSamples.Passphrase, PgpEncoding.AsciiArmor);
 
         // Assert
-        unlockedKey.GoKey.IsInvalid.Should().BeFalse();
+        unlockedKey.Base.ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]

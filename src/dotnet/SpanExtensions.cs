@@ -2,11 +2,14 @@
 
 internal static class SpanExtensions
 {
-    public static void FillWithTransform<TIn, TOut>(this Span<TOut> span, IReadOnlyList<TIn> input, Func<TIn, TOut> convertFunction)
+    extension<TIn, TOut>(Span<TOut> span)
     {
-        for (var i = 0; i < input.Count; ++i)
+        public void FillWithTransform(IReadOnlyList<TIn> input, Func<TIn, TOut> convertFunction)
         {
-            span[i] = convertFunction.Invoke(input[i]);
+            for (var i = 0; i < input.Count; ++i)
+            {
+                span[i] = convertFunction.Invoke(input[i]);
+            }
         }
     }
 }

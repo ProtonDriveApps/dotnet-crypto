@@ -1,8 +1,8 @@
 ﻿namespace Proton.Cryptography.Pgp;
 
-public sealed class PgpSignatureDetails
+public readonly struct PgpSignatureDetails
 {
-    public PgpSignatureDetails(long keyId)
+    internal PgpSignatureDetails(long keyId)
     {
         KeyId = keyId;
     }

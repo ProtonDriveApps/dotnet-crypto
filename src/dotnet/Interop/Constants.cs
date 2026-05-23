@@ -2,5 +2,5 @@
 
 internal static class Constants
 {
-    public const string GoLibraryName = "proton_crypto";
+    public const string ForeignLibraryName = "proton_crypto";
 }

@@ -4,6 +4,8 @@ namespace Proton.Cryptography.Tests.Pgp;
 
 public sealed class PgpEncryptingStreamTest
 {
+    private const int Timeout = 500;
+
     [Theory]
     [InlineData(PgpEncoding.None)]
     [InlineData(PgpEncoding.AsciiArmor)]
@@ -296,7 +298,7 @@ public sealed class PgpEncryptingStreamTest
         verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
-    [Theory]
+    [Theory(Timeout = Timeout)]
     [InlineData(1, 1, PgpEncoding.None)]
     [InlineData(1, 2, PgpEncoding.None)]
     [InlineData(1, 4096, PgpEncoding.None)]
@@ -332,7 +334,7 @@ public sealed class PgpEncryptingStreamTest
         decryptedBytes.Should().Equal(plainData);
     }
 
-    [Theory]
+    [Theory(Timeout = Timeout)]
     [InlineData(PgpProfile.Proton, 100, 1, PgpEncoding.None)]
     [InlineData(PgpProfile.Proton, 100, 4096, PgpEncoding.None)]
     [InlineData(PgpProfile.Proton, 100_000, 4096, PgpEncoding.None)]
@@ -369,7 +371,7 @@ public sealed class PgpEncryptingStreamTest
         decryptedData.Should().Equal(plainData);
     }
 
-    [Theory]
+    [Theory(Timeout = Timeout)]
     [InlineData(1, 1, PgpEncoding.None)]
     [InlineData(1, 2, PgpEncoding.None)]
     [InlineData(1, 4096, PgpEncoding.None)]
@@ -405,7 +407,7 @@ public sealed class PgpEncryptingStreamTest
         decryptedData.Should().Equal(plainData);
     }
 
-    [Theory]
+    [Theory(Timeout = Timeout)]
     [InlineData(PgpProfile.Proton, 100, PgpEncoding.None)]
     [InlineData(PgpProfile.Proton, 100_000, PgpEncoding.None)]
     [InlineData(PgpProfile.ProtonAead, 100, PgpEncoding.None)]

@@ -10,11 +10,17 @@ namespace Proton.Cryptography.Pgp;
 /// <remarks>
 /// To immediately clear sensitive data, call the <see cref="Dispose()"/> method.
 /// </remarks>
-public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerificationKeyRingSource, IEncryptionKeyRingSource, ISigningKeyRingSource, IDisposable
+public readonly partial struct PgpPrivateKey
+    : IDecryptionKeyRingSource, IVerificationKeyRingSource, IEncryptionKeyRingSource, ISigningKeyRingSource, IDisposable
 {
-    internal PgpPrivateKey(GoKey goKey)
+    internal PgpPrivateKey(nint foreignHandle)
     {
-        GoKey = goKey;
+        Base = new PgpKey(foreignHandle);
+    }
+
+    internal PgpPrivateKey(PgpKey baseKey)
+    {
+        Base = baseKey;
     }
 
     PgpPrivateKeyRing IDecryptionKeyRingSource.DecryptionKeyRing => this;
@@ -22,14 +28,16 @@ public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerifi
     PgpKeyRing IEncryptionKeyRingSource.EncryptionKeyRing => this;
     PgpPrivateKeyRing ISigningKeyRingSource.SigningKeyRing => this;
 
-    public int Version => GoKey.Version;
-    public nint Id => GoKey.Id;
-    public bool CanEncrypt => GoKey.CanEncrypt;
-    public bool CanVerify => GoKey.CanVerify;
-    public bool IsExpired => GoKey.IsExpired;
-    public bool IsRevoked => GoKey.IsRevoked;
+    public nint Id => Base.Id;
+    public int Version => Base.Version;
+    public bool CanEncrypt => Base.CanEncrypt;
+    public bool CanVerify => Base.CanVerify;
+    public bool IsExpired => Base.IsExpired;
+    public bool IsRevoked => Base.IsRevoked;
 
-    internal GoKey GoKey => field ?? throw new InvalidOperationException("Invalid handle");
+    internal PgpKey Base { get; }
+
+    public static implicit operator PgpKey(PgpPrivateKey privateKey) => privateKey.Base;
 
     public static unsafe PgpPrivateKey Generate(
         string name,
@@ -38,8 +46,6 @@ public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerifi
         PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
-        GoKey? goPrivateKey;
-
         var nameUtf8BytesMaxLength = Encoding.UTF8.GetMaxByteCount(name.Length);
         var nameUtf8Bytes = MemoryProvider.GetHeapMemoryIfTooLargeForStack(nameUtf8BytesMaxLength, out var nameHeapMemory, out var nameHeapMemoryOwner)
             ? nameHeapMemory.Span
@@ -65,7 +71,7 @@ public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerifi
                 {
                     fixed (byte* emailAddressUtf8BytesPointer = emailAddressUtf8Bytes)
                     {
-                        var parameters = new KeyGenerationParameters(
+                        var parameters = new InteropKeyGenerationParameters(
                             nameUtf8BytesPointer,
                             (nuint)nameUtf8BytesLength,
                             emailAddressUtf8BytesPointer,
@@ -74,91 +80,73 @@ public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerifi
                             profile,
                             timeProviderOverride);
 
-                        using var goError = GoGenerate(parameters, out var unsafePrivateKeyHandle);
-                        goError.ThrowIfFailure();
+                        using var error = ForeignFunctions.Generate(parameters, out var privateKeyHandle);
+                        error.ThrowPgpExceptionIfAny();
 
-                        goPrivateKey = new GoKey(unsafePrivateKeyHandle);
+                        return new PgpPrivateKey(privateKeyHandle);
                     }
                 }
             }
         }
-
-        return new PgpPrivateKey(goPrivateKey);
     }
 
-    public static PgpPrivateKey Import(ReadOnlySpan<byte> key, ReadOnlySpan<byte> passphrase, PgpEncoding? encoding = null)
+    public static PgpPrivateKey Import(ReadOnlySpan<byte> unlockedKeyBytes, PgpEncoding? encoding = null)
     {
-        using var goError = GoImportUnlock(
-            MemoryMarshal.GetReference(key),
-            (nuint)key.Length,
+        var importedKey = PgpSecretKey.Import(unlockedKeyBytes, encoding);
+
+        return new PgpPrivateKey(importedKey.Base);
+    }
+
+    public static PgpPrivateKey ImportAndUnlock(ReadOnlySpan<byte> lockedKeyBytes, ReadOnlySpan<byte> passphrase, PgpEncoding? encoding = null)
+    {
+        using var error = ForeignFunctions.ImportUnlock(
+            MemoryMarshal.GetReference(lockedKeyBytes),
+            (nuint)lockedKeyBytes.Length,
             MemoryMarshal.GetReference(passphrase),
             (nuint)passphrase.Length,
-            encoding.ToGoEncoding(),
+            encoding.ToInteropEncoding(),
             out var privateKeyHandle);
 
-        goError.ThrowIfFailure();
+        error.ThrowPgpExceptionIfAny();
 
-        return new PgpPrivateKey(new GoKey(privateKeyHandle));
+        return new PgpPrivateKey(privateKeyHandle);
     }
+
+    public void Export(Stream stream, PgpEncoding encoding) => Base.Export(stream, encoding);
 
     public PgpSecretKey Lock(ReadOnlySpan<byte> passphrase)
     {
-        using var goError = GoLock(
-            GoKey,
+        using var error = ForeignFunctions.Lock(
+            Base.ForeignHandle,
             MemoryMarshal.GetReference(passphrase),
             (nuint)passphrase.Length,
-            out var unsafeLockedPrivateKeyHandle);
+            out var lockedPrivateKeyHandle);
 
-        goError.ThrowIfFailure();
+        error.ThrowPgpExceptionIfAny();
 
-        return new PgpSecretKey(new GoKey(unsafeLockedPrivateKeyHandle));
+        return new PgpSecretKey(lockedPrivateKeyHandle);
     }
 
     public PgpPublicKey ToPublic()
     {
-        using var goError = GoGetPublicKey(GoKey, out var publicKey);
-        goError.ThrowIfFailure();
+        using var error = ForeignFunctions.GetPublicKey(Base.ForeignHandle, out var publicKey);
+        error.ThrowPgpExceptionIfAny();
 
-        return new PgpPublicKey(new GoKey(publicKey));
+        return new PgpPublicKey(publicKey);
     }
 
-    public byte[] GetFingerprint() => GoKey.GetFingerprint();
-    public string[] GetSha256Fingerprints() => GoKey.GetSha256Fingerprints();
+    public byte[] GetFingerprint() => Base.GetFingerprint();
+    public string[] GetSha256Fingerprints() => Base.GetSha256Fingerprints();
 
-    public override string ToString()
-    {
-        return GoKey.ToString();
-    }
+    public override string ToString() => Base.ToString();
 
     public void Dispose()
     {
-        GoKey.Dispose();
+        Base.Dispose();
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_generate_key")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoGenerate(in KeyGenerationParameters parameters, out nint privateKeyHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_key_lock")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoLock(GoKey goPrivateKey, in byte passphrase, nuint passphraseLength, out nint lockedPrivateKeyHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_private_key_import_unlock")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoImportUnlock(
-        in byte key,
-        nuint keyLength,
-        in byte passphrase,
-        nuint passphraseLength,
-        GoPgpEncoding encoding,
-        out nint privateKeyHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_private_key_get_public_key")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoGetPublicKey(GoKey goPrivateKey, out nint publicKeyHandle);
-
     [StructLayout(LayoutKind.Sequential)]
-    private unsafe ref struct KeyGenerationParameters
+    internal unsafe ref struct InteropKeyGenerationParameters
     {
         public byte Profile;
         public bool HasGenerationTime;
@@ -170,7 +158,7 @@ public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerifi
         public long GenerationTime;
         public byte Algorithm;
 
-        public KeyGenerationParameters(
+        public InteropKeyGenerationParameters(
             byte* name,
             nuint nameLength,
             byte* emailAddress,
@@ -195,5 +183,30 @@ public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerifi
                 GenerationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
             }
         }
+    }
+
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_generate_key")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial InteropError Generate(in InteropKeyGenerationParameters parameters, out nint privateKeyHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_private_key_import_unlock")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial InteropError ImportUnlock(
+            in byte key,
+            nuint keyLength,
+            in byte passphrase,
+            nuint passphraseLength,
+            InteropPgpEncoding encoding,
+            out nint importedKeyHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_key_lock")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial InteropError Lock(ForeignKeySafeHandle unlockedKeyHandle, in byte passphrase, nuint passphraseLength, out nint lockedKeyHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_private_key_get_public_key")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial InteropError GetPublicKey(ForeignKeySafeHandle privateKeyHandle, out nint publicKeyHandle);
     }
 }

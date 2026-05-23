@@ -10,12 +10,12 @@ public static partial class PgpArmorEncoder
     {
         fixed (byte* outputPointer = output)
         {
-            var outputWriter = new SpanWriter(outputPointer, output.Length);
-            var goWriter = GoExternalWriter.FromSpanWriter(&outputWriter);
+            var outputSpanWriter = new SpanWriter(outputPointer, output.Length);
+            var outputWriter = InteropWriter.FromSpanWriter(&outputSpanWriter);
 
-            Encode(message, blockType, goWriter);
+            Encode(message, blockType, outputWriter);
 
-            return outputWriter.NumberOfBytesWritten;
+            return outputSpanWriter.NumberOfBytesWritten;
         }
     }
 
@@ -30,16 +30,16 @@ public static partial class PgpArmorEncoder
 
     public static void Encode(ReadOnlySpan<byte> message, PgpBlockType blockType, Stream outputStream)
     {
-        var streamHandle = GCHandle.Alloc(outputStream);
+        var outputStreamHandle = GCHandle.Alloc(outputStream);
         try
         {
-            var goWriter = GoExternalWriter.FromStreamHandle(streamHandle);
+            var outputWriter = InteropWriter.FromStreamHandle(outputStreamHandle);
 
-            Encode(message, blockType, goWriter);
+            Encode(message, blockType, outputWriter);
         }
         catch
         {
-            streamHandle.Free();
+            outputStreamHandle.Free();
             throw;
         }
     }
@@ -49,14 +49,17 @@ public static partial class PgpArmorEncoder
         return MemoryProvider.EstimateEncodedLength(originalLength, PgpEncoding.AsciiArmor);
     }
 
-    private static void Encode(ReadOnlySpan<byte> message, PgpBlockType blockType, in GoExternalWriter goWriter)
+    private static void Encode(ReadOnlySpan<byte> message, PgpBlockType blockType, in InteropWriter outputWriter)
     {
-        using var goError = GoEncode(MemoryMarshal.GetReference(message), (nuint)message.Length, blockType, goWriter);
+        using var error = ForeignFunctions.Encode(MemoryMarshal.GetReference(message), (nuint)message.Length, blockType, outputWriter);
 
-        goError.ThrowIfFailure();
+        error.ThrowPgpExceptionIfAny();
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_armor_message")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoEncode(in byte message, nuint messageLength, PgpBlockType blockType, GoExternalWriter outputWriter);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_armor_message")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError Encode(in byte message, nuint messageLength, PgpBlockType blockType, InteropWriter outputWriter);
+    }
 }

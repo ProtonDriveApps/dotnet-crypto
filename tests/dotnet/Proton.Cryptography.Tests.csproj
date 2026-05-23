@@ -9,6 +9,7 @@
     <IsTestProject>true</IsTestProject>
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,5 +37,13 @@
     <Using Include="Proton.Cryptography.Pgp" />
     <Using Include="Proton.Cryptography.Srp" />
   </ItemGroup>
+
+  <Target Name="CopyNativeLibraries" AfterTargets="Build">
+    <ItemGroup>
+      <NativeLibs Include="..\..\bin\runtimes\$(RuntimeIdentifier)\native\**\*.*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(NativeLibs)" DestinationFolder="$(OutDir)" />
+  </Target>
 
 </Project>

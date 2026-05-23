@@ -1,7 +1,9 @@
-﻿namespace Proton.Cryptography.Pgp.Interop;
+﻿using Proton.Cryptography.Interop;
+
+namespace Proton.Cryptography.Pgp.Interop;
 
 [StructLayout(LayoutKind.Sequential)]
-internal readonly unsafe ref struct GoDecryptionParameters
+internal readonly unsafe ref struct InteropDecryptionParameters
 {
     public readonly nuint DecryptionKeysLength;
     public readonly nuint VerificationKeysLength;
@@ -21,12 +23,12 @@ internal readonly unsafe ref struct GoDecryptionParameters
     public readonly byte* Password;
     public readonly byte* DetachedSignature;
 
-    public GoDecryptionParameters(
+    public InteropDecryptionParameters(
         nint* decryptionKeys,
         nuint decryptionKeysLength,
         nint* verificationKeys,
         nuint verificationKeysLength,
-        PgpSessionKey? sessionKey,
+        PgpSessionKey? sessionKeyOrNull,
         byte* password,
         nuint passwordLength,
         byte* detachedSignature,
@@ -41,9 +43,9 @@ internal readonly unsafe ref struct GoDecryptionParameters
         VerificationKeys = verificationKeys;
         VerificationKeysLength = verificationKeysLength;
 
-        if (sessionKey is not null)
+        if (sessionKeyOrNull is { } sessionKey)
         {
-            SessionKey = sessionKey.Value.GoSessionKey.DangerousGetHandle();
+            SessionKey = ((IForeignHandleProxy)sessionKey).ForeignHandle.DangerousGetHandle();
             HasSessionKey = true;
         }
 

@@ -4,14 +4,14 @@ using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
-internal sealed partial class PgpSigningContext : IDisposable
+public readonly partial struct PgpSigningContext : IDisposable
 {
-    private readonly GoSigningContextHandle _goHandle;
-
-    private PgpSigningContext(GoSigningContextHandle goHandle)
+    private PgpSigningContext(ForeignSigningContextSafeHandle foreignHandle)
     {
-        _goHandle = goHandle;
+        ForeignHandle = foreignHandle;
     }
+
+    private ForeignSigningContextSafeHandle ForeignHandle => field ?? throw new InvalidOperationException("Invalid handle");
 
     public static unsafe PgpSigningContext Create(string value, bool isCritical = false)
     {
@@ -20,29 +20,36 @@ internal sealed partial class PgpSigningContext : IDisposable
             ? heapMemory.Span
             : stackalloc byte[valueUtf8BytesMaxLength];
 
-        nint goHandle;
+        nint signingContextHandle;
         using (heapMemoryOwner)
         {
             var valueUtf8BytesLength = Encoding.UTF8.GetBytes(value, valueUtf8Bytes);
 
-            goHandle = GoCreate(MemoryMarshal.GetReference(valueUtf8Bytes), (nuint)valueUtf8BytesLength, isCritical);
+            signingContextHandle = ForeignFunctions.Create(MemoryMarshal.GetReference(valueUtf8Bytes), (nuint)valueUtf8BytesLength, isCritical);
         }
 
-        return new PgpSigningContext(new GoSigningContextHandle(goHandle));
+        return new PgpSigningContext(new ForeignSigningContextSafeHandle(signingContextHandle));
     }
 
     public void Dispose()
     {
-        _goHandle.Dispose();
+        ForeignHandle.Dispose();
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_signing_context_new")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial nint GoCreate(in byte value, nuint valueLength, [MarshalAs(UnmanagedType.U1)] bool isCritical);
-
-    private sealed partial class GoSigningContextHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private static partial class ForeignFunctions
     {
-        public GoSigningContextHandle(nint handle)
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_signing_context_new")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial nint Create(in byte value, nuint valueLength, [MarshalAs(UnmanagedType.U1)] bool isCritical);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_signing_context_new_destroy")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial void ReleaseHandle(nint handle);
+    }
+
+    private sealed class ForeignSigningContextSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    {
+        public ForeignSigningContextSafeHandle(nint handle)
             : this()
         {
             SetHandle(handle);
@@ -50,13 +57,9 @@ internal sealed partial class PgpSigningContext : IDisposable
 
         protected override bool ReleaseHandle()
         {
-            ReleaseHandle(handle);
+            ForeignFunctions.ReleaseHandle(handle);
 
             return true;
         }
-
-        [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_signing_context_new_destroy")]
-        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        private static partial void ReleaseHandle(nint handle);
     }
 }

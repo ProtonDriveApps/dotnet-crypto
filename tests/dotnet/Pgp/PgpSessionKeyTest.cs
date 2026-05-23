@@ -1,4 +1,6 @@
-﻿namespace Proton.Cryptography.Tests.Pgp;
+﻿using Proton.Cryptography.Interop;
+
+namespace Proton.Cryptography.Tests.Pgp;
 
 public class PgpSessionKeyTest
 {
@@ -9,7 +11,7 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.Generate(PgpSamples.SessionKeyCipher);
 
         // Assert
-        sessionKey.GoSessionKey.IsInvalid.Should().BeFalse();
+        ((IForeignHandleProxy)sessionKey).ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]
@@ -19,7 +21,7 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.GenerateForAead(PgpSamples.SessionKeyCipher);
 
         // Assert
-        sessionKey.GoSessionKey.IsInvalid.Should().BeFalse();
+        ((IForeignHandleProxy)sessionKey).ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]
@@ -29,7 +31,7 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.Import(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
 
         // Assert
-        sessionKey.GoSessionKey.IsInvalid.Should().BeFalse();
+        ((IForeignHandleProxy)sessionKey).ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]
@@ -39,7 +41,7 @@ public class PgpSessionKeyTest
         using var sessionKey = PgpSessionKey.ImportForAead(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
 
         // Assert
-        sessionKey.GoSessionKey.IsInvalid.Should().BeFalse();
+        ((IForeignHandleProxy)sessionKey).ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
     [Fact]

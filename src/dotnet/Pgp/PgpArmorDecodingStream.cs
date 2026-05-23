@@ -6,13 +6,13 @@ namespace Proton.Cryptography.Pgp;
 
 public sealed partial class PgpArmorDecodingStream : BaseReadOnlyStream
 {
-    private readonly GoReader _goReader;
+    private readonly ForeignReader _outputReader;
 
     private GCHandle _inputStreamHandle;
 
-    private PgpArmorDecodingStream(GoReader goReader, GCHandle inputStreamHandle)
+    private PgpArmorDecodingStream(ForeignReader outputReader, GCHandle inputStreamHandle)
     {
-        _goReader = goReader;
+        _outputReader = outputReader;
         _inputStreamHandle = inputStreamHandle;
     }
 
@@ -27,11 +27,11 @@ public sealed partial class PgpArmorDecodingStream : BaseReadOnlyStream
 
         try
         {
-            var interopReader = new GoExternalReader(streamHandle);
-            using var goError = GoOpen(interopReader, out var unsafeGoReaderHandle);
-            goError.ThrowIfFailure();
+            var inputReader = new InteropReader(streamHandle);
+            using var error = ForeignFunctions.Open(inputReader, out var outputReaderHandle);
+            error.ThrowPgpExceptionIfAny();
 
-            return new PgpArmorDecodingStream(new GoReader(unsafeGoReaderHandle), streamHandle);
+            return new PgpArmorDecodingStream(new ForeignReader(outputReaderHandle), streamHandle);
         }
         catch
         {
@@ -42,7 +42,7 @@ public sealed partial class PgpArmorDecodingStream : BaseReadOnlyStream
 
     public override int Read(Span<byte> buffer)
     {
-        return _goReader.Read(MemoryMarshal.GetReference(buffer), (nuint)buffer.Length);
+        return _outputReader.Read(buffer);
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -57,7 +57,7 @@ public sealed partial class PgpArmorDecodingStream : BaseReadOnlyStream
         {
             if (disposing)
             {
-                _goReader.Dispose();
+                _outputReader.Dispose();
             }
 
             _inputStreamHandle.Free();
@@ -66,7 +66,10 @@ public sealed partial class PgpArmorDecodingStream : BaseReadOnlyStream
         base.Dispose(disposing);
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_unarmor_message_stream")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoOpen(GoExternalReader inputReader, out nint readerHandle);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_unarmor_message_stream")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError Open(InteropReader inputReader, out nint outputReaderHandle);
+    }
 }

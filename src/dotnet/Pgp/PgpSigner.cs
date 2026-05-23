@@ -112,12 +112,12 @@ public static partial class PgpSigner
     {
         fixed (byte* signatureOutputPointer = signatureOutput)
         {
-            var outputWriter = new SpanWriter(signatureOutputPointer, signatureOutput.Length);
-            var goWriter = GoExternalWriter.FromSpanWriter(&outputWriter);
+            var outputSpanWriter = new SpanWriter(signatureOutputPointer, signatureOutput.Length);
+            var outputWriter = InteropWriter.FromSpanWriter(&outputSpanWriter);
 
-            Sign(input, signingKeyRing, goWriter, outputEncoding, outputType, profile, timeProviderOverride);
+            Sign(input, signingKeyRing, outputWriter, outputEncoding, outputType, profile, timeProviderOverride);
 
-            return outputWriter.NumberOfBytesWritten;
+            return outputSpanWriter.NumberOfBytesWritten;
         }
     }
 
@@ -165,9 +165,9 @@ public static partial class PgpSigner
         var outputStreamHandle = GCHandle.Alloc(outputStream);
         try
         {
-            var goWriter = GoExternalWriter.FromStreamHandle(outputStreamHandle);
+            var outputWriter = InteropWriter.FromStreamHandle(outputStreamHandle);
 
-            Sign(input, signingKeyRing, goWriter, outputEncoding, outputType, profile, timeProviderOverride);
+            Sign(input, signingKeyRing, outputWriter, outputEncoding, outputType, profile, timeProviderOverride);
         }
         finally
         {
@@ -182,17 +182,17 @@ public static partial class PgpSigner
         PgpProfile profile = default,
         TimeProvider? timeProviderOverride = null)
     {
-        fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
+            var parameters = new InteropSigningParameters(signingKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
 
             var outputStreamHandle = GCHandle.Alloc(outputStream);
             try
             {
-                var goWriter = GoExternalWriter.FromStreamHandle(outputStreamHandle);
+                var outputWriter = InteropWriter.FromStreamHandle(outputStreamHandle);
 
-                using var goError = GoSignCleartext(parameters, MemoryMarshal.GetReference(input), (nuint)input.Length, goWriter);
-                goError.ThrowIfFailure();
+                using var error = ForeignFunctions.SignCleartext(parameters, MemoryMarshal.GetReference(input), (nuint)input.Length, outputWriter);
+                error.ThrowPgpExceptionIfAny();
             }
             finally
             {
@@ -204,35 +204,48 @@ public static partial class PgpSigner
     private static unsafe void Sign(
         ReadOnlySpan<byte> input,
         PgpPrivateKeyRing signingKeyRing,
-        in GoExternalWriter goWriter,
+        in InteropWriter outputWriter,
         PgpEncoding outputEncoding,
         SigningOutputType outputType,
         PgpProfile profile,
         TimeProvider? timeProviderOverride)
     {
-        fixed (nint* goSigningKeysPointer = signingKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new GoSigningParameters(goSigningKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
+            var parameters = new InteropSigningParameters(signingKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
 
             var detached = outputType == SigningOutputType.SignatureOnly;
 
-            using var goError = GoSign(parameters, MemoryMarshal.GetReference(input), (nuint)input.Length, outputEncoding.ToGoEncoding(), detached, goWriter);
+            using var error = ForeignFunctions.Sign(
+                parameters,
+                MemoryMarshal.GetReference(input),
+                (nuint)input.Length,
+                outputEncoding.ToInteropEncoding(),
+                detached,
+                outputWriter);
 
-            goError.ThrowIfFailure();
+            error.ThrowPgpExceptionIfAny();
         }
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_sign")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoSign(
-        in GoSigningParameters parameters,
-        in byte data,
-        nuint dataLength,
-        GoPgpEncoding encoding,
-        [MarshalAs(UnmanagedType.U1)] bool detached,
-        GoExternalWriter outputWriter);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_sign")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError Sign(
+            in InteropSigningParameters parameters,
+            in byte data,
+            nuint dataLength,
+            InteropPgpEncoding encoding,
+            [MarshalAs(UnmanagedType.U1)] bool detached,
+            InteropWriter outputWriter);
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_sign_cleartext")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoSignCleartext(in GoSigningParameters parameters, in byte data, nuint dataLength, GoExternalWriter outputWriter);
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_sign_cleartext")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError SignCleartext(
+            in InteropSigningParameters parameters,
+            in byte data,
+            nuint dataLength,
+            InteropWriter outputWriter);
+    }
 }

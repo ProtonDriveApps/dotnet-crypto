@@ -15,12 +15,12 @@ public static partial class PgpDecrypter
     {
         fixed (byte* outputPointer = output)
         {
-            var outputWriter = new SpanWriter(outputPointer, output.Length);
-            var goResult = new GoPlaintextResult(&outputWriter);
+            var outputSpanWriter = new SpanWriter(outputPointer, output.Length);
+            var outputWriter = new InteropPlaintextResult(&outputSpanWriter);
 
-            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult, timeProviderOverride);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref outputWriter, timeProviderOverride);
 
-            return outputWriter.NumberOfBytesWritten;
+            return outputSpanWriter.NumberOfBytesWritten;
         }
     }
 
@@ -76,9 +76,9 @@ public static partial class PgpDecrypter
 
         try
         {
-            var goResult = new GoPlaintextResult(outputStreamHandle);
+            var plaintextResult = new InteropPlaintextResult(outputStreamHandle);
 
-            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref goResult, timeProviderOverride);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref plaintextResult, timeProviderOverride);
         }
         finally
         {
@@ -242,10 +242,10 @@ public static partial class PgpDecrypter
 
     public static unsafe PgpSessionKey DecryptSessionKey(ReadOnlySpan<byte> keyPackets, in PgpPrivateKeyRing decryptionKeyRing)
     {
-        fixed (nint* goDecryptionKeysPointer = decryptionKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* decryptionKeysPointer = decryptionKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new GoDecryptionParameters(
-                goDecryptionKeysPointer,
+            var parameters = new InteropDecryptionParameters(
+                decryptionKeysPointer,
                 (nuint)decryptionKeyRing.Count,
                 null,
                 0,
@@ -258,15 +258,15 @@ public static partial class PgpDecrypter
                 default,
                 null);
 
-            using var goError = GoDecryptSessionKey(
+            using var error = ForeignFunctions.DecryptSessionKey(
                 parameters,
                 MemoryMarshal.GetReference(keyPackets),
                 (nuint)keyPackets.Length,
-                out var unsafeGoSessionKeyHandle);
+                out var sessionKeyHandle);
 
-            goError.ThrowIfFailure();
+            error.ThrowPgpExceptionIfAny();
 
-            return new PgpSessionKey(new GoSessionKey(unsafeGoSessionKeyHandle));
+            return new PgpSessionKey(sessionKeyHandle);
         }
     }
 
@@ -286,7 +286,7 @@ public static partial class PgpDecrypter
         fixed (byte* outputPointer = output)
         {
             var outputWriter = new SpanWriter(outputPointer, output.Length);
-            var goResult = new GoPlaintextResult(&outputWriter);
+            var plaintextResult = new InteropPlaintextResult(&outputWriter);
 
             Decrypt(
                 input,
@@ -296,12 +296,12 @@ public static partial class PgpDecrypter
                 signatureLength,
                 signatureEncoding,
                 signatureEncryptionState,
-                verificationKeyRing.DangerousGetGoKeyHandles(),
-                ref goResult,
+                verificationKeyRing.DangerousGetForeignKeyHandles(),
+                ref plaintextResult,
                 timeProviderOverride);
 
-            verificationResult = goResult.HasVerificationResult
-                ? new PgpVerificationResult(new GoVerificationResult(goResult.VerificationResultHandle))
+            verificationResult = plaintextResult.HasVerificationResult
+                ? new PgpVerificationResult(plaintextResult.VerificationResultHandle)
                 : throw new PgpException("Missing verification result");
 
             return outputWriter.NumberOfBytesWritten;
@@ -325,7 +325,7 @@ public static partial class PgpDecrypter
 
         try
         {
-            var goResult = new GoPlaintextResult(outputStreamHandle);
+            var plaintextResult = new InteropPlaintextResult(outputStreamHandle);
 
             Decrypt(
                 input,
@@ -335,12 +335,12 @@ public static partial class PgpDecrypter
                 signatureLength,
                 signatureEncoding,
                 signatureEncryptionState,
-                verificationKeyRing.DangerousGetGoKeyHandles(),
-                ref goResult,
+                verificationKeyRing.DangerousGetForeignKeyHandles(),
+                ref plaintextResult,
                 timeProviderOverride);
 
-            verificationResult = goResult.HasVerificationResult
-                ? new PgpVerificationResult(new GoVerificationResult(goResult.VerificationResultHandle))
+            verificationResult = plaintextResult.HasVerificationResult
+                ? new PgpVerificationResult(plaintextResult.VerificationResultHandle)
                 : throw new PgpException("Missing verification result");
         }
         finally
@@ -357,23 +357,23 @@ public static partial class PgpDecrypter
         int signatureLength,
         PgpEncoding signatureEncoding,
         EncryptionState signatureEncryptionState,
-        ReadOnlySpan<nint> goVerificationKeyHandles,
-        ref GoPlaintextResult goResult,
+        ReadOnlySpan<nint> verificationKeyHandles,
+        ref InteropPlaintextResult plaintextResult,
         TimeProvider? timeProviderOverride)
     {
         var (decryptionKeyRing, sessionKey, password) = secrets;
 
-        fixed (nint* goDecryptionKeysPointer = decryptionKeyRing.DangerousGetGoKeyHandles())
+        fixed (nint* decryptionKeysPointer = decryptionKeyRing.DangerousGetForeignKeyHandles())
         {
             fixed (byte* passwordPointer = password)
             {
-                fixed (nint* goVerificationKeysPointer = goVerificationKeyHandles)
+                fixed (nint* verificationKeysPointer = verificationKeyHandles)
                 {
-                    var parameters = new GoDecryptionParameters(
-                        goDecryptionKeysPointer,
+                    var parameters = new InteropDecryptionParameters(
+                        decryptionKeysPointer,
                         (nuint)decryptionKeyRing.Count,
-                        goVerificationKeysPointer,
-                        (nuint)goVerificationKeyHandles.Length,
+                        verificationKeysPointer,
+                        (nuint)verificationKeyHandles.Length,
                         sessionKey,
                         passwordPointer,
                         (nuint)password.Length,
@@ -383,33 +383,36 @@ public static partial class PgpDecrypter
                         signatureEncryptionState,
                         timeProviderOverride);
 
-                    using var goError = GoDecrypt(
+                    using var error = ForeignFunctions.Decrypt(
                         parameters,
                         MemoryMarshal.GetReference(input),
                         (nuint)input.Length,
-                        inputEncoding.ToGoEncoding(),
-                        ref goResult);
+                        inputEncoding.ToInteropEncoding(),
+                        ref plaintextResult);
 
-                    goError.ThrowIfFailure();
+                    error.ThrowPgpExceptionIfAny();
                 }
             }
         }
     }
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_decrypt")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoDecrypt(
-        in GoDecryptionParameters parameters,
-        in byte body,
-        nuint bodyLength,
-        GoPgpEncoding encoding,
-        ref GoPlaintextResult result);
+    private static partial class ForeignFunctions
+    {
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_decrypt")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError Decrypt(
+            in InteropDecryptionParameters parameters,
+            in byte body,
+            nuint bodyLength,
+            InteropPgpEncoding encoding,
+            ref InteropPlaintextResult plaintextResult);
 
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_decrypt_session_key")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static unsafe partial GoError GoDecryptSessionKey(
-        in GoDecryptionParameters parameters,
-        in byte keyPackets,
-        nuint keyPacketsLength,
-        out nint sessionKeyHandle);
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_decrypt_session_key")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError DecryptSessionKey(
+            in InteropDecryptionParameters parameters,
+            in byte keyPackets,
+            nuint keyPacketsLength,
+            out nint sessionKeyHandle);
+    }
 }

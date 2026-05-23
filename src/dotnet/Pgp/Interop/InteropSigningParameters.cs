@@ -1,7 +1,7 @@
 ﻿namespace Proton.Cryptography.Pgp.Interop;
 
 [StructLayout(LayoutKind.Sequential)]
-internal unsafe readonly struct GoSigningParameters
+internal unsafe readonly struct InteropSigningParameters
 {
     public readonly byte Profile;
     public readonly nuint SigningKeysLength;
@@ -12,7 +12,7 @@ internal unsafe readonly struct GoSigningParameters
     public readonly nint SigningContext = 0;
     public readonly long SigningTime;
 
-    public GoSigningParameters(void* signingKeys, nuint signingKeysLength, PgpProfile profile, TimeProvider? timeProviderOverride)
+    public InteropSigningParameters(void* signingKeys, nuint signingKeysLength, PgpProfile profile, TimeProvider? timeProviderOverride)
     {
         Profile = (byte)profile;
         SigningKeysLength = signingKeysLength;

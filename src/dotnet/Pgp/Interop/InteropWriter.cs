@@ -3,27 +3,27 @@
 namespace Proton.Cryptography.Pgp.Interop;
 
 [StructLayout(LayoutKind.Sequential)]
-internal readonly unsafe struct GoExternalWriter
+internal readonly unsafe struct InteropWriter
 {
     public readonly nint OutputHandle;
     public readonly delegate* unmanaged[Cdecl]<nint, byte*, nuint, long> WriteFunctionPointer;
 
-    private GoExternalWriter(nint outputHandle, delegate* unmanaged[Cdecl]<nint, byte*, nuint, long> writeFunctionPointer)
+    private InteropWriter(nint outputHandle, delegate* unmanaged[Cdecl]<nint, byte*, nuint, long> writeFunctionPointer)
     {
         OutputHandle = outputHandle;
         WriteFunctionPointer = writeFunctionPointer;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static GoExternalWriter FromStreamHandle(GCHandle streamHandle)
+    public static InteropWriter FromStreamHandle(GCHandle streamHandle)
     {
-        return new GoExternalWriter(GCHandle.ToIntPtr(streamHandle), &WriteToStream);
+        return new InteropWriter(GCHandle.ToIntPtr(streamHandle), &WriteToStream);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static GoExternalWriter FromSpanWriter(SpanWriter* spanWriter)
+    public static InteropWriter FromSpanWriter(SpanWriter* spanWriter)
     {
-        return new GoExternalWriter(new nint(spanWriter), &WriteToSpan);
+        return new InteropWriter(new nint(spanWriter), &WriteToSpan);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
