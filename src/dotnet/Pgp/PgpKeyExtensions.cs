@@ -2,11 +2,11 @@
 
 public static class PgpKeyExtensions
 {
-    public static ArraySegment<byte> ToBytes(this PgpPrivateKey privateKey, PgpEncoding encoding = default)
+    public static ArraySegment<byte> ToBytes(this PgpSecretKey secretKey, PgpEncoding encoding = default)
     {
         using var stream = new MemoryStream();
 
-        privateKey.Export(stream, encoding);
+        secretKey.Export(stream, encoding);
 
         return stream.TryGetBuffer(out var buffer) ? buffer : stream.ToArray();
     }

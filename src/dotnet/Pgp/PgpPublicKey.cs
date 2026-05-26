@@ -4,6 +4,9 @@ using Proton.Cryptography.Pgp.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
+/// <summary>
+/// Represents an OpenPGP public key, which can be used for encryption and verification operations.
+/// </summary>
 public readonly partial struct PgpPublicKey : IVerificationKeyRingSource, IEncryptionKeyRingSource, IDisposable
 {
     private readonly GoKey? _goKey;

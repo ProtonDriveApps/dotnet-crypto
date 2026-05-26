@@ -252,8 +252,8 @@ internal static class PgpSamples
     public static readonly byte[] SessionKeyToken = Convert.FromBase64String("E4sPzqVRQkoPVe/30kYuE9CRjMqg3nTK5Izt6hTfDWI=");
     public static readonly SymmetricCipher SessionKeyCipher = SymmetricCipher.Aes256;
 
-    public static readonly PgpPrivateKey UnlockedPrivateKey = PgpPrivateKey.ImportAndUnlock(ArmoredLockedPrivateKey, Passphrase, PgpEncoding.AsciiArmor);
-    public static readonly PgpPrivateKey UnlockedPrivateKeyV6 = PgpPrivateKey.ImportAndUnlock(ArmoredLockedPrivateKeyV6, Passphrase, PgpEncoding.AsciiArmor);
+    public static readonly PgpPrivateKey UnlockedPrivateKey = PgpPrivateKey.Import(ArmoredLockedPrivateKey, Passphrase, PgpEncoding.AsciiArmor);
+    public static readonly PgpPrivateKey UnlockedPrivateKeyV6 = PgpPrivateKey.Import(ArmoredLockedPrivateKeyV6, Passphrase, PgpEncoding.AsciiArmor);
 
     public static readonly PgpPublicKey PublicKey = PgpPublicKey.Import(ArmoredPublicKey, PgpEncoding.AsciiArmor);
     public static readonly PgpPublicKey PublicKeyV6 = PgpPublicKey.Import(ArmoredPublicKeyV6, PgpEncoding.AsciiArmor);

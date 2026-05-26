@@ -2,6 +2,9 @@
 
 namespace Proton.Cryptography.Pgp;
 
+/// <summary>
+/// Represents an OpenPGP key that can be used for encryption and verification operations.
+/// </summary>
 public readonly struct PgpKey : IVerificationKeyRingSource, IEncryptionKeyRingSource
 {
     public PgpKey(PgpPrivateKey privateKey)

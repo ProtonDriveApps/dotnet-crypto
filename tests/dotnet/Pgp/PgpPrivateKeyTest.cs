@@ -28,39 +28,13 @@ public sealed class PgpPrivateKeyTest
     }
 
     [Fact]
-    public void Unlock_Succeeds()
+    public void Import_Succeeds()
     {
-        // Arrange
-        using var privateKey = PgpPrivateKey.Import(PgpSamples.ArmoredLockedPrivateKey, PgpEncoding.AsciiArmor);
-
         // Act
-        using var unlockedKey = privateKey.Unlock(PgpSamples.Passphrase);
+        using var unlockedKey = PgpPrivateKey.Import(PgpSamples.ArmoredLockedPrivateKey, PgpSamples.Passphrase, PgpEncoding.AsciiArmor);
 
         // Assert
         unlockedKey.GoKey.IsInvalid.Should().BeFalse();
-    }
-
-    [Fact]
-    public void ImportAndUnlock_Succeeds()
-    {
-        // Act
-        using var unlockedKey = PgpPrivateKey.ImportAndUnlock(PgpSamples.ArmoredLockedPrivateKey, PgpSamples.Passphrase, PgpEncoding.AsciiArmor);
-
-        // Assert
-        unlockedKey.GoKey.IsInvalid.Should().BeFalse();
-    }
-
-    [Fact]
-    public void Export_Throws_WhenHandleIsInvalid()
-    {
-        // Arrange
-        var privateKey = default(PgpPrivateKey);
-
-        // Act
-        var act = new Action(() => privateKey.Export(Stream.Null, default));
-
-        // Assert
-        act.Should().Throw<Exception>();
     }
 
     [Fact]

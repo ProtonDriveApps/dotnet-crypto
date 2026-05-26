@@ -4,14 +4,17 @@ using Proton.Cryptography.Pgp.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
-public readonly partial struct PgpPrivateKey
-    : IDecryptionKeyRingSource, IVerificationKeyRingSource, IEncryptionKeyRingSource, ISigningKeyRingSource, IDisposable
+/// <summary>
+/// Represents an unlocked OpenPGP private key, which can be used for all cryptographic operations.
+/// </summary>
+/// <remarks>
+/// To immediately clear sensitive data, call the <see cref="Dispose()"/> method.
+/// </remarks>
+public readonly partial struct PgpPrivateKey : IDecryptionKeyRingSource, IVerificationKeyRingSource, IEncryptionKeyRingSource, ISigningKeyRingSource, IDisposable
 {
-    private readonly GoKey? _goKey;
-
-    private PgpPrivateKey(GoKey goKey)
+    internal PgpPrivateKey(GoKey goKey)
     {
-        _goKey = goKey;
+        GoKey = goKey;
     }
 
     PgpPrivateKeyRing IDecryptionKeyRingSource.DecryptionKeyRing => this;
@@ -26,7 +29,7 @@ public readonly partial struct PgpPrivateKey
     public bool IsExpired => GoKey.IsExpired;
     public bool IsRevoked => GoKey.IsRevoked;
 
-    internal GoKey GoKey => _goKey ?? throw new InvalidOperationException("Invalid handle");
+    internal GoKey GoKey => field ?? throw new InvalidOperationException("Invalid handle");
 
     public static unsafe PgpPrivateKey Generate(
         string name,
@@ -83,7 +86,7 @@ public readonly partial struct PgpPrivateKey
         return new PgpPrivateKey(goPrivateKey);
     }
 
-    public static PgpPrivateKey ImportAndUnlock(ReadOnlySpan<byte> key, ReadOnlySpan<byte> passphrase, PgpEncoding? encoding = null)
+    public static PgpPrivateKey Import(ReadOnlySpan<byte> key, ReadOnlySpan<byte> passphrase, PgpEncoding? encoding = null)
     {
         using var goError = GoImportUnlock(
             MemoryMarshal.GetReference(key),
@@ -98,17 +101,17 @@ public readonly partial struct PgpPrivateKey
         return new PgpPrivateKey(new GoKey(privateKeyHandle));
     }
 
-    public void Export(Stream stream, PgpEncoding encoding)
+    public PgpSecretKey Lock(ReadOnlySpan<byte> passphrase)
     {
-        GoKey.Export(stream, encoding);
-    }
+        using var goError = GoLock(
+            GoKey,
+            MemoryMarshal.GetReference(passphrase),
+            (nuint)passphrase.Length,
+            out var unsafeLockedPrivateKeyHandle);
 
-    public PgpPrivateKey Lock(ReadOnlySpan<byte> passphrase)
-    {
-        using var goError = GoLock(GoKey, MemoryMarshal.GetReference(passphrase), (nuint)passphrase.Length, out var unsafeLockedPrivateKeyHandle);
         goError.ThrowIfFailure();
 
-        return new PgpPrivateKey(new GoKey(unsafeLockedPrivateKeyHandle));
+        return new PgpSecretKey(new GoKey(unsafeLockedPrivateKeyHandle));
     }
 
     public PgpPublicKey ToPublic()
@@ -132,30 +135,6 @@ public readonly partial struct PgpPrivateKey
         GoKey.Dispose();
     }
 
-    // This stays internal for testing purposes, as we want users to validate their keys through unlocking
-    internal static PgpPrivateKey Import(ReadOnlySpan<byte> key, PgpEncoding? encoding = null)
-    {
-        using var goError = GoImport(
-            MemoryMarshal.GetReference(key),
-            (nuint)key.Length,
-            encoding.ToGoEncoding(),
-            out var privateKeyHandle);
-
-        goError.ThrowIfFailure();
-
-        return new PgpPrivateKey(new GoKey(privateKeyHandle));
-    }
-
-    // This stays internal for testing purposes, because the users should never have a private key that is locked (and therefore not
-    // authenticated through unlocking)
-    internal PgpPrivateKey Unlock(ReadOnlySpan<byte> passphrase)
-    {
-        using var goError = GoUnlock(GoKey, MemoryMarshal.GetReference(passphrase), (nuint)passphrase.Length, out var unsafeUnlockedPrivateKeyHandle);
-        goError.ThrowIfFailure();
-
-        return new PgpPrivateKey(new GoKey(unsafeUnlockedPrivateKeyHandle));
-    }
-
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_generate_key")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static partial GoError GoGenerate(in KeyGenerationParameters parameters, out nint privateKeyHandle);
@@ -163,18 +142,6 @@ public readonly partial struct PgpPrivateKey
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_key_lock")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static partial GoError GoLock(GoKey goPrivateKey, in byte passphrase, nuint passphraseLength, out nint lockedPrivateKeyHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_key_unlock")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoUnlock(GoKey goPrivateKey, in byte passphrase, nuint passphraseLength, out nint unlockedPrivateKeyHandle);
-
-    [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_private_key_import")]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    private static partial GoError GoImport(
-        in byte key,
-        nuint keyLength,
-        GoPgpEncoding encoding,
-        out nint privateKeyHandle);
 
     [LibraryImport(Constants.GoLibraryName, EntryPoint = "pgp_private_key_import_unlock")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
