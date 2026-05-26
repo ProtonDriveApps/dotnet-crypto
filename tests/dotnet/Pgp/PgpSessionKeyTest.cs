@@ -104,7 +104,7 @@ public class PgpSessionKeyTest
         using var outputStream = new MemoryStream();
 
         // Act
-        sessionKey.EncryptToStream(Encoding.UTF8.GetBytes(PgpSamples.PlainText), outputStream);
+        sessionKey.EncryptToStream(PgpSamples.PlainText, outputStream);
 
         // Assert
         outputStream.Seek(2, SeekOrigin.Begin);
@@ -120,7 +120,7 @@ public class PgpSessionKeyTest
         using var outputStream = new MemoryStream();
 
         // Act
-        sessionKey.EncryptToStream(Encoding.UTF8.GetBytes(PgpSamples.PlainText), outputStream);
+        sessionKey.EncryptToStream(PgpSamples.PlainText, outputStream);
 
         // Assert
         outputStream.Seek(2, SeekOrigin.Begin);

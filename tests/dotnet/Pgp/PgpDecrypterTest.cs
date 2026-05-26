@@ -5,11 +5,27 @@ public class PgpDecrypterTest
     [Theory]
     [InlineData(PgpProfile.Proton)]
     [InlineData(PgpProfile.ProtonAead)]
+    public void Export_Succeeds(PgpProfile profile)
+    {
+        // Arrange
+        var sessionKey = profile == PgpProfile.Proton ? PgpSamples.SessionKey : PgpSamples.SessionKeyV6;
+
+        // Act
+        var token = sessionKey.Export();
+
+        // Assert
+        token.Should().Equal(PgpSamples.SessionKeyToken);
+    }
+
+    [Theory]
+    [InlineData(PgpProfile.Proton)]
+    [InlineData(PgpProfile.ProtonAead)]
     public void DecryptSessionKey_DecryptsSessionKey(PgpProfile profile)
     {
         // Arrange
-        var privateKey = profile == PgpProfile.Proton ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
-        var keyPacket = profile == PgpProfile.Proton ? PgpSamples.KeyPacket : PgpSamples.KeyPacketV6;
+        var (privateKey, keyPacket) = profile == PgpProfile.Proton
+            ? (PgpSamples.UnlockedPrivateKey, PgpSamples.KeyPacket)
+            : (PgpSamples.UnlockedPrivateKeyV6, PgpSamples.KeyPacketV6);
 
         // Act
         var sessionKey = PgpDecrypter.DecryptSessionKey(keyPacket, privateKey);
@@ -21,27 +37,10 @@ public class PgpDecrypterTest
     [Theory]
     [InlineData(PgpProfile.Proton)]
     [InlineData(PgpProfile.ProtonAead)]
-    public void DecryptSessionKey_DecryptedSessionKeyCanBeExported(PgpProfile profile)
-    {
-        // Arrange
-        var privateKey = profile == PgpProfile.Proton ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
-        var keyPacket = profile == PgpProfile.Proton ? PgpSamples.KeyPacket : PgpSamples.KeyPacketV6;
-        var sessionKey = PgpDecrypter.DecryptSessionKey(keyPacket, privateKey);
-
-        // Act
-        var act = () => sessionKey.Export();
-
-        // Assert
-        act.Should().NotThrow();
-    }
-
-    [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
     public void DecryptSessionKey_DecryptsSessionKeyWithExtensionMethod(PgpProfile profile)
     {
         // Arrange
-        var privateKey = profile == PgpProfile.Proton ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
+        var privateKey = profile == PgpProfile.Proton ? PgpSamples.UnlockedPrivateKey : PgpSamples.UnlockedPrivateKeyV6;
         var keyPacket = profile == PgpProfile.Proton ? PgpSamples.KeyPacket : PgpSamples.KeyPacketV6;
 
         // Act
@@ -54,100 +53,77 @@ public class PgpDecrypterTest
     [Fact]
     public void Decrypt_DecryptsMessage_WithPrivateKey()
     {
-        // Arrange
-        var input = Encoding.ASCII.GetBytes(PgpSamples.KeyBasedArmoredUnsignedMessage);
-
         // Act
-        var output = PgpDecrypter.Decrypt(input, PgpSamples.PrivateKey, PgpEncoding.AsciiArmor);
+        var output = PgpDecrypter.Decrypt(PgpSamples.KeyBasedArmoredUnsignedMessage, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
 
         // Assert
-        var outputString = Encoding.UTF8.GetString(output);
-        outputString.Should().Be(PgpSamples.PlainText);
+        output.Should().Equal(PgpSamples.PlainText);
     }
 
     [Fact]
     public void Decrypt_DecryptsMessage_WithPrivateKeyV6()
     {
-        // Arrange
-        var input = Encoding.ASCII.GetBytes(PgpSamples.KeyBasedArmoredUnsignedAeadMessage);
-
         // Act
-        var output = PgpDecrypter.Decrypt(input, PgpSamples.PrivateKeyV6, PgpEncoding.AsciiArmor);
+        var output = PgpDecrypter.Decrypt(PgpSamples.KeyBasedArmoredUnsignedAeadMessage, PgpSamples.UnlockedPrivateKeyV6, PgpEncoding.AsciiArmor);
 
         // Assert
-        var outputString = Encoding.UTF8.GetString(output);
-        outputString.Should().Be(PgpSamples.PlainText);
+        output.Should().Equal(PgpSamples.PlainText);
     }
 
     [Fact]
     public void Decrypt_DecryptsMessage_WithPassword()
     {
-        // Arrange
-        var input = Encoding.ASCII.GetBytes(PgpSamples.PasswordBasedArmoredUnsignedMessage);
-
         // Act
-        var output = PgpDecrypter.Decrypt(input, PgpSamples.Password, PgpEncoding.AsciiArmor);
+        var output = PgpDecrypter.Decrypt(PgpSamples.PasswordBasedArmoredUnsignedMessage, PgpSamples.Password, PgpEncoding.AsciiArmor);
 
         // Assert
-        var outputString = Encoding.UTF8.GetString(output);
-        outputString.Should().Be(PgpSamples.PlainText);
+        output.Should().Equal(PgpSamples.PlainText);
     }
 
     [Fact]
     public void Decrypt_DecryptsDataPacket_WithSessionKey()
     {
-        // Arrange
-        var dataPacket = Convert.FromBase64String(PgpSamples.LongDataPacket);
-
         // Act
-        var output = PgpDecrypter.Decrypt(dataPacket, PgpSamples.SessionKey);
+        var output = PgpDecrypter.Decrypt(PgpSamples.LongDataPacket, PgpSamples.SessionKey);
 
         // Assert
-        var outputString = Encoding.UTF8.GetString(output);
-        outputString.Should().Be(PgpSamples.LongPlainText);
+        output.Should().Equal(PgpSamples.LongPlainText);
     }
 
     [Theory]
-    [InlineData(PgpVerificationStatus.Ok, PgpSamples.ArmoredSignedMessage)]
-    [InlineData(PgpVerificationStatus.Failed, PgpSamples.KeyBasedArmoredMessageWithInvalidSignature)]
-    [InlineData(PgpVerificationStatus.NoVerifier, PgpSamples.KeyBasedArmoredMessageWithNonMatchingSignature)]
-    [InlineData(PgpVerificationStatus.NotSigned, PgpSamples.KeyBasedArmoredUnsignedMessage)]
-    public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsAttached(PgpVerificationStatus expectedStatus, string armoredInput)
+    [MemberData(nameof(VerificationTestData.AttachedSignatures), MemberType = typeof(VerificationTestData))]
+    public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsAttached(Func<byte[]> armoredInput, PgpVerificationStatus expectedStatus)
     {
-        // Arrange
-        var input = Encoding.ASCII.GetBytes(armoredInput);
-
         // Act
-        PgpDecrypter.DecryptAndVerify(input, PgpSamples.PrivateKey, PgpSamples.PublicKey, out var verificationResult, PgpEncoding.AsciiArmor);
+        PgpDecrypter.DecryptAndVerify(
+            armoredInput.Invoke(),
+            PgpSamples.UnlockedPrivateKey,
+            PgpSamples.PublicKey,
+            out var verificationResult,
+            PgpEncoding.AsciiArmor);
 
         // Assert
         verificationResult.Status.Should().Be(expectedStatus);
     }
 
     [Theory]
-    [InlineData(PgpVerificationStatus.Ok, PgpSamples.ArmoredSignature, EncryptionState.Plain)]
-    [InlineData(PgpVerificationStatus.Ok, PgpSamples.ArmoredEncryptedSignature, EncryptionState.Encrypted)]
-    [InlineData(PgpVerificationStatus.NotSigned, "", EncryptionState.Plain)]
-    [InlineData(PgpVerificationStatus.Failed, PgpSamples.ArmoredInvalidSignature, EncryptionState.Plain)]
+    [MemberData(nameof(VerificationTestData.DetachedSignatures), MemberType = typeof(VerificationTestData))]
     public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsDetached(
-        PgpVerificationStatus expectedStatus,
-        string signatureInput,
-        EncryptionState encryptionState)
+        Func<byte[]> signatureInput,
+        PgpEncoding signatureEncoding,
+        EncryptionState signatureEncryptionState,
+        PgpVerificationStatus expectedStatus)
     {
-        // Arrange
-        var input = Encoding.ASCII.GetBytes(PgpSamples.KeyBasedArmoredUnsignedMessage);
-        var detachedSignature = Encoding.ASCII.GetBytes(signatureInput);
-
         // Act
         PgpDecrypter.DecryptAndVerify(
-            input,
-            PgpSamples.PrivateKey,
-            detachedSignature,
+            PgpSamples.KeyBasedArmoredUnsignedMessage,
+            PgpSamples.UnlockedPrivateKey,
+            signatureInput.Invoke(),
             PgpSamples.PublicKey,
             out var verificationResult,
             PgpEncoding.AsciiArmor,
-            PgpEncoding.AsciiArmor,
-            encryptionState);
+            signatureEncoding,
+            signatureEncryptionState);
 
         // Assert
         verificationResult.Status.Should().Be(expectedStatus);

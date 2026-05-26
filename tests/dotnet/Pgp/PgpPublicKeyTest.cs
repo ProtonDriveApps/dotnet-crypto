@@ -9,7 +9,7 @@ public sealed class PgpPublicKeyTest
         var publicKey = default(PgpPublicKey);
 
         // Act
-        var act = new Action(() => publicKey.Export(Stream.Null, default));
+        var act = () => publicKey.Export(Stream.Null, default);
 
         // Assert
         act.Should().Throw<Exception>();

@@ -8,7 +8,7 @@ public class PgpSignerTest
     public void Sign_OutputsSignatureOnly()
     {
         // Act
-        var signatureBytes = PgpSigner.Sign(Encoding.ASCII.GetBytes(PgpSamples.PlainText), PgpSamples.PrivateKey, PgpEncoding.AsciiArmor);
+        var signatureBytes = PgpSigner.Sign(PgpSamples.PlainText, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
 
         // Assert
         var signature = Encoding.ASCII.GetString(signatureBytes);
@@ -21,8 +21,8 @@ public class PgpSignerTest
     {
         // Act
         var messageBytes = PgpSigner.Sign(
-            Encoding.ASCII.GetBytes(PgpSamples.PlainText),
-            PgpSamples.PrivateKey,
+            PgpSamples.PlainText,
+            PgpSamples.UnlockedPrivateKey,
             PgpEncoding.AsciiArmor,
             SigningOutputType.FullMessage);
 
@@ -40,7 +40,7 @@ public class PgpSignerTest
         using var messageReader = new StreamReader(outputStream);
 
         // Act
-        PgpSigner.SignCleartext(Encoding.ASCII.GetBytes(PgpSamples.PlainText), PgpSamples.PrivateKey, outputStream);
+        PgpSigner.SignCleartext(PgpSamples.PlainText, PgpSamples.UnlockedPrivateKey, outputStream);
 
         // Assert
         outputStream.Seek(0, SeekOrigin.Begin);
@@ -67,7 +67,7 @@ public class PgpSignerTest
         var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, timeProviderOverride: keyGenerationTimeProvider);
 
         // Act
-        var act = new Action(() => privateKey.Sign(Encoding.UTF8.GetBytes(PgpSamples.PlainText), timeProviderOverride: encryptionTimeProvider));
+        var act = new Action(() => privateKey.Sign(PgpSamples.PlainText, timeProviderOverride: encryptionTimeProvider));
 
         // Assert
         act.Should().Throw<PgpException>().And.Message.Should().Contain("no valid signing keys");
@@ -91,7 +91,7 @@ public class PgpSignerTest
         var privateKey = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default, timeProviderOverride: keyGenerationTimeProvider);
 
         // Act
-        var act = () => privateKey.Sign(Encoding.UTF8.GetBytes(PgpSamples.PlainText), timeProviderOverride: encryptionTimeProvider);
+        var act = () => privateKey.Sign(PgpSamples.PlainText, timeProviderOverride: encryptionTimeProvider);
 
         // Assert
         act.Should().NotThrow();

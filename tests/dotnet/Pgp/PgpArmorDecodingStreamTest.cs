@@ -3,19 +3,20 @@
 public class PgpArmorDecodingStreamTest
 {
     [Fact]
-    public void Write_WritesWithArmorEncoding()
+    public void Read_ProducesDecodedBytes()
     {
         // Arrange
-        using var inputStream = new MemoryStream(Encoding.ASCII.GetBytes(PgpSamples.KeyBasedArmoredUnsignedMessage));
+        using var inputStream = new MemoryStream(PgpSamples.KeyBasedArmoredUnsignedMessage);
+        using var outputStream = new MemoryStream();
 
         using var stream = PgpArmorDecodingStream.Open(inputStream);
-
-        using var outputStream = new MemoryStream();
 
         // Act
         stream.CopyTo(outputStream);
 
         // Assert
-        outputStream.Length.Should().Be(PgpSamples.KeyPacket.Length + PgpSamples.DataPacket.Length);
+        var decryptedBytes = PgpDecrypter.Decrypt(outputStream.GetSpan(), PgpSamples.UnlockedPrivateKey);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 }

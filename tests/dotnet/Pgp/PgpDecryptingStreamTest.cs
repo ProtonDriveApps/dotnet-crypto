@@ -6,23 +6,23 @@ public sealed class PgpDecryptingStreamTest
     public void Read_DecryptsMessage_WithPrivateKey()
     {
         // Arrange
-        using var inputStream = new AsciiStream(PgpSamples.KeyBasedArmoredUnsignedMessage);
+        using var inputStream = new MemoryStream(PgpSamples.KeyBasedArmoredUnsignedMessage, writable: false);
 
-        using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.PrivateKey, PgpEncoding.AsciiArmor);
+        using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
 
         // Act
         var output = streamReader.ReadToEnd();
 
         // Assert
-        output.Should().Be(PgpSamples.PlainText);
+        output.Should().Be(Encoding.UTF8.GetString(PgpSamples.PlainText));
     }
 
     [Fact]
     public void Read_DecryptsMessage_WithPassword()
     {
         // Arrange
-        using var inputStream = new AsciiStream(PgpSamples.PasswordBasedArmoredUnsignedMessage);
+        using var inputStream = new MemoryStream(PgpSamples.PasswordBasedArmoredUnsignedMessage, writable: false);
 
         using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.Password, PgpEncoding.AsciiArmor);
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
@@ -31,16 +31,14 @@ public sealed class PgpDecryptingStreamTest
         var output = streamReader.ReadToEnd();
 
         // Assert
-        output.Should().Be(PgpSamples.PlainText);
+        output.Should().Be(Encoding.UTF8.GetString(PgpSamples.PlainText));
     }
 
     [Fact]
     public void Read_DecryptsDataPacket_WithSessionKey()
     {
         // Arrange
-        var dataPacket = Convert.FromBase64String(PgpSamples.LongDataPacket);
-
-        using var inputStream = new MemoryStream(dataPacket);
+        using var inputStream = new MemoryStream(PgpSamples.LongDataPacket, writable: false);
 
         using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.SessionKey);
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
@@ -49,20 +47,17 @@ public sealed class PgpDecryptingStreamTest
         var output = streamReader.ReadToEnd();
 
         // Assert
-        output.Should().Be(PgpSamples.LongPlainText);
+        output.Should().Be(Encoding.UTF8.GetString(PgpSamples.LongPlainText));
     }
 
     [Theory]
-    [InlineData(PgpVerificationStatus.Ok, PgpSamples.ArmoredSignedMessage)]
-    [InlineData(PgpVerificationStatus.Failed, PgpSamples.KeyBasedArmoredMessageWithInvalidSignature)]
-    [InlineData(PgpVerificationStatus.NoVerifier, PgpSamples.KeyBasedArmoredMessageWithNonMatchingSignature)]
-    [InlineData(PgpVerificationStatus.NotSigned, PgpSamples.KeyBasedArmoredUnsignedMessage)]
-    public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsAttached(PgpVerificationStatus expectedStatus, string input)
+    [MemberData(nameof(VerificationTestData.AttachedSignatures), MemberType = typeof(VerificationTestData))]
+    public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsAttached(Func<byte[]> armoredMessage, PgpVerificationStatus expectedStatus)
     {
         // Arrange
-        using var inputStream = new AsciiStream(input);
+        using var inputStream = new MemoryStream(armoredMessage.Invoke(), writable: false);
 
-        using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.PrivateKey, PgpSamples.PublicKey, PgpEncoding.AsciiArmor);
+        using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.UnlockedPrivateKey, PgpSamples.PublicKey, PgpEncoding.AsciiArmor);
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
         streamReader.ReadToEnd();
 
@@ -74,27 +69,24 @@ public sealed class PgpDecryptingStreamTest
     }
 
     [Theory]
-    [InlineData(PgpVerificationStatus.Ok, PgpSamples.ArmoredSignature, EncryptionState.Plain)]
-    [InlineData(PgpVerificationStatus.Ok, PgpSamples.ArmoredEncryptedSignature, EncryptionState.Encrypted)]
-    [InlineData(PgpVerificationStatus.NotSigned, "", EncryptionState.Plain)]
-    [InlineData(PgpVerificationStatus.Failed, PgpSamples.ArmoredInvalidSignature, EncryptionState.Plain)]
+    [MemberData(nameof(VerificationTestData.DetachedSignatures), MemberType = typeof(VerificationTestData))]
     public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsDetached(
-        PgpVerificationStatus expectedStatus,
-        string signatureInput,
-        EncryptionState encryptionState)
+        Func<byte[]> signature,
+        PgpEncoding signatureEncoding,
+        EncryptionState signatureEncryptionState,
+        PgpVerificationStatus expectedStatus)
     {
         // Arrange
-        using var inputStream = new AsciiStream(PgpSamples.KeyBasedArmoredUnsignedMessage);
-        var detachedSignature = Encoding.ASCII.GetBytes(signatureInput);
+        using var inputStream = new MemoryStream(PgpSamples.KeyBasedArmoredUnsignedMessage, writable: false);
 
         using var stream = PgpDecryptingStream.Open(
             inputStream,
-            PgpSamples.PrivateKey,
-            detachedSignature,
+            PgpSamples.UnlockedPrivateKey,
+            signature.Invoke(),
             PgpSamples.PublicKey,
             PgpEncoding.AsciiArmor,
-            PgpEncoding.AsciiArmor,
-            encryptionState);
+            signatureEncoding,
+            signatureEncryptionState);
 
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
         streamReader.ReadToEnd();

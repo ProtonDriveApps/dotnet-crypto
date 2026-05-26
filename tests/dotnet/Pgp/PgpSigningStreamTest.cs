@@ -9,8 +9,8 @@ public class PgpSigningStreamTest
     {
         // Arrange
         using var signatureOutputStream = new MemoryStream();
-        using var stream = PgpSigningStream.Open(signatureOutputStream, PgpSamples.PrivateKey, PgpEncoding.AsciiArmor, outputType);
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.LongPlainText));
+        using var stream = PgpSigningStream.Open(signatureOutputStream, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor, outputType);
+        stream.Write(PgpSamples.LongPlainText);
 
         using var signatureReader = new StreamReader(signatureOutputStream);
 

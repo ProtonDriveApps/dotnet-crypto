@@ -2,101 +2,116 @@ namespace Proton.Cryptography.Tests.Pgp;
 
 public sealed class PgpEncrypterTest
 {
-    [Fact]
-    public void Encrypt_Succeeds()
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Encrypt_ProducesValidMessage(PgpEncoding encoding)
     {
         // Act
-        var messageBytes = PgpEncrypter.Encrypt(Encoding.UTF8.GetBytes(PgpSamples.PlainText), PgpSamples.PublicKey, PgpEncoding.AsciiArmor);
+        var messageBytes = PgpEncrypter.Encrypt(PgpSamples.PlainText, PgpSamples.PublicKey, encoding);
 
         // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.Decrypt(messageBytes, encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
-    [Fact]
-    public void Encrypt_OutputsAttachedSignature()
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Encrypt_ProducesValidMessageWithAttachedSignature_WhenSigningKeysProvided(PgpEncoding encoding)
+    {
+        // Act
+        var messageBytes = PgpEncrypter.EncryptAndSign(PgpSamples.PlainText, PgpSamples.PublicKey, PgpSamples.UnlockedPrivateKey, encoding);
+
+        // Assert
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.DecryptAndVerify(messageBytes, PgpSamples.PublicKey, out var verificationResult, encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
+    }
+
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Encrypt_ProducesValidMessageWithDetachedSignature_WhenDetachedSignatureOutputRequested(PgpEncoding encoding)
     {
         // Act
         var messageBytes = PgpEncrypter.EncryptAndSign(
-            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
+            PgpSamples.PlainText,
             PgpSamples.PublicKey,
-            PgpSamples.PrivateKey,
-            PgpEncoding.AsciiArmor);
+            PgpSamples.UnlockedPrivateKey,
+            out var signature,
+            encoding);
 
         // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+        PgpEncodingAssertions.ShouldMatchEncoding(signature, encoding);
+
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.DecryptAndVerify(
+            messageBytes,
+            signature.AsSpan(),
+            PgpSamples.PublicKey,
+            out var verificationResult,
+            encoding,
+            encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
-    [Fact]
-    public void Encrypt_OutputsDetachedSignature()
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Encrypt_ProducesValidMessage_WhenCompressionEnabled(PgpEncoding encoding)
     {
         // Act
-        var messageBytes = PgpEncrypter.EncryptAndSign(
-            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
-            PgpSamples.PublicKey,
-            PgpSamples.PrivateKey,
-            out var signatureBytes,
-            PgpEncoding.AsciiArmor);
+        var messageBytes = PgpEncrypter.Encrypt(PgpSamples.PlainText, PgpSamples.PublicKey, encoding, PgpCompression.Default);
 
         // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        var signature = Encoding.UTF8.GetString(signatureBytes);
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.Decrypt(messageBytes, encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
-    [Fact]
-    public void Encrypt_Succeeds_WithCompression()
+    [Theory]
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void Encrypt_ProducesValidMessage_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Act
-        var messageBytes = PgpEncrypter.Encrypt(
-            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
-            PgpSamples.PublicKey,
-            PgpEncoding.AsciiArmor,
-            PgpCompression.Default);
+        var messageBytes = PgpEncrypter.Encrypt(PgpSamples.PlainText, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.Decrypt(messageBytes, encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
     [Theory]
     [InlineData(PgpProfile.Proton)]
     [InlineData(PgpProfile.ProtonAead)]
-    public void Encrypt_Succeeds_WithKeyV6(PgpProfile profile)
+    public void Encrypt_ProducesExpectedSessionKeyPacketLayout_WhenUsingSessionKeyWithV6Key(PgpProfile profile)
     {
-        // Act
-        var messageBytes = PgpEncrypter.Encrypt(
-            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
-            PgpSamples.PublicKeyV6,
-            PgpEncoding.AsciiArmor,
-            profile: profile);
-
-        // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(messageBytes, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
-    }
-
-    [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void Encrypt_Has_Valid_Sk_And_Dp_WithKeyV6(PgpProfile profile)
-    {
-        // Act
+        // Arrange
         var sessionKey = profile == PgpProfile.ProtonAead
             ? PgpSessionKey.ImportForAead(PgpSamples.SessionKeyToken, SymmetricCipher.Aes256)
             : PgpSessionKey.Import(PgpSamples.SessionKeyToken, SymmetricCipher.Aes256);
 
+        // Act
         var messageBytes = PgpEncrypter.Encrypt(
-            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
+            PgpSamples.PlainText,
             new EncryptionSecrets(PgpSamples.PublicKeyV6, sessionKey),
-            PgpEncoding.None,
             profile: profile);
 
         // Assert
@@ -121,52 +136,58 @@ public sealed class PgpEncrypterTest
     }
 
     [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void EncryptAndSign_WithV6Key_Succeeds_AttachedSignature(PgpProfile profile)
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void EncryptAndSign_ProducesValidMessageWithAttachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Act
         var messageBytes = PgpEncrypter.EncryptAndSign(
-            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
+            PgpSamples.PlainText,
             PgpSamples.PublicKeyV6,
-            PgpSamples.PrivateKeyV6,
-            PgpEncoding.AsciiArmor,
+            PgpSamples.UnlockedPrivateKeyV6,
+            encoding,
             profile: profile);
 
         // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
 
-        var decryptedBytes = PgpSamples.PrivateKeyV6.DecryptAndVerify(messageBytes, PgpSamples.PublicKeyV6, out var verificationResult, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.DecryptAndVerify(messageBytes, PgpSamples.PublicKeyV6, out var verificationResult, encoding);
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
         verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
     [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void EncryptAndSign_WithV6Key_Succeeds_DetachedSignature(PgpProfile profile)
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void EncryptAndSign_ProducesValidMessageWithDetachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Act
         var messageBytes = PgpEncrypter.EncryptAndSign(
-            Encoding.UTF8.GetBytes(PgpSamples.PlainText),
+            PgpSamples.PlainText,
             PgpSamples.PublicKeyV6,
-            PgpSamples.PrivateKey,
-            out var signatureBytes,
-            PgpEncoding.AsciiArmor,
+            PgpSamples.UnlockedPrivateKeyV6,
+            out var signature,
+            encoding,
             profile: profile);
 
         // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        var signature = Encoding.UTF8.GetString(signatureBytes);
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+        PgpEncodingAssertions.ShouldMatchEncoding(signature, encoding);
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.DecryptAndVerify(
+            messageBytes,
+            signature,
+            PgpSamples.PublicKeyV6,
+            out var verificationResult,
+            encoding,
+            encoding);
 
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(messageBytes, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
     [Theory]
@@ -176,126 +197,146 @@ public sealed class PgpEncrypterTest
     [InlineData(6, PgpProfile.Proton, PgpEncoding.AsciiArmor)]
     [InlineData(6, PgpProfile.ProtonAead, PgpEncoding.None)]
     [InlineData(6, PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
-    public void Encrypt_WithDifferentEncodings_CanBeDecrypted(
+    public void Encrypt_ProducesValidMessage_ForMultipleKeyVersionsProfilesAndEncodings(
         int keyVersion,
         PgpProfile profile,
         PgpEncoding encoding)
     {
         // Arrange
         var publicKey = keyVersion == 4 ? PgpSamples.PublicKey : PgpSamples.PublicKeyV6;
-        var privateKey = keyVersion == 4 ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
-        var plainData = Encoding.UTF8.GetBytes(PgpSamples.PlainText);
+        var privateKey = keyVersion == 4 ? PgpSamples.UnlockedPrivateKey : PgpSamples.UnlockedPrivateKeyV6;
 
         // Act
         var messageBytes = PgpEncrypter.Encrypt(
-            plainData,
+            PgpSamples.PlainText,
             publicKey,
             encoding,
             profile: profile);
 
         // Assert
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+
         var decryptedBytes = privateKey.Decrypt(messageBytes, encoding);
-        decryptedBytes.Should().Equal(plainData);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
     [Theory]
-    [InlineData(4, PgpProfile.Proton, PgpCompression.None)]
-    [InlineData(4, PgpProfile.Proton, PgpCompression.Default)]
-    [InlineData(6, PgpProfile.Proton, PgpCompression.None)]
-    [InlineData(6, PgpProfile.Proton, PgpCompression.Default)]
-    [InlineData(6, PgpProfile.ProtonAead, PgpCompression.None)]
-    [InlineData(6, PgpProfile.ProtonAead, PgpCompression.Default)]
-    public void Encrypt_WithDifferentCompression_CanBeDecrypted(int keyVersion, PgpProfile profile, PgpCompression compression)
+    [InlineData(4, PgpProfile.Proton, PgpCompression.None, PgpEncoding.None)]
+    [InlineData(4, PgpProfile.Proton, PgpCompression.Default, PgpEncoding.None)]
+    [InlineData(6, PgpProfile.Proton, PgpCompression.None, PgpEncoding.None)]
+    [InlineData(6, PgpProfile.Proton, PgpCompression.Default, PgpEncoding.None)]
+    [InlineData(6, PgpProfile.ProtonAead, PgpCompression.None, PgpEncoding.None)]
+    [InlineData(6, PgpProfile.ProtonAead, PgpCompression.Default, PgpEncoding.None)]
+    [InlineData(4, PgpProfile.Proton, PgpCompression.None, PgpEncoding.AsciiArmor)]
+    [InlineData(4, PgpProfile.Proton, PgpCompression.Default, PgpEncoding.AsciiArmor)]
+    [InlineData(6, PgpProfile.Proton, PgpCompression.None, PgpEncoding.AsciiArmor)]
+    [InlineData(6, PgpProfile.Proton, PgpCompression.Default, PgpEncoding.AsciiArmor)]
+    [InlineData(6, PgpProfile.ProtonAead, PgpCompression.None, PgpEncoding.AsciiArmor)]
+    [InlineData(6, PgpProfile.ProtonAead, PgpCompression.Default, PgpEncoding.AsciiArmor)]
+    public void Encrypt_ProducesValidMessage_ForMultipleKeyVersionsProfilesCompressionAndEncodings(
+        int keyVersion,
+        PgpProfile profile,
+        PgpCompression compression,
+        PgpEncoding encoding)
     {
         // Arrange
-        var publicKey = keyVersion == 4 ? PgpSamples.PublicKey : PgpSamples.PublicKeyV6;
-        var privateKey = keyVersion == 4 ? PgpSamples.PrivateKey : PgpSamples.PrivateKeyV6;
-        var plainData = Encoding.UTF8.GetBytes(PgpSamples.PlainText);
+        var (publicKey, privateKey) = keyVersion == 4
+            ? (PgpSamples.PublicKey, PgpSamples.UnlockedPrivateKey)
+            : (PgpSamples.PublicKeyV6, PgpSamples.UnlockedPrivateKeyV6);
 
         // Act
         var messageBytes = PgpEncrypter.Encrypt(
-            plainData,
+            PgpSamples.PlainText,
             publicKey,
+            encoding,
             outputCompression: compression,
             profile: profile);
 
         // Assert
-        var decryptedBytes = privateKey.Decrypt(messageBytes);
-        decryptedBytes.Should().Equal(plainData);
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+
+        var decryptedBytes = privateKey.Decrypt(messageBytes, encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
     [Theory]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void EncryptText_WithV6Key_Succeeds(PgpProfile profile)
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void EncryptText_ProducesValidMessage_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
+        // Arrange
+        var plainText = Encoding.UTF8.GetString(PgpSamples.PlainText);
+
         // Act
-        var messageBytes = PgpEncrypter.EncryptText(
-            PgpSamples.PlainText,
-            PgpSamples.PublicKeyV6,
-            PgpEncoding.AsciiArmor,
-            profile: profile);
+        var messageBytes = PgpEncrypter.EncryptText(plainText, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Assert
-        var message = Encoding.UTF8.GetString(messageBytes);
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(messageBytes, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        PgpEncodingAssertions.ShouldMatchEncoding(messageBytes, encoding);
+
+        var decryptedText = PgpSamples.UnlockedPrivateKeyV6.DecryptText(messageBytes, encoding);
+
+        decryptedText.Should().Be(plainText);
     }
 
     [Theory]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void EncryptToStream_WithV6Key_Succeeds(PgpProfile profile)
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void EncryptToStream_ProducesValidMessage_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Arrange
         using var outputStream = new MemoryStream();
-        var plainData = Encoding.UTF8.GetBytes(PgpSamples.PlainText);
+        var plainData = PgpSamples.PlainText;
 
         // Act
         PgpEncrypter.EncryptToStream(
             plainData,
             PgpSamples.PublicKeyV6,
             outputStream,
-            PgpEncoding.AsciiArmor,
+            encoding,
             profile: profile);
 
         // Assert
         outputStream.Seek(0, SeekOrigin.Begin);
-        using var reader = new StreamReader(outputStream);
-        var message = reader.ReadToEnd();
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(messageBytes, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.Decrypt(outputStream.GetSpan(), encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
     [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void EncryptAndSignToStream_WithV6Key_Succeeds(PgpProfile profile)
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void EncryptAndSignToStream_ProducesValidMessageWithAttachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Arrange
         using var outputStream = new MemoryStream();
-        var plainData = Encoding.UTF8.GetBytes(PgpSamples.PlainText);
+        var plainData = PgpSamples.PlainText;
 
         // Act
         PgpEncrypter.EncryptAndSignToStream(
             plainData,
             PgpSamples.PublicKeyV6,
             outputStream,
-            PgpSamples.PrivateKey,
-            PgpEncoding.AsciiArmor,
+            PgpSamples.UnlockedPrivateKey,
+            encoding,
             profile: profile);
 
         // Assert
         outputStream.Seek(0, SeekOrigin.Begin);
-        var messageBytes = outputStream.ToArray();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        var decryptedBytes = PgpSamples.PrivateKeyV6.DecryptAndVerify(messageBytes, PgpSamples.PublicKey, out var verificationResult, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.DecryptAndVerify(outputStream.GetSpan(), PgpSamples.PublicKey, out var verificationResult, encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
         verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 }

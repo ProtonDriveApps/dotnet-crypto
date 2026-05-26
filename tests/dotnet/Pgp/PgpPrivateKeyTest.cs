@@ -1,4 +1,4 @@
-﻿namespace Proton.Cryptography.Tests.Pgp;
+namespace Proton.Cryptography.Tests.Pgp;
 
 public sealed class PgpPrivateKeyTest
 {
@@ -31,7 +31,7 @@ public sealed class PgpPrivateKeyTest
     public void Unlock_Succeeds()
     {
         // Arrange
-        using var privateKey = PgpPrivateKey.Import(Encoding.ASCII.GetBytes(PgpSamples.ArmoredLockedPrivateKey), PgpEncoding.AsciiArmor);
+        using var privateKey = PgpPrivateKey.Import(PgpSamples.ArmoredLockedPrivateKey, PgpEncoding.AsciiArmor);
 
         // Act
         using var unlockedKey = privateKey.Unlock(PgpSamples.Passphrase);
@@ -44,10 +44,7 @@ public sealed class PgpPrivateKeyTest
     public void ImportAndUnlock_Succeeds()
     {
         // Act
-        using var unlockedKey = PgpPrivateKey.ImportAndUnlock(
-            Encoding.ASCII.GetBytes(PgpSamples.ArmoredLockedPrivateKey),
-            PgpSamples.Passphrase,
-            PgpEncoding.AsciiArmor);
+        using var unlockedKey = PgpPrivateKey.ImportAndUnlock(PgpSamples.ArmoredLockedPrivateKey, PgpSamples.Passphrase, PgpEncoding.AsciiArmor);
 
         // Assert
         unlockedKey.GoKey.IsInvalid.Should().BeFalse();
@@ -70,7 +67,7 @@ public sealed class PgpPrivateKeyTest
     public void Version_ReturnsValidVersion()
     {
         // Act
-        var version = PgpSamples.PrivateKey.Version;
+        var version = PgpSamples.UnlockedPrivateKey.Version;
 
         // Assert
         version.Should().NotBe(0);
@@ -80,7 +77,7 @@ public sealed class PgpPrivateKeyTest
     public void Id_ReturnsValidId()
     {
         // Act
-        var id = PgpSamples.PrivateKey.Id;
+        var id = PgpSamples.UnlockedPrivateKey.Id;
 
         // Assert
         id.Should().NotBe(0);
@@ -90,7 +87,7 @@ public sealed class PgpPrivateKeyTest
     public void GetFingerprint_ReturnsFingerprint()
     {
         // Act
-        var fingerprint = PgpSamples.PrivateKey.GetFingerprint();
+        var fingerprint = PgpSamples.UnlockedPrivateKey.GetFingerprint();
 
         // Assert
         fingerprint.Should().NotBeEmpty();
@@ -100,7 +97,7 @@ public sealed class PgpPrivateKeyTest
     public void GetSha256Fingerprints_ReturnsFingerprints()
     {
         // Act
-        var fingerprints = PgpSamples.PrivateKey.GetSha256Fingerprints();
+        var fingerprints = PgpSamples.UnlockedPrivateKey.GetSha256Fingerprints();
 
         // Assert
         fingerprints.Should().NotBeEmpty();
@@ -110,7 +107,7 @@ public sealed class PgpPrivateKeyTest
     public void CanVerify_DoesNotThrow()
     {
         // Act
-        var act = () => PgpSamples.PrivateKey.CanVerify;
+        var act = () => PgpSamples.UnlockedPrivateKey.CanVerify;
 
         // Assert
         act.Should().NotThrow();
@@ -120,7 +117,7 @@ public sealed class PgpPrivateKeyTest
     public void CanEncrypt_DoesNotThrow()
     {
         // Act
-        var act = () => PgpSamples.PrivateKey.CanEncrypt;
+        var act = () => PgpSamples.UnlockedPrivateKey.CanEncrypt;
 
         // Assert
         act.Should().NotThrow();
@@ -130,7 +127,7 @@ public sealed class PgpPrivateKeyTest
     public void IsExpired_DoesNotThrow()
     {
         // Act
-        var act = () => PgpSamples.PrivateKey.IsExpired;
+        var act = () => PgpSamples.UnlockedPrivateKey.IsExpired;
 
         // Assert
         act.Should().NotThrow();
@@ -140,7 +137,7 @@ public sealed class PgpPrivateKeyTest
     public void IsRevoked_DoesNotThrow()
     {
         // Act
-        var act = () => PgpSamples.PrivateKey.IsRevoked;
+        var act = () => PgpSamples.UnlockedPrivateKey.IsRevoked;
 
         // Assert
         act.Should().NotThrow();

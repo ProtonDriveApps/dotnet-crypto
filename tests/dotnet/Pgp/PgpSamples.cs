@@ -2,7 +2,7 @@
 
 internal static class PgpSamples
 {
-    public const string ArmoredLockedPrivateKey =
+    public static readonly byte[] ArmoredLockedPrivateKey =
         """
         -----BEGIN PGP PRIVATE KEY BLOCK-----
         Version: GopenPGP 2.1.3
@@ -22,9 +22,9 @@ internal static class PgpSamples
         AP4zK8gpETp13qCV6dooRD4LP2g/IAB+/f+VitR3JYptAw==
         =oSE9
         -----END PGP PRIVATE KEY BLOCK-----
-        """;
+        """u8.ToArray();
 
-    public const string ArmoredLockedPrivateKeyV6 =
+    public static readonly byte[] ArmoredLockedPrivateKeyV6 =
         """
         -----BEGIN PGP PRIVATE KEY BLOCK-----
 
@@ -45,9 +45,9 @@ internal static class PgpSamples
         TtsEPv6uncQSWHUpVIltgZ+jKieCah4ApExDyoYfup36qZVq/t66r//TF51sSYWx
         QM/NoVWBQR4zSYOfq+HngwbFRiweCRdW+Q7P6+f2++HyO9stE2Lduok1zPRrzg8=
         -----END PGP PRIVATE KEY BLOCK-----
-        """;
+        """u8.ToArray();
 
-    public const string ArmoredPublicKey =
+    public static readonly byte[] ArmoredPublicKey =
         """
         -----BEGIN PGP PUBLIC KEY BLOCK-----
         Version: GopenPGP 2.1.3
@@ -64,9 +64,9 @@ internal static class PgpSamples
         AH79/5WK1Hclim0D
         =HWbV
         -----END PGP PUBLIC KEY BLOCK-----
-        """;
+        """u8.ToArray();
 
-    public const string ArmoredPublicKeyV6 =
+    public static readonly byte[] ArmoredPublicKeyV6 =
         """
         -----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -84,9 +84,9 @@ internal static class PgpSamples
         +qmVav7euq//0xedbEmFsUDPzaFVgUEeM0mDn6vh54MGxUYsHgkXVvkOz+vn9vvh
         8jvbLRNi3bqJNcz0a84P
         -----END PGP PUBLIC KEY BLOCK-----
-        """;
+        """u8.ToArray();
 
-    public const string ArmoredSignedMessage =
+    public static readonly byte[] ArmoredSignedMessage =
         """
         -----BEGIN PGP MESSAGE-----
         Comment: https://gopenpgp.org
@@ -101,9 +101,9 @@ internal static class PgpSamples
         tP75Rg==
         =Qfb4
         -----END PGP MESSAGE-----
-        """;
+        """u8.ToArray();
 
-    public const string KeyBasedArmoredUnsignedMessage =
+    public static readonly byte[] KeyBasedArmoredUnsignedMessage =
         """
         -----BEGIN PGP MESSAGE-----
         Version: GopenPGP 2.1.3
@@ -115,9 +115,9 @@ internal static class PgpSamples
         7DrUSz9LxMH3CSd1Xg==
         =44WS
         -----END PGP MESSAGE-----
-        """;
+        """u8.ToArray();
 
-    public const string KeyBasedArmoredUnsignedAeadMessage =
+    public static readonly byte[] KeyBasedArmoredUnsignedAeadMessage =
         """
         -----BEGIN PGP MESSAGE-----
 
@@ -127,9 +127,9 @@ internal static class PgpSamples
         odkSSFS90G603l3ka5JE9uIew/44k/mMVDgK6X0wpvLQ9/N0Uqa/dKToC6AX+4N3
         W573Un1hNw==
         -----END PGP MESSAGE-----
-        """;
+        """u8.ToArray();
 
-    public const string KeyBasedArmoredMessageWithNonMatchingSignature =
+    public static readonly byte[] KeyBasedArmoredMessageWithNonMatchingSignature =
         """
         -----BEGIN PGP MESSAGE-----
         Version: GopenPGP 2.4.7
@@ -144,9 +144,9 @@ internal static class PgpSamples
         L0tq9w==
         =HeF7
         -----END PGP MESSAGE-----
-        """;
+        """u8.ToArray();
 
-    public const string KeyBasedArmoredMessageWithInvalidSignature =
+    public static readonly byte[] KeyBasedArmoredMessageWithInvalidSignature =
         """
         -----BEGIN PGP MESSAGE-----
         Version: GopenPGP 2.4.7
@@ -161,9 +161,9 @@ internal static class PgpSamples
         Bo5oMw==
         =J0RW
         -----END PGP MESSAGE-----
-        """;
+        """u8.ToArray();
 
-    public const string PasswordBasedArmoredUnsignedMessage =
+    public static readonly byte[] PasswordBasedArmoredUnsignedMessage =
         """
         -----BEGIN PGP MESSAGE-----
         Version: GopenPGP 2.2.2
@@ -174,12 +174,12 @@ internal static class PgpSamples
         colcDQE7aAcZl4fvLQ==
         =Cc05
         -----END PGP MESSAGE-----
-        """;
+        """u8.ToArray();
 
-    public const string Signature =
-        "wnUEABYKACcFAmBGWJkJEOE/bnKDTkKRFiEEL8kg4K5LYNzoAqRu4T9ucoNOQpEAACwDAP4ut6l46bH8j8w1odrkNVHGj7VXtzyS+HLb0am6Yihq9AD+K8TqreY0kdrmU0WKS4Codk2FnOBAr2Fp8mU17GKQjwo=";
+    public static readonly byte[] Signature = Convert.FromBase64String(
+        "wnUEABYKACcFAmBGWJkJEOE/bnKDTkKRFiEEL8kg4K5LYNzoAqRu4T9ucoNOQpEAACwDAP4ut6l46bH8j8w1odrkNVHGj7VXtzyS+HLb0am6Yihq9AD+K8TqreY0kdrmU0WKS4Codk2FnOBAr2Fp8mU17GKQjwo=");
 
-    public const string ArmoredSignature =
+    public static readonly byte[] ArmoredSignature =
         """
         -----BEGIN PGP SIGNATURE-----
         Comment: https://gopenpgp.org
@@ -190,12 +190,12 @@ internal static class PgpSamples
         U0WKS4Codk2FnOBAr2Fp8mU17GKQjwo=
         =nRHS
         -----END PGP SIGNATURE-----
-        """;
+        """u8.ToArray();
 
-    public const string InvalidSignature =
-        "wnUEABYKACcFAmKV34cJkOE/bnKDTkKRFiEEL8kg4K5LYNzoAqRu4T9ucoNOQpEAAGf8AP0TdxfvBWHPfLX1SQ0ZEls54jtXTxqxiWpZJb8uTJlgRQEAjGkdbpFWkxtrpQDA+UDlb6VptZv7KEcJdeUMRMrhfAs=";
+    public static readonly byte[] InvalidSignature = Convert.FromBase64String(
+        "wnUEABYKACcFAmKV34cJkOE/bnKDTkKRFiEEL8kg4K5LYNzoAqRu4T9ucoNOQpEAAGf8AP0TdxfvBWHPfLX1SQ0ZEls54jtXTxqxiWpZJb8uTJlgRQEAjGkdbpFWkxtrpQDA+UDlb6VptZv7KEcJdeUMRMrhfAs=");
 
-    public const string ArmoredInvalidSignature =
+    public static readonly byte[] ArmoredInvalidSignature =
         """
         -----BEGIN PGP SIGNATURE-----
         Version: GopenPGP 2.4.7
@@ -206,9 +206,9 @@ internal static class PgpSamples
         pQDA+UDlb6VptZv7KEcJdeUMRMrhfAs=
         =br1C
         -----END PGP SIGNATURE-----
-        """;
+        """u8.ToArray();
 
-    public const string ArmoredEncryptedSignature =
+    public static readonly byte[] ArmoredEncryptedSignature =
         """
         -----BEGIN PGP MESSAGE-----
         Comment: https://gopenpgp.org
@@ -222,9 +222,9 @@ internal static class PgpSamples
         4htYxdGBo4fjeDNNeW2QOHdoLWBa1M8c/1M=
         =1v+N
         -----END PGP MESSAGE-----
-        """;
+        """u8.ToArray();
 
-    public const string LongDataPacket =
+    public static readonly byte[] LongDataPacket = Convert.FromBase64String(
         """
         0uoBCMsEJkKs6wwow3uuUVmWWR/rCZhay3Uq8fMksgusifoi0R6ZlBYoshKU60t9oJkz2t2Rdxfqqho6VO/TDEovZOq49dLFR3AVuHiWD5gES33iR1LrIBJQZgmmiXChmbrIpSS1XX45idj8SQF2FSmE8
         xoWObz2NkpXUt9h6VlfyzpT9ENgG10vgIr8tS0YnsQkgICE/uVR1tZ48H38r9+PMyFAGi0sG9RxsvNIXqMl9iISY162Kg/HG7N4I2ASAL4/S/3S+nZjSsG5D2YTnkmx5uX7JBgHUPYiq0B/is43gzWlks
@@ -238,20 +238,7 @@ internal static class PgpSamples
         S3ZAKyDlbiKh3WYrTQKdUwOUmSZtF4ZX6SpIDBHjULqJZGESOK2JPkaqh8d3wK0sEDFWR7sGvU8VvqD8EJqYq4HonpulUohShX9BkmmPSMTyTUoWwJxq5EUFj95/WLicpCBuMAZS/tDuXIq8Z6YiQoyuI
         Dd5kcrC4QOSvIVhKJxBf+EM+E16oJBkUKm/jYPb22+ASpfXsCPp/4STCIOkdumFJwAG7oxqMV2I+ThT1umLhY01N+9T357qkzacAnOVW7X8RAs8th3Fkr62Tav/GSesQkuu1Cf1Q2sDEhPUliVsz9NnA=
         =
-        """;
-
-    public const string PlainText = "plain text";
-
-    public const string LongPlainText =
-        "plain text - Amet vero gubergren diam magna velit sea invidunt sit accusam eirmod dolor labore et aliquyam duo lorem lorem at veniam nonumy iriure eos "
-        + "clita tempor minim et lorem tempor elit ut duo in sadipscing aliquip ut sit lorem et sanctus duo iriure tempor vero volutpat at nam ut velit ut justo"
-        + " ipsum sed dolor amet duis sit dolore lorem dolores consetetur eirmod ex duis eum justo clita ut sit accumsan blandit facilisis nulla molestie sed mi"
-        + "nim takimata dolores voluptua clita no amet dolores dolore facilisis gubergren sed tempor at sit aliquip ipsum dolor liber stet sit sit sed quis prae"
-        + "sent stet aliquyam labore vero et minim diam labore veniam at takimata et voluptua tincidunt elitr lorem accusam duo dolore est elitr at ut ea est ea"
-        + " tincidunt accusam et et et ut laoreet sadipscing dolore sed kasd sed amet invidunt et velit id amet sadipscing tempor wisi sadipscing rebum eu et do"
-        + "lore tempor est at velit quis soluta lobortis est tempor aliquam diam dolore elitr gubergren sadipscing stet eu rebum lorem magna vero feugiat dolore"
-        + "s lorem congue labore ullamcorper sit duo magna euismod sadipscing nostrud ut diam magna praesent eum amet tempor sit nonumy ipsum aliquam sadipscing"
-        + " lorem sea ea";
+        """);
 
     public static readonly byte[] KeyPacket = Convert.FromBase64String(
         "wV4DQBQ9k/1PHwwSAQdAE3UTz3w3FEZ3Hta9V7a5ZuOk31K4aJNcN/mQ95g84jswwpd3vQphTgzyRatGz6fIxUfO78gCNbXjPMf6vz/TgLXhmrWelq3riy9u+c5Fltvh");
@@ -265,19 +252,18 @@ internal static class PgpSamples
     public static readonly byte[] SessionKeyToken = Convert.FromBase64String("E4sPzqVRQkoPVe/30kYuE9CRjMqg3nTK5Izt6hTfDWI=");
     public static readonly SymmetricCipher SessionKeyCipher = SymmetricCipher.Aes256;
 
-    public static readonly PgpPrivateKey PrivateKey = PgpPrivateKey.ImportAndUnlock(
-        Encoding.ASCII.GetBytes(ArmoredLockedPrivateKey),
-        Passphrase,
-        PgpEncoding.AsciiArmor);
+    public static readonly PgpPrivateKey UnlockedPrivateKey = PgpPrivateKey.ImportAndUnlock(ArmoredLockedPrivateKey, Passphrase, PgpEncoding.AsciiArmor);
+    public static readonly PgpPrivateKey UnlockedPrivateKeyV6 = PgpPrivateKey.ImportAndUnlock(ArmoredLockedPrivateKeyV6, Passphrase, PgpEncoding.AsciiArmor);
 
-    public static readonly PgpPrivateKey PrivateKeyV6 = PgpPrivateKey.ImportAndUnlock(
-        Encoding.ASCII.GetBytes(ArmoredLockedPrivateKeyV6),
-        Passphrase,
-        PgpEncoding.AsciiArmor);
-
-    public static readonly PgpPublicKey PublicKey = PgpPublicKey.Import(Encoding.ASCII.GetBytes(ArmoredPublicKey), PgpEncoding.AsciiArmor);
-    public static readonly PgpPublicKey PublicKeyV6 = PgpPublicKey.Import(Encoding.ASCII.GetBytes(ArmoredPublicKeyV6), PgpEncoding.AsciiArmor);
+    public static readonly PgpPublicKey PublicKey = PgpPublicKey.Import(ArmoredPublicKey, PgpEncoding.AsciiArmor);
+    public static readonly PgpPublicKey PublicKeyV6 = PgpPublicKey.Import(ArmoredPublicKeyV6, PgpEncoding.AsciiArmor);
     public static readonly PgpSessionKey SessionKey = PgpSessionKey.Import(SessionKeyToken, SessionKeyCipher);
+    public static readonly PgpSessionKey SessionKeyV6 = PgpSessionKey.ImportForAead(SessionKeyToken, SessionKeyCipher);
+
+    public static readonly byte[] PlainText = "plain text"u8.ToArray();
+
+    public static readonly byte[] LongPlainText =
+        "plain text - Amet vero gubergren diam magna velit sea invidunt sit accusam eirmod dolor labore et aliquyam duo lorem lorem at veniam nonumy iriure eos clita tempor minim et lorem tempor elit ut duo in sadipscing aliquip ut sit lorem et sanctus duo iriure tempor vero volutpat at nam ut velit ut justo ipsum sed dolor amet duis sit dolore lorem dolores consetetur eirmod ex duis eum justo clita ut sit accumsan blandit facilisis nulla molestie sed minim takimata dolores voluptua clita no amet dolores dolore facilisis gubergren sed tempor at sit aliquip ipsum dolor liber stet sit sit sed quis praesent stet aliquyam labore vero et minim diam labore veniam at takimata et voluptua tincidunt elitr lorem accusam duo dolore est elitr at ut ea est ea tincidunt accusam et et et ut laoreet sadipscing dolore sed kasd sed amet invidunt et velit id amet sadipscing tempor wisi sadipscing rebum eu et dolore tempor est at velit quis soluta lobortis est tempor aliquam diam dolore elitr gubergren sadipscing stet eu rebum lorem magna vero feugiat dolores lorem congue labore ullamcorper sit duo magna euismod sadipscing nostrud ut diam magna praesent eum amet tempor sit nonumy ipsum aliquam sadipscing lorem sea ea"u8.ToArray();
 
     public static ReadOnlySpan<byte> Password => "password"u8;
     public static ReadOnlySpan<byte> Passphrase => "passphrase"u8;

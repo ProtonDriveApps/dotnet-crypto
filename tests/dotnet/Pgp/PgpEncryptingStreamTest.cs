@@ -4,546 +4,433 @@ namespace Proton.Cryptography.Tests.Pgp;
 
 public sealed class PgpEncryptingStreamTest
 {
-    [Fact]
-    public void Write_Encrypts()
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessage(PgpEncoding encoding)
     {
         // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.Open(outputStream, PgpSamples.PublicKey, PgpEncoding.AsciiArmor);
-
-        using var messageReader = new StreamReader(outputStream);
+        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, encoding);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(outputStream);
 
         // Assert
-        outputStream.Seek(0, SeekOrigin.Begin);
-        var message = messageReader.ReadToEnd();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.Decrypt(outputStream.GetSpan(), encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
-    [Fact]
-    public void Write_WritesAttachedSignature()
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessageWithAttachedSignature_WhenSigningKeysProvided(PgpEncoding encoding)
     {
         // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.Open(outputStream, PgpSamples.PublicKey, PgpSamples.PrivateKey, PgpEncoding.AsciiArmor);
-
-        using var messageReader = new StreamReader(outputStream);
+        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, PgpSamples.UnlockedPrivateKey, encoding);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(outputStream);
 
         // Assert
-        outputStream.Seek(0, SeekOrigin.Begin);
-        var message = messageReader.ReadToEnd();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.DecryptAndVerify(outputStream.GetSpan(), PgpSamples.PublicKey, out var verificationResult, encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
-    [Fact]
-    public void Write_WritesDetachedSignature()
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessageWithDetachedSignature_WhenOutputSignatureStreamProvided(PgpEncoding encoding)
     {
         // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
         using var signatureOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.Open(outputStream, signatureOutputStream, PgpSamples.PublicKey, PgpSamples.PrivateKey, PgpEncoding.AsciiArmor);
-
-        using var signatureReader = new StreamReader(signatureOutputStream);
+        using var stream = PgpEncryptingStream.OpenRead(
+            inputStream,
+            signatureOutputStream,
+            PgpSamples.PublicKey,
+            PgpSamples.UnlockedPrivateKey,
+            encoding);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(outputStream);
 
         // Assert
-        signatureOutputStream.Seek(0, SeekOrigin.Begin);
-        var signature = signatureReader.ReadToEnd();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
+        PgpEncodingAssertions.ShouldMatchEncoding(signatureOutputStream, encoding);
 
-        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.DecryptAndVerify(
+            outputStream.GetSpan(),
+            signatureOutputStream.GetSpan(),
+            PgpSamples.PublicKey,
+            out var verificationResult,
+            encoding,
+            encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
     [Fact]
-    public void Write_WritesSeparateKeyAndDataPackets()
+    public void Read_ProducesValidMessageWithDetachedKeyPackets_WhenKeyPacketOutputStreamProvided()
     {
         // Arrange
-        using var dataPacketStream = new MemoryStream();
-        using var keyPacketStream = new MemoryStream();
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
+        using var dataPacketOutputStream = new MemoryStream();
+        using var keyPacketOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenSplit(dataPacketStream, keyPacketStream, PgpSamples.PublicKey);
+        using var stream = PgpEncryptingStream.OpenSplitRead(inputStream, keyPacketOutputStream, PgpSamples.PublicKey);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(dataPacketOutputStream);
 
         // Assert
-        dataPacketStream.Length.Should().BePositive();
-        keyPacketStream.Length.Should().BePositive();
+        var messageBytes = new byte[keyPacketOutputStream.Length + dataPacketOutputStream.Length].AsSpan();
+        keyPacketOutputStream.GetSpan().CopyTo(messageBytes);
+        dataPacketOutputStream.GetSpan().CopyTo(messageBytes[(int)keyPacketOutputStream.Length..]);
+
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.Decrypt(messageBytes);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
     [Fact]
-    public void Write_WritesSeparateKeyAndDataPackets_AndDetachedSignature()
+    public void Read_ProducesValidMessageWithDetachedSignatureAndKeyPackets_WhenSignatureAndKeyPacketStreamsProvided()
     {
         // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var dataPacketOutputStream = new MemoryStream();
         using var keyPacketOutputStream = new MemoryStream();
         using var signatureOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenSplit(
-            dataPacketOutputStream,
+        using var stream = PgpEncryptingStream.OpenSplitRead(
+            inputStream,
             keyPacketOutputStream,
             signatureOutputStream,
             PgpSamples.PublicKey,
-            PgpSamples.PrivateKey);
+            PgpSamples.UnlockedPrivateKey);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(dataPacketOutputStream);
 
         // Assert
-        dataPacketOutputStream.Length.Should().BePositive();
-        keyPacketOutputStream.Length.Should().BePositive();
-        signatureOutputStream.Length.Should().BePositive();
+        var messageBytes = new byte[keyPacketOutputStream.Length + dataPacketOutputStream.Length].AsSpan();
+        keyPacketOutputStream.GetSpan().CopyTo(messageBytes);
+        dataPacketOutputStream.GetSpan().CopyTo(messageBytes[(int)keyPacketOutputStream.Length..]);
+
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.DecryptAndVerify(
+            messageBytes,
+            signatureOutputStream.GetSpan(),
+            PgpSamples.PublicKey,
+            out var verificationResult);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
     [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void Write_Encrypts_WithV6Key(PgpProfile profile)
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessage_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
-        using var stream = PgpEncryptingStream.Open(outputStream, PgpSamples.PublicKeyV6, PgpEncoding.AsciiArmor, profile: profile);
-        using var messageReader = new StreamReader(outputStream);
+
+        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(outputStream);
 
         // Assert
-        outputStream.Seek(0, SeekOrigin.Begin);
-        var message = messageReader.ReadToEnd();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.Decrypt(outputStream.GetSpan(), encoding);
 
-        // Verify it can be decrypted
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(messageBytes, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
     [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void Write_WritesAttachedSignature_WithV6Key(PgpProfile profile)
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessageWithAttachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
-        using var stream = PgpEncryptingStream.Open(outputStream, PgpSamples.PublicKeyV6, PgpSamples.PrivateKey, PgpEncoding.AsciiArmor, profile: profile);
+
+        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, PgpSamples.UnlockedPrivateKey, encoding, profile: profile);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(outputStream);
 
         // Assert
-        outputStream.Seek(0, SeekOrigin.Begin);
-        var messageBytes = outputStream.ToArray();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        var decryptedBytes = PgpSamples.PrivateKeyV6.DecryptAndVerify(messageBytes, PgpSamples.PublicKey, out var verificationResult, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.DecryptAndVerify(
+            outputStream.GetSpan(),
+            PgpSamples.PublicKey,
+            out var verificationResult,
+            encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
+    }
+
+    [Theory]
+    [InlineData(PgpProfile.Proton, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessageWithDetachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
+    {
+        // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
+        using var outputStream = new MemoryStream();
+        using var signatureOutputStream = new MemoryStream();
+
+        using var stream = PgpEncryptingStream.OpenRead(
+            inputStream,
+            signatureOutputStream,
+            PgpSamples.PublicKeyV6,
+            PgpSamples.UnlockedPrivateKeyV6,
+            encoding,
+            profile: profile);
+
+        // Act
+        stream.ReadAll(outputStream);
+
+        // Assert
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
+        PgpEncodingAssertions.ShouldMatchEncoding(signatureOutputStream, encoding);
+
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.DecryptAndVerify(
+            outputStream.GetSpan(),
+            signatureOutputStream.GetSpan(),
+            PgpSamples.PublicKeyV6,
+            out var verificationResult,
+            encoding,
+            encoding);
+
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
         verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
     [Theory]
     [InlineData(PgpProfile.Proton)]
     [InlineData(PgpProfile.ProtonAead)]
-    public void Write_WritesDetachedSignature_WithV6Key(PgpProfile profile)
+    public void Read_ProducesValidMessageWithDetachedKeyPackets_WhenUsingProfileWithV6Key(PgpProfile profile)
     {
-        // Arrange
-        using var outputStream = new MemoryStream();
-        using var signatureOutputStream = new MemoryStream();
-        using var stream = PgpEncryptingStream.Open(
-            outputStream,
-            signatureOutputStream,
-            PgpSamples.PublicKeyV6,
-            PgpSamples.PrivateKey,
-            PgpEncoding.AsciiArmor,
-            profile: profile);
-        using var signatureReader = new StreamReader(signatureOutputStream);
+        // Arrange=
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
+        using var dataPacketOutputStream = new MemoryStream();
+        using var keyPacketOutputStream = new MemoryStream();
+
+        using var stream = PgpEncryptingStream.OpenSplitRead(inputStream, keyPacketOutputStream, PgpSamples.PublicKeyV6, profile: profile);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(dataPacketOutputStream);
 
         // Assert
-        signatureOutputStream.Seek(0, SeekOrigin.Begin);
-        var signature = signatureReader.ReadToEnd();
+        var messageBytes = new byte[keyPacketOutputStream.Length + dataPacketOutputStream.Length].AsSpan();
+        keyPacketOutputStream.GetSpan().CopyTo(messageBytes);
+        dataPacketOutputStream.GetSpan().CopyTo(messageBytes[(int)keyPacketOutputStream.Length..]);
 
-        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.Decrypt(messageBytes);
 
-        // Verify message can be decrypted
-        outputStream.Seek(0, SeekOrigin.Begin);
-        var messageBytes = outputStream.ToArray();
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(messageBytes, PgpEncoding.AsciiArmor);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
     }
 
     [Theory]
     [InlineData(PgpProfile.Proton)]
     [InlineData(PgpProfile.ProtonAead)]
-    public void OpenSplit_Writes_WithV6Key(PgpProfile profile)
+    public void Read_ProducesValidMessageWithDetachedSignatureAndKeyPackets_WhenUsingProfileWithV6Key(PgpProfile profile)
     {
         // Arrange
-        using var dataPacketStream = new MemoryStream();
-        using var keyPacketStream = new MemoryStream();
-        using var stream = PgpEncryptingStream.OpenSplit(dataPacketStream, keyPacketStream, PgpSamples.PublicKeyV6, profile: profile);
-
-        // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
-
-        // Assert
-        dataPacketStream.Length.Should().BePositive();
-        keyPacketStream.Length.Should().BePositive();
-
-        // Verify the split packets can be decrypted when combined
-        var combinedMessage = new byte[keyPacketStream.Length + dataPacketStream.Length];
-        keyPacketStream.Seek(0, SeekOrigin.Begin);
-        dataPacketStream.Seek(0, SeekOrigin.Begin);
-        keyPacketStream.Read(combinedMessage, 0, (int)keyPacketStream.Length);
-        dataPacketStream.Read(combinedMessage, (int)keyPacketStream.Length, (int)dataPacketStream.Length);
-
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(combinedMessage);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
-    }
-
-    [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void OpenSplit_WritesSeparateKeyAndDataPackets_AndDetachedSignature_WithV6Key(PgpProfile profile)
-    {
-        // Arrange
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var dataPacketOutputStream = new MemoryStream();
         using var keyPacketOutputStream = new MemoryStream();
         using var signatureOutputStream = new MemoryStream();
-        using var stream = PgpEncryptingStream.OpenSplit(
-            dataPacketOutputStream,
+
+        using var stream = PgpEncryptingStream.OpenSplitRead(
+            inputStream,
             keyPacketOutputStream,
             signatureOutputStream,
             PgpSamples.PublicKeyV6,
-            PgpSamples.PrivateKey,
+            PgpSamples.UnlockedPrivateKeyV6,
             profile: profile);
 
         // Act
-        stream.Write(Encoding.UTF8.GetBytes(PgpSamples.PlainText));
-        stream.Close();
+        stream.ReadAll(dataPacketOutputStream);
 
         // Assert
-        dataPacketOutputStream.Length.Should().BePositive();
-        keyPacketOutputStream.Length.Should().BePositive();
-        signatureOutputStream.Length.Should().BePositive();
+        var messageBytes = new byte[keyPacketOutputStream.Length + dataPacketOutputStream.Length].AsSpan();
+        keyPacketOutputStream.GetSpan().CopyTo(messageBytes);
+        dataPacketOutputStream.GetSpan().CopyTo(messageBytes[(int)keyPacketOutputStream.Length..]);
 
-        // Verify the split packets can be decrypted when combined
-        var combinedMessage = new byte[keyPacketOutputStream.Length + dataPacketOutputStream.Length];
-        keyPacketOutputStream.Seek(0, SeekOrigin.Begin);
-        dataPacketOutputStream.Seek(0, SeekOrigin.Begin);
-        keyPacketOutputStream.Read(combinedMessage, 0, (int)keyPacketOutputStream.Length);
-        dataPacketOutputStream.Read(combinedMessage, (int)keyPacketOutputStream.Length, (int)dataPacketOutputStream.Length);
+        var decryptedBytes = PgpSamples.UnlockedPrivateKeyV6.DecryptAndVerify(
+            messageBytes,
+            signatureOutputStream.GetSpan(),
+            PgpSamples.PublicKeyV6,
+            out var verificationResult);
 
-        var decryptedBytes = PgpSamples.PrivateKeyV6.Decrypt(combinedMessage);
-        var decryptedText = Encoding.UTF8.GetString(decryptedBytes);
-        decryptedText.Should().Be(PgpSamples.PlainText);
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
     [Theory]
-    [InlineData(1, 1)]
-    [InlineData(1, 2)]
-    [InlineData(1, 16)]
-    [InlineData(1, 4096)]
-    [InlineData(2, 1)]
-    [InlineData(2, 2)]
-    [InlineData(2, 16)]
-    [InlineData(2, 4096)]
-    [InlineData(100, 1)]
-    [InlineData(100, 2)]
-    [InlineData(100, 16)]
-    [InlineData(100, 4096)]
-    [InlineData(256_000, 1)]
-    [InlineData(256_000, 2)]
-    [InlineData(256_000, 16)]
-    [InlineData(256_000, 4096)]
-    public void Read_EncryptsWithoutArmor(int length, int readBufferSize)
+    [InlineData(1, 1, PgpEncoding.None)]
+    [InlineData(1, 2, PgpEncoding.None)]
+    [InlineData(1, 4096, PgpEncoding.None)]
+    [InlineData(2, 1, PgpEncoding.None)]
+    [InlineData(2, 2, PgpEncoding.None)]
+    [InlineData(2, 4096, PgpEncoding.None)]
+    [InlineData(100, 1, PgpEncoding.None)]
+    [InlineData(100, 2, PgpEncoding.None)]
+    [InlineData(100, 4096, PgpEncoding.None)]
+    [InlineData(100_000, 1, PgpEncoding.None)]
+    [InlineData(100_000, 2, PgpEncoding.None)]
+    [InlineData(100_000, 4096, PgpEncoding.None)]
+    [InlineData(1, 4096, PgpEncoding.AsciiArmor)]
+    [InlineData(100, 4096, PgpEncoding.AsciiArmor)]
+    [InlineData(100_000, 4096, PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessage_ForMultiplePlaintextAndBufferSizes(int length, int readBufferSize, PgpEncoding encoding)
     {
         // Arrange
         var plainData = RandomNumberGenerator.GetBytes(length);
         using var inputStream = new MemoryStream(plainData, 0, plainData.Length, false, true);
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey);
+        using var outputStream = new MemoryStream();
 
-        var readBuffer = new byte[readBufferSize].AsSpan();
-        var encryptedDataStream = new MemoryStream();
-        int bytesRead;
+        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, encoding);
 
         // Act
-        do
-        {
-            bytesRead = stream.Read(readBuffer);
-            encryptedDataStream.Write(readBuffer[..bytesRead]);
-        } while (bytesRead > 0);
+        stream.ReadAll(outputStream, readBufferSize);
 
         // Assert
-        var message = encryptedDataStream.ToArray();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        var decryptedData = PgpSamples.PrivateKey.Decrypt(message);
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.Decrypt(outputStream.GetSpan(), encoding);
 
-        decryptedData.Should().Equal(plainData);
-    }
-
-    [Fact]
-    public void Read_DoesNotThrow_WhenUsingLegacyArrayOverload()
-    {
-        // Arrange
-        const int length = 16;
-
-        var plainData = RandomNumberGenerator.GetBytes(length);
-        using var inputStream = new MemoryStream(plainData, 0, plainData.Length, false, true);
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey);
-
-        var readBuffer = new byte[length];
-
-        // Act
-        var act = (Stream s) => s.Read(readBuffer, 0, length);
-
-        // Assert
-        stream.Invoking(act).Should().NotThrow();
+        decryptedBytes.Should().Equal(plainData);
     }
 
     [Theory]
-    [InlineData(PgpProfile.Proton, 100, 1)]
-    [InlineData(PgpProfile.Proton, 100, 4096)]
-    [InlineData(PgpProfile.Proton, 256_000, 4096)]
-    [InlineData(PgpProfile.ProtonAead, 100, 1)]
-    [InlineData(PgpProfile.ProtonAead, 100, 4096)]
-    [InlineData(PgpProfile.ProtonAead, 256_000, 4096)]
-    public void Read_EncryptsWithV6Key(PgpProfile profile, int length, int readBufferSize)
+    [InlineData(PgpProfile.Proton, 100, 1, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, 100, 4096, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, 100_000, 4096, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, 100, 1, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, 100, 4096, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, 100_000, 4096, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, 100, 1, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.Proton, 100, 4096, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.Proton, 100_000, 4096, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, 100, 1, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, 100, 4096, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, 100_000, 4096, PgpEncoding.AsciiArmor)]
+    public void Read_ProducesValidMessage_ForMultiplePlaintextAndBufferSizes_WhenUsingProfileAndV6Key(
+        PgpProfile profile,
+        int length,
+        int readBufferSize,
+        PgpEncoding encoding)
     {
         // Arrange
         var plainData = RandomNumberGenerator.GetBytes(length);
         using var inputStream = new MemoryStream(plainData);
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, profile: profile);
+        using var outputStream = new MemoryStream();
 
-        var readBuffer = new byte[readBufferSize].AsSpan();
-        var encryptedDataStream = new MemoryStream();
-        int bytesRead;
+        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Act
-        do
-        {
-            bytesRead = stream.Read(readBuffer);
-            encryptedDataStream.Write(readBuffer[..bytesRead]);
-        } while (bytesRead > 0);
+        stream.ReadAll(outputStream, readBufferSize);
 
         // Assert
-        var message = encryptedDataStream.ToArray();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        var decryptedData = PgpSamples.PrivateKeyV6.Decrypt(message);
+        var decryptedData = PgpSamples.UnlockedPrivateKeyV6.Decrypt(outputStream.GetSpan(), encoding);
 
         decryptedData.Should().Equal(plainData);
     }
 
     [Theory]
-    [InlineData(1, 1)]
-    [InlineData(1, 2)]
-    [InlineData(1, 16)]
-    [InlineData(1, 4096)]
-    [InlineData(2, 1)]
-    [InlineData(2, 2)]
-    [InlineData(2, 16)]
-    [InlineData(2, 4096)]
-    [InlineData(100, 1)]
-    [InlineData(100, 2)]
-    [InlineData(100, 16)]
-    [InlineData(100, 4096)]
-    [InlineData(256_000, 1)]
-    [InlineData(256_000, 2)]
-    [InlineData(256_000, 16)]
-    [InlineData(256_000, 4096)]
-    public async Task ReadAsync_EncryptsWithoutArmor(int length, int readBufferSize)
+    [InlineData(1, 1, PgpEncoding.None)]
+    [InlineData(1, 2, PgpEncoding.None)]
+    [InlineData(1, 4096, PgpEncoding.None)]
+    [InlineData(2, 1, PgpEncoding.None)]
+    [InlineData(2, 2, PgpEncoding.None)]
+    [InlineData(2, 4096, PgpEncoding.None)]
+    [InlineData(100, 1, PgpEncoding.None)]
+    [InlineData(100, 2, PgpEncoding.None)]
+    [InlineData(100, 4096, PgpEncoding.None)]
+    [InlineData(100_000, 1, PgpEncoding.None)]
+    [InlineData(100_000, 2, PgpEncoding.None)]
+    [InlineData(100_000, 4096, PgpEncoding.None)]
+    [InlineData(1, 4096, PgpEncoding.AsciiArmor)]
+    [InlineData(100, 4096, PgpEncoding.AsciiArmor)]
+    [InlineData(100_000, 4096, PgpEncoding.AsciiArmor)]
+    public async Task ReadAsync_ProducesValidMessage_ForMultiplePlaintextAndBufferSizes(int length, int readBufferSize, PgpEncoding encoding)
     {
         // Arrange
         var plainData = RandomNumberGenerator.GetBytes(length);
         using var inputStream = new MemoryStream(plainData);
-        await using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey);
+        using var outputStream = new MemoryStream();
 
-        var readBuffer = new byte[readBufferSize].AsMemory();
-        var encryptedDataStream = new MemoryStream();
-        int bytesRead;
+        await using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, encoding);
 
         // Act
-        do
-        {
-            bytesRead = await stream.ReadAsync(readBuffer, CancellationToken.None);
-            encryptedDataStream.Write(readBuffer.Span[..bytesRead]);
-        } while (bytesRead > 0);
+        await stream.ReadAllAsync(outputStream, readBufferSize);
 
         // Assert
-        var message = encryptedDataStream.ToArray();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        var decryptedData = PgpSamples.PrivateKey.Decrypt(message);
+        var decryptedData = PgpSamples.UnlockedPrivateKey.Decrypt(outputStream.GetSpan(), encoding);
 
         decryptedData.Should().Equal(plainData);
     }
 
     [Theory]
-    [InlineData(PgpProfile.Proton, 100, 4096)]
-    [InlineData(PgpProfile.Proton, 256_000, 4096)]
-    [InlineData(PgpProfile.ProtonAead, 100, 4096)]
-    [InlineData(PgpProfile.ProtonAead, 256_000, 4096)]
-    public async Task ReadAsync_EncryptsWithV6Key(PgpProfile profile, int length, int readBufferSize)
+    [InlineData(PgpProfile.Proton, 100, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, 100_000, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, 100, PgpEncoding.None)]
+    [InlineData(PgpProfile.ProtonAead, 100_000, PgpEncoding.None)]
+    [InlineData(PgpProfile.Proton, 100, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.Proton, 100_000, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, 100, PgpEncoding.AsciiArmor)]
+    [InlineData(PgpProfile.ProtonAead, 100_000, PgpEncoding.AsciiArmor)]
+    public async Task ReadAsync_ProducesValidMessage_ForMultiplePlaintextSizes_WhenUsingProfileAndV6Key(PgpProfile profile, int length, PgpEncoding encoding)
     {
         // Arrange
         var plainData = RandomNumberGenerator.GetBytes(length);
         using var inputStream = new MemoryStream(plainData);
-        await using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, profile: profile);
+        using var outputStream = new MemoryStream();
 
-        var readBuffer = new byte[readBufferSize].AsMemory();
-        var encryptedDataStream = new MemoryStream();
-        int bytesRead;
+        await using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Act
-        do
-        {
-            bytesRead = await stream.ReadAsync(readBuffer, CancellationToken.None);
-            encryptedDataStream.Write(readBuffer.Span[..bytesRead]);
-        } while (bytesRead > 0);
+        await stream.ReadAllAsync(outputStream);
 
         // Assert
-        var message = encryptedDataStream.ToArray();
+        PgpEncodingAssertions.ShouldMatchEncoding(outputStream, encoding);
 
-        var decryptedData = PgpSamples.PrivateKeyV6.Decrypt(message);
+        var decryptedData = PgpSamples.UnlockedPrivateKeyV6.Decrypt(outputStream.GetSpan(), encoding);
 
-        decryptedData.Should().Equal(plainData);
-    }
-
-    [Theory]
-    [InlineData(1, 1)]
-    [InlineData(1, 2)]
-    [InlineData(1, 16)]
-    [InlineData(1, 4096)]
-    [InlineData(2, 1)]
-    [InlineData(2, 2)]
-    [InlineData(2, 16)]
-    [InlineData(2, 4096)]
-    [InlineData(100, 1)]
-    [InlineData(100, 2)]
-    [InlineData(100, 16)]
-    [InlineData(100, 4096)]
-    [InlineData(256_000, 1)]
-    [InlineData(256_000, 2)]
-    [InlineData(256_000, 16)]
-    [InlineData(256_000, 4096)]
-    public void Read_EncryptsWithArmor(int length, int readBufferSize)
-    {
-        // Arrange
-        var plainData = RandomNumberGenerator.GetBytes(length);
-        using var inputStream = new MemoryStream(plainData);
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, PgpEncoding.AsciiArmor);
-
-        var readBuffer = new byte[readBufferSize].AsSpan();
-        var encryptedDataStream = new MemoryStream();
-        int bytesRead;
-
-        // Act
-        do
-        {
-            bytesRead = stream.Read(readBuffer);
-            encryptedDataStream.Write(readBuffer[..bytesRead]);
-        } while (bytesRead > 0);
-
-        // Assert
-        var message = Encoding.UTF8.GetString(encryptedDataStream.ToArray());
-
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        message.Should().EndWith("-----END PGP MESSAGE-----");
-    }
-
-    [Theory]
-    [InlineData(PgpProfile.Proton, 100, 4096)]
-    [InlineData(PgpProfile.Proton, 256_000, 4096)]
-    [InlineData(PgpProfile.ProtonAead, 100, 4096)]
-    [InlineData(PgpProfile.ProtonAead, 256_000, 4096)]
-    public void Read_EncryptsWithArmor_WithV6Key(PgpProfile profile, int length, int readBufferSize)
-    {
-        // Arrange
-        var plainData = RandomNumberGenerator.GetBytes(length);
-        using var inputStream = new MemoryStream(plainData);
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, PgpEncoding.AsciiArmor, profile: profile);
-
-        var readBuffer = new byte[readBufferSize].AsSpan();
-        var encryptedDataStream = new MemoryStream();
-        int bytesRead;
-
-        // Act
-        do
-        {
-            bytesRead = stream.Read(readBuffer);
-            encryptedDataStream.Write(readBuffer[..bytesRead]);
-        } while (bytesRead > 0);
-
-        // Assert
-        var message = Encoding.UTF8.GetString(encryptedDataStream.ToArray());
-
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        message.Should().EndWith("-----END PGP MESSAGE-----");
-
-        // Verify can be decrypted
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-        var decryptedData = PgpSamples.PrivateKeyV6.Decrypt(messageBytes, PgpEncoding.AsciiArmor);
-        decryptedData.Should().Equal(plainData);
-    }
-
-    [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
-    public void OpenSplitRead_EncryptsWithV6Key(PgpProfile profile)
-    {
-        // Arrange
-        var plainData = RandomNumberGenerator.GetBytes(1024);
-        using var inputStream = new MemoryStream(plainData);
-        using var dataPacketStream = new MemoryStream();
-        using var keyPacketStream = new MemoryStream();
-        using var stream = PgpEncryptingStream.OpenSplitRead(inputStream, keyPacketStream, PgpSamples.PublicKeyV6, profile: profile);
-
-        var readBuffer = new byte[4096].AsSpan();
-        int bytesRead;
-
-        // Act
-        do
-        {
-            bytesRead = stream.Read(readBuffer);
-            dataPacketStream.Write(readBuffer[..bytesRead]);
-        } while (bytesRead > 0);
-
-        // Assert
-        dataPacketStream.Length.Should().BePositive();
-        keyPacketStream.Length.Should().BePositive();
-
-        // Verify the split packets can be decrypted when combined
-        var combinedMessage = new byte[keyPacketStream.Length + dataPacketStream.Length];
-        keyPacketStream.Seek(0, SeekOrigin.Begin);
-        dataPacketStream.Seek(0, SeekOrigin.Begin);
-        keyPacketStream.Read(combinedMessage, 0, (int)keyPacketStream.Length);
-        dataPacketStream.Read(combinedMessage, (int)keyPacketStream.Length, (int)dataPacketStream.Length);
-
-        var decryptedData = PgpSamples.PrivateKeyV6.Decrypt(combinedMessage);
         decryptedData.Should().Equal(plainData);
     }
 }
