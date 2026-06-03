@@ -22,16 +22,20 @@ public readonly partial struct PgpSecretKey : IDisposable
 
     internal PgpKey Base { get; }
 
-    public static PgpSecretKey Import(ReadOnlySpan<byte> key, PgpEncoding? encoding = null)
+    public static PgpSecretKey Import(ReadOnlySpan<byte> lockedKeyBytes, PgpEncoding? encoding = null)
     {
-        using var error = ForeignFunctions.Import(MemoryMarshal.GetReference(key), (nuint)key.Length, encoding.ToInteropEncoding(), out var keyHandle);
+        using var error = ForeignFunctions.Import(
+            MemoryMarshal.GetReference(lockedKeyBytes),
+            (nuint)lockedKeyBytes.Length,
+            encoding.ToInteropEncoding(),
+            out var keyHandle);
 
         error.ThrowPgpExceptionIfAny();
 
         return new PgpSecretKey(keyHandle);
     }
 
-    public void Export(Stream stream, PgpEncoding encoding) => Base.Export(stream, encoding);
+    public void Export(Stream stream, PgpEncoding encoding = PgpEncoding.None) => Base.Export(stream, encoding);
 
     public PgpPrivateKey Unlock(ReadOnlySpan<byte> passphrase)
     {
@@ -55,7 +59,7 @@ public readonly partial struct PgpSecretKey : IDisposable
 
     private static partial class ForeignFunctions
     {
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_private_key_import")]
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_locked_private_key_import")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial InteropError Import(
             in byte key,

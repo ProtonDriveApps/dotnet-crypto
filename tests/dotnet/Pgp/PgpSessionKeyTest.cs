@@ -44,11 +44,13 @@ public class PgpSessionKeyTest
         ((IForeignHandleProxy)sessionKey).ForeignHandle.IsInvalid.Should().BeFalse();
     }
 
-    [Fact]
-    public void Export_Succeeds()
+    [Theory]
+    [InlineData(PgpProfile.Proton)]
+    [InlineData(PgpProfile.ProtonAead)]
+    public void Export_Succeeds(PgpProfile profile)
     {
         // Arrange
-        using var sessionKey = PgpSessionKey.Import(PgpSamples.SessionKeyToken, PgpSamples.SessionKeyCipher);
+        var sessionKey = profile == PgpProfile.Proton ? PgpSamples.SessionKey : PgpSamples.SessionKeyV6;
 
         // Act
         var token = sessionKey.Export();

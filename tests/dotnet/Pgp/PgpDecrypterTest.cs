@@ -5,21 +5,6 @@ public class PgpDecrypterTest
     [Theory]
     [InlineData(PgpProfile.Proton)]
     [InlineData(PgpProfile.ProtonAead)]
-    public void Export_Succeeds(PgpProfile profile)
-    {
-        // Arrange
-        var sessionKey = profile == PgpProfile.Proton ? PgpSamples.SessionKey : PgpSamples.SessionKeyV6;
-
-        // Act
-        var token = sessionKey.Export();
-
-        // Assert
-        token.Should().Equal(PgpSamples.SessionKeyToken);
-    }
-
-    [Theory]
-    [InlineData(PgpProfile.Proton)]
-    [InlineData(PgpProfile.ProtonAead)]
     public void DecryptSessionKey_DecryptsSessionKey(PgpProfile profile)
     {
         // Arrange

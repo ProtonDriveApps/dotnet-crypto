@@ -135,6 +135,16 @@ func pgp_private_key_import(
 	return errorToPGPError(nil)
 }
 
+//export pgp_locked_private_key_import
+func pgp_locked_private_key_import(
+	private_key *C.cuchar_t,
+	private_key_len C.size_t,
+	encoding C.uchar_t,
+	out_key *C.uintptr_t,
+) (cErr C.PGP_Error) {
+	return pgp_private_key_import(private_key, private_key_len, encoding, out_key)
+}
+
 //export pgp_private_key_import_unlock
 func pgp_private_key_import_unlock(
 	private_key *C.cuchar_t,

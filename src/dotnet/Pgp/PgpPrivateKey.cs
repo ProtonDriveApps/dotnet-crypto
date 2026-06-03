@@ -92,9 +92,15 @@ public readonly partial struct PgpPrivateKey
 
     public static PgpPrivateKey Import(ReadOnlySpan<byte> unlockedKeyBytes, PgpEncoding? encoding = null)
     {
-        var importedKey = PgpSecretKey.Import(unlockedKeyBytes, encoding);
+        using var error = ForeignFunctions.Import(
+            MemoryMarshal.GetReference(unlockedKeyBytes),
+            (nuint)unlockedKeyBytes.Length,
+            encoding.ToInteropEncoding(),
+            out var keyHandle);
 
-        return new PgpPrivateKey(importedKey.Base);
+        error.ThrowPgpExceptionIfAny();
+
+        return new PgpPrivateKey(keyHandle);
     }
 
     public static PgpPrivateKey ImportAndUnlock(ReadOnlySpan<byte> lockedKeyBytes, ReadOnlySpan<byte> passphrase, PgpEncoding? encoding = null)
@@ -190,6 +196,14 @@ public readonly partial struct PgpPrivateKey
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_generate_key")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial InteropError Generate(in InteropKeyGenerationParameters parameters, out nint privateKeyHandle);
+
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_private_key_import")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static partial InteropError Import(
+            in byte key,
+            nuint keyLength,
+            InteropPgpEncoding encoding,
+            out nint importedKeyHandle);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_private_key_import_unlock")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

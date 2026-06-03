@@ -22,9 +22,33 @@ public sealed class PgpPrivateKeyTest
         using var lockedKey = privateKey.Lock(PgpSamples.Passphrase);
 
         // Assert
-        lockedKey.Base.ForeignHandle.IsInvalid.Should().BeFalse();
         var unlock = () => lockedKey.Unlock(PgpSamples.Passphrase);
+        var lockAgain = () => privateKey.Lock(PgpSamples.Passphrase);
+
+        lockedKey.Base.ForeignHandle.IsInvalid.Should().BeFalse();
         unlock.Should().NotThrow();
+        lockAgain.Should().NotThrow();
+    }
+
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Export_Succeeds(PgpEncoding encoding)
+    {
+        // Arrange
+        using var privateKey = PgpPrivateKey.Generate("Test", "test@example.com", KeyGenerationAlgorithm.Default);
+        var exportedKeyStream = new MemoryStream();
+
+        // Act
+        privateKey.Export(exportedKeyStream, encoding);
+
+        // Assert
+        var exportedBytes = exportedKeyStream.ToArray();
+        var importAction = () => PgpPrivateKey.Import(exportedBytes, encoding);
+        var lockAfterImportAction = () => PgpPrivateKey.Import(exportedBytes, encoding).Lock(PgpSamples.Passphrase);
+
+        importAction.Should().NotThrow();
+        lockAfterImportAction.Should().NotThrow();
     }
 
     [Fact]
