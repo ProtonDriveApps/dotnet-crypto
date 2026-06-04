@@ -278,7 +278,7 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenEncryptingStream(
+        public PgpEncryptingWriteStream OpenEncryptingWriteStream(
             Stream messageOutputStream,
             PgpEncoding encoding = default,
             PgpCompression compression = default,
@@ -286,7 +286,7 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.Open(
+            return PgpEncryptingWriteStream.Open(
                 messageOutputStream,
                 encryptionSecretsSource.EncryptionSecrets,
                 encoding,
@@ -296,16 +296,16 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenEncryptingReadStream(
-            Stream messageOutputStream,
+        public PgpEncryptingReadStream OpenEncryptingReadStream(
+            Stream plainDataInputStream,
             PgpEncoding encoding = default,
             PgpCompression compression = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.OpenRead(
-                messageOutputStream,
+            return PgpEncryptingReadStream.Open(
+                plainDataInputStream,
                 encryptionSecretsSource.EncryptionSecrets,
                 encoding,
                 compression,
@@ -314,7 +314,7 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenEncryptingAndSigningStream(
+        public PgpEncryptingWriteStream OpenEncryptingAndSigningWriteStream(
             Stream messageOutputStream,
             PgpPrivateKeyRing signingKeyRing,
             PgpEncoding encoding = default,
@@ -323,7 +323,7 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.Open(
+            return PgpEncryptingWriteStream.Open(
                 messageOutputStream,
                 encryptionSecretsSource.EncryptionSecrets,
                 signingKeyRing,
@@ -334,8 +334,8 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenEncryptingAndSigningReadStream(
-            Stream messageOutputStream,
+        public PgpEncryptingReadStream OpenEncryptingAndSigningReadStream(
+            Stream plainDataInputStream,
             PgpPrivateKeyRing signingKeyRing,
             PgpEncoding encoding = default,
             PgpCompression compression = default,
@@ -343,8 +343,8 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.OpenRead(
-                messageOutputStream,
+            return PgpEncryptingReadStream.Open(
+                plainDataInputStream,
                 encryptionSecretsSource.EncryptionSecrets,
                 signingKeyRing,
                 encoding,
@@ -354,7 +354,7 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenEncryptingAndSigningStream(
+        public PgpEncryptingWriteStream OpenEncryptingAndSigningWriteStream(
             Stream messageOutputStream,
             Stream signatureOutputStream,
             PgpPrivateKeyRing signingKeyRing,
@@ -365,7 +365,7 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.Open(
+            return PgpEncryptingWriteStream.Open(
                 messageOutputStream,
                 signatureOutputStream,
                 encryptionSecretsSource.EncryptionSecrets,
@@ -378,8 +378,8 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenEncryptingAndSigningReadStream(
-            Stream messageOutputStream,
+        public PgpEncryptingReadStream OpenEncryptingAndSigningReadStream(
+            Stream plainDataInputStream,
             Stream signatureOutputStream,
             PgpPrivateKeyRing signingKeyRing,
             PgpEncoding encoding = default,
@@ -389,8 +389,8 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.OpenRead(
-                messageOutputStream,
+            return PgpEncryptingReadStream.Open(
+                plainDataInputStream,
                 signatureOutputStream,
                 encryptionSecretsSource.EncryptionSecrets,
                 signingKeyRing,
@@ -402,7 +402,7 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenSplitEncryptingStream(
+        public PgpEncryptingWriteStream OpenSplitEncryptingWriteStream(
             Stream messageOutputStream,
             Stream keyPacketsOutputStream,
             PgpCompression messageCompression = default,
@@ -410,7 +410,7 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.OpenSplit(
+            return PgpEncryptingWriteStream.OpenSplit(
                 messageOutputStream,
                 keyPacketsOutputStream,
                 encryptionSecretsSource.EncryptionSecrets,
@@ -420,16 +420,16 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenSplitEncryptingReadStream(
-            Stream messageOutputStream,
+        public PgpEncryptingReadStream OpenSplitEncryptingReadStream(
+            Stream plainDataInputStream,
             Stream keyPacketsOutputStream,
             PgpCompression messageCompression = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.OpenSplitRead(
-                messageOutputStream,
+            return PgpEncryptingReadStream.OpenSplit(
+                plainDataInputStream,
                 keyPacketsOutputStream,
                 encryptionSecretsSource.EncryptionSecrets,
                 messageCompression,
@@ -438,7 +438,7 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenSplitEncryptingStream(
+        public PgpEncryptingWriteStream OpenSplitEncryptingWriteStream(
             Stream messageOutputStream,
             Stream keyPacketsOutputStream,
             Stream signatureOutputStream,
@@ -449,7 +449,7 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.OpenSplit(
+            return PgpEncryptingWriteStream.OpenSplit(
                 messageOutputStream,
                 keyPacketsOutputStream,
                 signatureOutputStream,
@@ -462,8 +462,8 @@ public static class EncryptionSecretsExtensions
                 timeProviderOverride);
         }
 
-        public PgpEncryptingStream OpenSplitEncryptingReadStream(
-            Stream messageOutputStream,
+        public PgpEncryptingReadStream OpenSplitEncryptingReadStream(
+            Stream plainDataInputStream,
             Stream keyPacketsOutputStream,
             Stream signatureOutputStream,
             PgpPrivateKeyRing signingKeyRing,
@@ -473,8 +473,8 @@ public static class EncryptionSecretsExtensions
             long? aeadStreamingChunkLength = null,
             TimeProvider? timeProviderOverride = null)
         {
-            return PgpEncryptingStream.OpenSplitRead(
-                messageOutputStream,
+            return PgpEncryptingReadStream.OpenSplit(
+                plainDataInputStream,
                 keyPacketsOutputStream,
                 signatureOutputStream,
                 encryptionSecretsSource.EncryptionSecrets,

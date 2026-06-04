@@ -38,12 +38,12 @@
     <Using Include="Proton.Cryptography.Srp" />
   </ItemGroup>
 
-  <Target Name="CopyNativeLibraries" AfterTargets="Build">
-    <ItemGroup>
-      <NativeLibs Include="..\..\bin\runtimes\$(RuntimeIdentifier)\native\**\*.*" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(NativeLibs)" DestinationFolder="$(OutDir)" />
-  </Target>
+  <ItemGroup>
+    <None Include="
+      ../../bin/runtimes/$(RuntimeIdentifier)/native/*.dll;
+      ../../bin/runtimes/$(RuntimeIdentifier)/native/*.so;
+      ../../bin/runtimes/$(RuntimeIdentifier)/native/*.dylib"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

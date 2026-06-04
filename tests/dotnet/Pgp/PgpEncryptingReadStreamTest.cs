@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 namespace Proton.Cryptography.Tests.Pgp;
 
-public sealed class PgpEncryptingStreamTest
+public sealed class PgpEncryptingReadStreamTest
 {
     private const int Timeout = 500;
 
@@ -15,7 +15,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, encoding);
+        using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKey, encoding);
 
         // Act
         stream.ReadAll(outputStream);
@@ -37,7 +37,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, PgpSamples.UnlockedPrivateKey, encoding);
+        using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKey, PgpSamples.UnlockedPrivateKey, encoding);
 
         // Act
         stream.ReadAll(outputStream);
@@ -61,7 +61,7 @@ public sealed class PgpEncryptingStreamTest
         using var outputStream = new MemoryStream();
         using var signatureOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(
+        using var stream = PgpEncryptingReadStream.Open(
             inputStream,
             signatureOutputStream,
             PgpSamples.PublicKey,
@@ -95,7 +95,7 @@ public sealed class PgpEncryptingStreamTest
         using var dataPacketOutputStream = new MemoryStream();
         using var keyPacketOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenSplitRead(inputStream, keyPacketOutputStream, PgpSamples.PublicKey);
+        using var stream = PgpEncryptingReadStream.OpenSplit(inputStream, keyPacketOutputStream, PgpSamples.PublicKey);
 
         // Act
         stream.ReadAll(dataPacketOutputStream);
@@ -119,7 +119,7 @@ public sealed class PgpEncryptingStreamTest
         using var keyPacketOutputStream = new MemoryStream();
         using var signatureOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenSplitRead(
+        using var stream = PgpEncryptingReadStream.OpenSplit(
             inputStream,
             keyPacketOutputStream,
             signatureOutputStream,
@@ -155,7 +155,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
+        using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Act
         stream.ReadAll(outputStream);
@@ -179,7 +179,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, PgpSamples.UnlockedPrivateKey, encoding, profile: profile);
+        using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKeyV6, PgpSamples.UnlockedPrivateKey, encoding, profile: profile);
 
         // Act
         stream.ReadAll(outputStream);
@@ -209,7 +209,7 @@ public sealed class PgpEncryptingStreamTest
         using var outputStream = new MemoryStream();
         using var signatureOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(
+        using var stream = PgpEncryptingReadStream.Open(
             inputStream,
             signatureOutputStream,
             PgpSamples.PublicKeyV6,
@@ -246,7 +246,7 @@ public sealed class PgpEncryptingStreamTest
         using var dataPacketOutputStream = new MemoryStream();
         using var keyPacketOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenSplitRead(inputStream, keyPacketOutputStream, PgpSamples.PublicKeyV6, profile: profile);
+        using var stream = PgpEncryptingReadStream.OpenSplit(inputStream, keyPacketOutputStream, PgpSamples.PublicKeyV6, profile: profile);
 
         // Act
         stream.ReadAll(dataPacketOutputStream);
@@ -272,7 +272,7 @@ public sealed class PgpEncryptingStreamTest
         using var keyPacketOutputStream = new MemoryStream();
         using var signatureOutputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenSplitRead(
+        using var stream = PgpEncryptingReadStream.OpenSplit(
             inputStream,
             keyPacketOutputStream,
             signatureOutputStream,
@@ -299,6 +299,8 @@ public sealed class PgpEncryptingStreamTest
     }
 
     [Theory(Timeout = Timeout)]
+    [InlineData(0, 1, PgpEncoding.None)]
+    [InlineData(0, 4096, PgpEncoding.None)]
     [InlineData(1, 1, PgpEncoding.None)]
     [InlineData(1, 2, PgpEncoding.None)]
     [InlineData(1, 4096, PgpEncoding.None)]
@@ -311,6 +313,7 @@ public sealed class PgpEncryptingStreamTest
     [InlineData(100_000, 1, PgpEncoding.None)]
     [InlineData(100_000, 2, PgpEncoding.None)]
     [InlineData(100_000, 4096, PgpEncoding.None)]
+    [InlineData(0, 4096, PgpEncoding.AsciiArmor)]
     [InlineData(1, 4096, PgpEncoding.AsciiArmor)]
     [InlineData(100, 4096, PgpEncoding.AsciiArmor)]
     [InlineData(100_000, 4096, PgpEncoding.AsciiArmor)]
@@ -321,7 +324,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(plainData, 0, plainData.Length, false, true);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, encoding);
+        using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKey, encoding);
 
         // Act
         stream.ReadAll(outputStream, readBufferSize);
@@ -358,7 +361,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(plainData);
         using var outputStream = new MemoryStream();
 
-        using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
+        using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Act
         stream.ReadAll(outputStream, readBufferSize);
@@ -372,6 +375,8 @@ public sealed class PgpEncryptingStreamTest
     }
 
     [Theory(Timeout = Timeout)]
+    [InlineData(0, 1, PgpEncoding.None)]
+    [InlineData(0, 4096, PgpEncoding.None)]
     [InlineData(1, 1, PgpEncoding.None)]
     [InlineData(1, 2, PgpEncoding.None)]
     [InlineData(1, 4096, PgpEncoding.None)]
@@ -384,6 +389,7 @@ public sealed class PgpEncryptingStreamTest
     [InlineData(100_000, 1, PgpEncoding.None)]
     [InlineData(100_000, 2, PgpEncoding.None)]
     [InlineData(100_000, 4096, PgpEncoding.None)]
+    [InlineData(0, 4096, PgpEncoding.AsciiArmor)]
     [InlineData(1, 4096, PgpEncoding.AsciiArmor)]
     [InlineData(100, 4096, PgpEncoding.AsciiArmor)]
     [InlineData(100_000, 4096, PgpEncoding.AsciiArmor)]
@@ -394,7 +400,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(plainData);
         using var outputStream = new MemoryStream();
 
-        await using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKey, encoding);
+        await using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKey, encoding);
 
         // Act
         await stream.ReadAllAsync(outputStream, readBufferSize);
@@ -423,7 +429,7 @@ public sealed class PgpEncryptingStreamTest
         using var inputStream = new MemoryStream(plainData);
         using var outputStream = new MemoryStream();
 
-        await using var stream = PgpEncryptingStream.OpenRead(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
+        await using var stream = PgpEncryptingReadStream.Open(inputStream, PgpSamples.PublicKeyV6, encoding, profile: profile);
 
         // Act
         await stream.ReadAllAsync(outputStream);
