@@ -59,7 +59,7 @@ public readonly partial struct PgpSecretKey : IDisposable
 
     private static partial class ForeignFunctions
     {
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_locked_private_key_import")]
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_private_key_import")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial InteropError Import(
             in byte key,

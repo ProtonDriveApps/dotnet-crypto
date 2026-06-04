@@ -266,8 +266,8 @@ func pgp_verification_reader_get_verify_result(
 	return errorToPGPError(nil)
 }
 
-//export pgp_reader_destroy
-func pgp_reader_destroy(handle C.uintptr_t) {
+//export pgp_go_reader_destroy
+func pgp_go_reader_destroy(handle C.uintptr_t) {
 	cgo.Handle(handle).Delete()
 }
 
