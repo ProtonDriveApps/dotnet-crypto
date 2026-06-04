@@ -38,6 +38,8 @@ public readonly partial struct PgpPublicKey : IVerificationKeyRingSource, IEncry
 
     public void Export(Stream stream, PgpEncoding encoding) => Base.Export(stream, encoding);
 
+    public int Export(Span<byte> outputBuffer, PgpEncoding encoding) => Base.Export(outputBuffer, encoding);
+
     public byte[] GetFingerprint() => Base.GetFingerprint();
     public string[] GetSha256Fingerprints() => Base.GetSha256Fingerprints();
 

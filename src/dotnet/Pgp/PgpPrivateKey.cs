@@ -120,6 +120,8 @@ public readonly partial struct PgpPrivateKey
 
     public void Export(Stream stream, PgpEncoding encoding) => Base.Export(stream, encoding);
 
+    public int Export(Span<byte> outputBuffer, PgpEncoding encoding) => Base.Export(outputBuffer, encoding);
+
     public PgpSecretKey Lock(ReadOnlySpan<byte> passphrase)
     {
         using var error = ForeignFunctions.Lock(

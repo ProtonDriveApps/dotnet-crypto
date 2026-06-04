@@ -93,6 +93,22 @@ public readonly partial struct PgpKey : IVerificationKeyRingSource, IEncryptionK
         }
     }
 
+    public unsafe int Export(Span<byte> outputBuffer, PgpEncoding encoding)
+    {
+        fixed (byte* outputBufferPointer = outputBuffer)
+        {
+            var spanWriter = new SpanWriter(outputBufferPointer, outputBuffer.Length);
+
+            var outputWriter = InteropWriter.FromSpanWriter(&spanWriter);
+
+            using var error = ForeignFunctions.Export(ForeignHandle, forcePublic: false, encoding == PgpEncoding.AsciiArmor, outputWriter);
+
+            error.ThrowPgpExceptionIfAny();
+
+            return spanWriter.NumberOfBytesWritten;
+        }
+    }
+
     public override string ToString()
     {
         using var stream = new MemoryStream();

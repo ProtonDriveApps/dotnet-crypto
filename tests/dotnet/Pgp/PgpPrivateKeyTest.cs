@@ -33,7 +33,7 @@ public sealed class PgpPrivateKeyTest
     [Theory]
     [InlineData(PgpEncoding.None)]
     [InlineData(PgpEncoding.AsciiArmor)]
-    public void Export_Succeeds(PgpEncoding encoding)
+    public void Export_Succeeds_WhenOutputingToStream(PgpEncoding encoding)
     {
         // Arrange
         using var privateKey = PgpPrivateKey.Generate("Test", "test@example.com", KeyGenerationAlgorithm.Default);
@@ -46,6 +46,27 @@ public sealed class PgpPrivateKeyTest
         var exportedBytes = exportedKeyStream.ToArray();
         var importAction = () => PgpPrivateKey.Import(exportedBytes, encoding);
         var lockAfterImportAction = () => PgpPrivateKey.Import(exportedBytes, encoding).Lock(PgpSamples.Passphrase);
+
+        importAction.Should().NotThrow();
+        lockAfterImportAction.Should().NotThrow();
+    }
+
+    [Theory]
+    [InlineData(PgpEncoding.None)]
+    [InlineData(PgpEncoding.AsciiArmor)]
+    public void Export_Succeeds_WhenOutputingToSpan(PgpEncoding encoding)
+    {
+        // Arrange
+        using var privateKey = PgpPrivateKey.Generate("Test", "test@example.com", KeyGenerationAlgorithm.Default);
+        var outputBuffer = new byte[4096];
+
+        // Act
+        var length = privateKey.Export(outputBuffer, encoding);
+
+        // Assert
+        var exportedBytes = outputBuffer.AsMemory(..length);
+        var importAction = () => PgpPrivateKey.Import(exportedBytes.Span, encoding);
+        var lockAfterImportAction = () => PgpPrivateKey.Import(exportedBytes.Span, encoding).Lock(PgpSamples.Passphrase);
 
         importAction.Should().NotThrow();
         lockAfterImportAction.Should().NotThrow();

@@ -40,7 +40,7 @@ internal readonly partial struct ForeignReader(nint foreignHandle) : IDisposable
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial InteropError GetVerificationResult(ForeignReaderSafeHandle outputReaderHandle, out nint verificationResultHandle);
 
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_go_reader_destroy")]
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_reader_destroy")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial void ReleaseHandle(nint handle);
     }
