@@ -92,7 +92,7 @@ public readonly partial struct PgpMessage : IDisposable
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignMessageSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignMessageSafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignMessageSafeHandle(nint handle)
             : this()

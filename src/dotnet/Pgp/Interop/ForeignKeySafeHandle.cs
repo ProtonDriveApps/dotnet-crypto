@@ -1,10 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
-using Microsoft.Win32.SafeHandles;
 using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Pgp.Interop;
 
-internal sealed partial class ForeignKeySafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+internal sealed partial class ForeignKeySafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
 {
     public ForeignKeySafeHandle(nint handle)
         : this()

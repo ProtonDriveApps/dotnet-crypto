@@ -228,7 +228,7 @@ public readonly partial struct SrpClient : IDisposable
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignSrpAuthSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignSrpAuthSafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignSrpAuthSafeHandle(nint handle)
             : this()

@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using Microsoft.Win32.SafeHandles;
 using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Pgp.Interop;
@@ -45,7 +44,7 @@ internal readonly partial struct ForeignReader(nint foreignHandle) : IDisposable
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignReaderSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignReaderSafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignReaderSafeHandle(nint handle)
             : this()

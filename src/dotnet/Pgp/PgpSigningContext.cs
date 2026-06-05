@@ -47,7 +47,7 @@ public readonly partial struct PgpSigningContext : IDisposable
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignSigningContextSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignSigningContextSafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignSigningContextSafeHandle(nint handle)
             : this()

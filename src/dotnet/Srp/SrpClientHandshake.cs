@@ -47,7 +47,7 @@ public readonly partial struct SrpClientHandshake : IDisposable
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignSrpClientHandshakeSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignSrpClientHandshakeSafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignSrpClientHandshakeSafeHandle(nint handle)
             : this()

@@ -42,7 +42,7 @@ internal readonly partial struct ForeignWriter(nint foreignHandle) : IDisposable
         public static partial void ReleaseHandle(nint writerHandle);
     }
 
-    private sealed class ForeignWriterSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignWriterSafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignWriterSafeHandle(nint handle)
             : this()

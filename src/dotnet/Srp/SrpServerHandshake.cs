@@ -115,7 +115,7 @@ public readonly partial struct SrpServerHandshake : IDisposable
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignSrpServerHandshakeSafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignSrpServerHandshakeSafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignSrpServerHandshakeSafeHandle(nint handle)
             : this()

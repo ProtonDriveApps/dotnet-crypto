@@ -171,7 +171,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignSessionKeySafeHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignSessionKeySafeHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignSessionKeySafeHandle(nint handle)
             : this()

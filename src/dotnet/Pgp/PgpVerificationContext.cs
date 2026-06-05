@@ -82,7 +82,7 @@ public readonly partial struct PgpVerificationContext : IDisposable
         public static partial void ReleaseHandle(nint handle);
     }
 
-    private sealed class ForeignVerificationContextHandle() : SafeHandleZeroOrMinusOneIsInvalid(ownsHandle: true)
+    private sealed class ForeignVerificationContextHandle() : SafeHandleZeroIsInvalid(ownsHandle: true)
     {
         public ForeignVerificationContextHandle(nint handle)
             : this()
