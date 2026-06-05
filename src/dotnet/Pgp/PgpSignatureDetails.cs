@@ -2,10 +2,10 @@
 
 public readonly struct PgpSignatureDetails
 {
-    internal PgpSignatureDetails(long keyId)
+    internal PgpSignatureDetails(ulong keyId)
     {
         KeyId = keyId;
     }
 
-    public long KeyId { get; }
+    public ulong KeyId { get; }
 }

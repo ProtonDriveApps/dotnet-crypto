@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using Microsoft.Win32.SafeHandles;
 using Proton.Cryptography.Interop;
 using Proton.Cryptography.Pgp;
 using Proton.Cryptography.Pgp.Interop;

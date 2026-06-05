@@ -1,6 +1,5 @@
 ﻿using System.Buffers;
 using System.Runtime.CompilerServices;
-using Microsoft.Win32.SafeHandles;
 using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Pgp;
@@ -34,7 +33,7 @@ public readonly partial struct PgpMessage : IDisposable
         }
     }
 
-    public unsafe long[] GetEncryptionKeyIds()
+    public unsafe ulong[] GetEncryptionKeyIds()
     {
         ForeignFunctions.GetEncryptionKeyIds(ForeignHandle, out var keyIdsPointer, out var keyIdsLength);
 
@@ -43,10 +42,10 @@ public readonly partial struct PgpMessage : IDisposable
             throw new CryptographicException("Failed to get encryption key IDs");
         }
 
-        return InteropMemory.CopyToArrayAndFree<long>(keyIdsPointer, keyIdsLength);
+        return InteropMemory.CopyToArrayAndFree<ulong>(keyIdsPointer, keyIdsLength);
     }
 
-    public unsafe long[] GetSigningKeyIds()
+    public unsafe ulong[] GetSigningKeyIds()
     {
         ForeignFunctions.GetSigningKeyIds(ForeignHandle, out var keyIdsPointer, out var keyIdsLength);
 
@@ -55,7 +54,7 @@ public readonly partial struct PgpMessage : IDisposable
             throw new CryptographicException("Failed to get signing key IDs");
         }
 
-        return InteropMemory.CopyToArrayAndFree<long>(keyIdsPointer, keyIdsLength);
+        return InteropMemory.CopyToArrayAndFree<ulong>(keyIdsPointer, keyIdsLength);
     }
 
     public int GetKeyPacketsLength()
@@ -77,11 +76,11 @@ public readonly partial struct PgpMessage : IDisposable
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_get_enc_key_ids")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial void GetEncryptionKeyIds(ForeignMessageSafeHandle messageHandle, out long* keyIds, out nuint keyIdsLength);
+        public static unsafe partial void GetEncryptionKeyIds(ForeignMessageSafeHandle messageHandle, out ulong* keyIds, out nuint keyIdsLength);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_get_sig_key_ids")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial void GetSigningKeyIds(ForeignMessageSafeHandle messageHandle, out long* keyIds, out nuint keyIdsLength);
+        public static unsafe partial void GetSigningKeyIds(ForeignMessageSafeHandle messageHandle, out ulong* keyIds, out nuint keyIdsLength);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_key_packet_split")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

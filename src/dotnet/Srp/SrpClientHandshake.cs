@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using Microsoft.Win32.SafeHandles;
 using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Srp;
