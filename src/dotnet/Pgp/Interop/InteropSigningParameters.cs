@@ -10,7 +10,7 @@ internal unsafe readonly struct InteropSigningParameters
     public readonly bool Utf8;
     public readonly void* SigningKeys;
     public readonly nint SigningContext = 0;
-    public readonly long SigningTime;
+    public readonly ulong SigningTime;
 
     public InteropSigningParameters(void* signingKeys, nuint signingKeysLength, PgpProfile profile, TimeProvider? timeProviderOverride)
     {
@@ -23,7 +23,7 @@ internal unsafe readonly struct InteropSigningParameters
         if (timeProvider is not null)
         {
             HasSigningTime = true;
-            SigningTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+            SigningTime = checked((ulong)timeProvider.GetUtcNow().ToUnixTimeSeconds());
         }
     }
 }

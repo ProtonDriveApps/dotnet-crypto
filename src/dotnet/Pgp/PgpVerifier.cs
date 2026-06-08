@@ -185,7 +185,7 @@ public static partial class PgpVerifier
         public readonly bool IsUtf8;
         public readonly nint* Keys;
         public readonly nint VerificationContext;
-        public readonly long VerificationTime;
+        public readonly ulong VerificationTime;
 
         public InteropVerificationParameters(nint* verificationKeys, nuint verificationKeysLength, TimeProvider? timeProviderOverride)
         {
@@ -197,7 +197,8 @@ public static partial class PgpVerifier
             if (timeProvider is not null)
             {
                 HasVerificationTime = true;
-                VerificationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+
+                VerificationTime = checked((ulong)timeProvider.GetUtcNow().ToUnixTimeSeconds());
             }
         }
     }

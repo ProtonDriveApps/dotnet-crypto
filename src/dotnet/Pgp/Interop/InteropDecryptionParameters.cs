@@ -19,7 +19,7 @@ internal readonly unsafe ref struct InteropDecryptionParameters
     public readonly nint* VerificationKeys;
     public readonly nint SessionKey;
     public readonly nint VerificationContext;
-    public readonly long VerificationTime;
+    public readonly ulong VerificationTime;
     public readonly byte* Password;
     public readonly byte* DetachedSignature;
 
@@ -63,7 +63,7 @@ internal readonly unsafe ref struct InteropDecryptionParameters
         if (timeProvider is not null)
         {
             HasVerificationTime = true;
-            VerificationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+            VerificationTime = checked((ulong)timeProvider.GetUtcNow().ToUnixTimeSeconds());
         }
     }
 }

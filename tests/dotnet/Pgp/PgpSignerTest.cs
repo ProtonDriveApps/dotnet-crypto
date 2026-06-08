@@ -50,8 +50,8 @@ public class PgpSignerTest
     }
 
     [Theory]
-    [InlineData(2000, 1000)]
-    [InlineData(3000, null)]
+    [InlineData(2000, 1970)]
+    [InlineData(2100, null)]
     [InlineData(null, 2000)]
     public void Sign_Fails_WithInvalidTime(int? keyGenerationTimeOverrideYear, int? encryptionTimeOverrideYear)
     {
@@ -74,9 +74,9 @@ public class PgpSignerTest
     }
 
     [Theory]
-    [InlineData(1000, 2000)]
+    [InlineData(1970, 2000)]
     [InlineData(2000, null)]
-    [InlineData(null, 3000)]
+    [InlineData(null, 2100)]
     public void Sign_Succeeds_WithValidTime(int? keyGenerationTimeOverrideYear, int? encryptionTimeOverrideYear)
     {
         // Arrange

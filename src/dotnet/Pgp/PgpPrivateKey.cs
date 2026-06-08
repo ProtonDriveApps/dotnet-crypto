@@ -163,7 +163,7 @@ public readonly partial struct PgpPrivateKey
         public nuint NameLength;
         public byte* EmailAddress;
         public nuint EmailAddressLength;
-        public long GenerationTime;
+        public ulong GenerationTime;
         public byte Algorithm;
 
         public InteropKeyGenerationParameters(
@@ -188,7 +188,7 @@ public readonly partial struct PgpPrivateKey
             if (timeProvider is not null)
             {
                 HasGenerationTime = true;
-                GenerationTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+                GenerationTime = checked((ulong)timeProvider.GetUtcNow().ToUnixTimeSeconds());
             }
         }
     }

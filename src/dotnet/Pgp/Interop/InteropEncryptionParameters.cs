@@ -19,7 +19,7 @@ internal unsafe readonly struct InteropEncryptionParameters
     public readonly nint* SigningKeys;
     public readonly nint SessionKey;
     public readonly nint SigningContext;
-    public readonly long EncryptionTime;
+    public readonly ulong EncryptionTime;
     public readonly ulong MessageSizeHint;
     public readonly nuint PasswordLength;
     public readonly byte* Password;
@@ -61,14 +61,14 @@ internal unsafe readonly struct InteropEncryptionParameters
 
         Compress = compress;
 
-        MessageSizeHint = (ulong)(aeadStreamingChunkLength ?? PgpEnvironment.DefaultAeadStreamingChunkLength);
+        MessageSizeHint = checked((ulong)(aeadStreamingChunkLength ?? PgpEnvironment.DefaultAeadStreamingChunkLength));
 
         var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
 
         if (timeProvider is not null)
         {
             HasEncryptionTime = true;
-            EncryptionTime = timeProvider.GetUtcNow().ToUnixTimeSeconds();
+            EncryptionTime = checked((ulong)timeProvider.GetUtcNow().ToUnixTimeSeconds());
         }
     }
 }
