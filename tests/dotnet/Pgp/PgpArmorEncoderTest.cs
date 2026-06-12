@@ -1,20 +1,16 @@
 ﻿namespace Proton.Cryptography.Tests.Pgp;
 
-public class PgpArmorEncodingStreamTest
+public class PgpArmorEncoderTest
 {
     [Fact]
     public void Write_WritesWithArmorEncoding()
     {
         // Arrange
         var outputStream = new MemoryStream();
-
-        var stream = PgpArmorEncodingStream.Open(outputStream, PgpBlockType.Message);
-
         using var messageReader = new StreamReader(outputStream);
 
         // Act
-        stream.Write(PgpSamples.DataPacket);
-        stream.Close();
+        PgpArmorEncoder.Encode(PgpSamples.DataPacket, PgpBlockType.Message, outputStream);
 
         // Assert
         outputStream.Seek(0, SeekOrigin.Begin);
