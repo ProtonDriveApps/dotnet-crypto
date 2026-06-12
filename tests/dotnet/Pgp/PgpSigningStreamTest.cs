@@ -18,10 +18,11 @@ public class PgpSigningStreamTest
         stream.Close();
 
         // Assert
-        signatureOutputStream.Seek(0, SeekOrigin.Begin);
-        var signature = signatureReader.ReadToEnd();
-        var expectedBlockTypeString = outputType == SigningOutputType.FullMessage ? "MESSAGE" : "SIGNATURE";
-        signature.Should().StartWith($"-----BEGIN PGP {expectedBlockTypeString}-----");
-        signature.Should().EndWith($"-----END PGP {expectedBlockTypeString}-----");
+        var signatureBytes = signatureOutputStream.ToArray();
+        var expectedHeader = outputType == SigningOutputType.FullMessage ? PgpArmorHeaders.Message : PgpArmorHeaders.Signature;
+        signatureBytes.Should().StartWith(expectedHeader);
+
+        var decode = () => PgpArmorDecoder.Decode(signatureBytes);
+        decode.Should().NotThrow();
     }
 }

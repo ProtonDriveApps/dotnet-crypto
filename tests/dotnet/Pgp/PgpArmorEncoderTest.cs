@@ -7,16 +7,15 @@ public class PgpArmorEncoderTest
     {
         // Arrange
         var outputStream = new MemoryStream();
-        using var messageReader = new StreamReader(outputStream);
 
         // Act
         PgpArmorEncoder.Encode(PgpSamples.DataPacket, PgpBlockType.Message, outputStream);
 
         // Assert
-        outputStream.Seek(0, SeekOrigin.Begin);
-        var message = messageReader.ReadToEnd();
+        var messageBytes = outputStream.ToArray();
+        messageBytes.Should().StartWith(PgpArmorHeaders.Message);
 
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        message.Should().EndWith("-----END PGP MESSAGE-----");
+        var decode = () => PgpArmorDecoder.Decode(messageBytes);
+        decode.Should().NotThrow();
     }
 }

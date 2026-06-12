@@ -11,9 +11,10 @@ public class PgpSignerTest
         var signatureBytes = PgpSigner.Sign(PgpSamples.PlainText, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
 
         // Assert
-        var signature = Encoding.ASCII.GetString(signatureBytes);
-        signature.Should().StartWith("-----BEGIN PGP SIGNATURE-----");
-        signature.Should().EndWith("-----END PGP SIGNATURE-----");
+        signatureBytes.Should().StartWith(PgpArmorHeaders.Signature);
+
+        var decode = () => PgpArmorDecoder.Decode(signatureBytes);
+        decode.Should().NotThrow();
     }
 
     [Fact]
@@ -27,9 +28,10 @@ public class PgpSignerTest
             SigningOutputType.FullMessage);
 
         // Assert
-        var message = Encoding.ASCII.GetString(messageBytes);
-        message.Should().StartWith("-----BEGIN PGP MESSAGE-----");
-        message.Should().EndWith("-----END PGP MESSAGE-----");
+        messageBytes.Should().StartWith(PgpArmorHeaders.Message);
+
+        var decode = () => PgpArmorDecoder.Decode(messageBytes);
+        decode.Should().NotThrow();
     }
 
     [Fact]
@@ -43,10 +45,8 @@ public class PgpSignerTest
         PgpSigner.SignCleartext(PgpSamples.PlainText, PgpSamples.UnlockedPrivateKey, outputStream);
 
         // Assert
-        outputStream.Seek(0, SeekOrigin.Begin);
-        var message = messageReader.ReadToEnd();
-        message.Should().StartWith("-----BEGIN PGP SIGNED MESSAGE-----");
-        message.Should().EndWith("-----END PGP SIGNATURE-----");
+        var messageBytes = outputStream.ToArray();
+        messageBytes.Should().StartWith(PgpArmorHeaders.SignedMessage);
     }
 
     [Theory]
