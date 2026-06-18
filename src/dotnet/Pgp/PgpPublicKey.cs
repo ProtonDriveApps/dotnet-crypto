@@ -17,13 +17,6 @@ public readonly partial struct PgpPublicKey : IVerificationKeyRingSource, IEncry
     PgpKeyRing IVerificationKeyRingSource.VerificationKeyRing => this;
     PgpKeyRing IEncryptionKeyRingSource.EncryptionKeyRing => this;
 
-    public nint Id => Base.Id;
-    public int Version => Base.Version;
-    public bool CanEncrypt => Base.CanEncrypt;
-    public bool CanVerify => Base.CanVerify;
-    public bool IsExpired => Base.IsExpired;
-    public bool IsRevoked => Base.IsRevoked;
-
     internal PgpKey Base { get; }
 
     public static implicit operator PgpKey(PgpPublicKey publicKey) => publicKey.Base;
@@ -39,9 +32,6 @@ public readonly partial struct PgpPublicKey : IVerificationKeyRingSource, IEncry
     public void Export(Stream stream, PgpEncoding encoding) => Base.Export(stream, encoding);
 
     public int Export(Span<byte> outputBuffer, PgpEncoding encoding) => Base.Export(outputBuffer, encoding);
-
-    public byte[] GetFingerprint() => Base.GetFingerprint();
-    public string[] GetSha256Fingerprints() => Base.GetSha256Fingerprints();
 
     public override string ToString() => Base.ToString();
 

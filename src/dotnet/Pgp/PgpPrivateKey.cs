@@ -28,13 +28,6 @@ public readonly partial struct PgpPrivateKey
     PgpKeyRing IEncryptionKeyRingSource.EncryptionKeyRing => this;
     PgpPrivateKeyRing ISigningKeyRingSource.SigningKeyRing => this;
 
-    public nint Id => Base.Id;
-    public int Version => Base.Version;
-    public bool CanEncrypt => Base.CanEncrypt;
-    public bool CanVerify => Base.CanVerify;
-    public bool IsExpired => Base.IsExpired;
-    public bool IsRevoked => Base.IsRevoked;
-
     internal PgpKey Base { get; }
 
     public static implicit operator PgpKey(PgpPrivateKey privateKey) => privateKey.Base;
@@ -142,9 +135,6 @@ public readonly partial struct PgpPrivateKey
 
         return new PgpPublicKey(publicKey);
     }
-
-    public byte[] GetFingerprint() => Base.GetFingerprint();
-    public string[] GetSha256Fingerprints() => Base.GetSha256Fingerprints();
 
     public override string ToString() => Base.ToString();
 
