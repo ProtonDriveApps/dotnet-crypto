@@ -34,21 +34,6 @@ public class PgpSignerTest
         decode.Should().NotThrow();
     }
 
-    [Fact]
-    public void SignCleartext_Succeeds()
-    {
-        // Arrange
-        using var outputStream = new MemoryStream();
-        using var messageReader = new StreamReader(outputStream);
-
-        // Act
-        PgpSigner.SignCleartext(PgpSamples.PlainText, PgpSamples.UnlockedPrivateKey, outputStream);
-
-        // Assert
-        var messageBytes = outputStream.ToArray();
-        messageBytes.Should().StartWith(PgpArmorHeaders.SignedMessage);
-    }
-
     [Theory]
     [InlineData(2000, 1970)]
     [InlineData(2100, null)]

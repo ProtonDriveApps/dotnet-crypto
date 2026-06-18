@@ -17,9 +17,6 @@ public readonly partial struct PgpSecretKey : IDisposable
         Base = new PgpKey(foreignHandle);
     }
 
-    public nint Id => Base.Id;
-    public int Version => Base.Version;
-
     internal PgpKey Base { get; }
 
     public static PgpSecretKey Import(ReadOnlySpan<byte> lockedKeyBytes, PgpEncoding? encoding = null)

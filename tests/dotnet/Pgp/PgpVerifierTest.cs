@@ -40,18 +40,4 @@ public class PgpVerifierTest
         // Assert
         verificationResult.Status.Should().Be(expectedStatus);
     }
-
-    [Fact]
-    public void VerifyCleartext_ReturnsOk_AndWritesPlaintext()
-    {
-        // Arrange
-        using var cleartextOutput = new MemoryStream();
-
-        // Act
-        using var verificationResult = PgpVerifier.VerifyCleartext(PgpSamples.ArmoredSignedCleartextMessage, PgpSamples.PublicKey, cleartextOutput);
-
-        // Assert
-        verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
-        cleartextOutput.ToArray().Should().BeEquivalentTo(PgpSamples.PlainText);
-    }
 }

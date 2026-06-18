@@ -175,32 +175,6 @@ public static partial class PgpSigner
         }
     }
 
-    public static unsafe void SignCleartext(
-        ReadOnlySpan<byte> input,
-        PgpPrivateKeyRing signingKeyRing,
-        Stream outputStream,
-        PgpProfile profile = default,
-        TimeProvider? timeProviderOverride = null)
-    {
-        fixed (nint* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
-        {
-            var parameters = new InteropSigningParameters(signingKeysPointer, (nuint)signingKeyRing.Count, profile, timeProviderOverride);
-
-            var outputStreamHandle = GCHandle.Alloc(outputStream);
-            try
-            {
-                var outputWriter = InteropWriter.FromStreamHandle(outputStreamHandle);
-
-                using var error = ForeignFunctions.SignCleartext(parameters, MemoryMarshal.GetReference(input), (nuint)input.Length, outputWriter);
-                error.ThrowPgpExceptionIfAny();
-            }
-            finally
-            {
-                outputStreamHandle.Free();
-            }
-        }
-    }
-
     private static unsafe void Sign(
         ReadOnlySpan<byte> input,
         PgpPrivateKeyRing signingKeyRing,
@@ -238,14 +212,6 @@ public static partial class PgpSigner
             nuint dataLength,
             InteropPgpEncoding encoding,
             [MarshalAs(UnmanagedType.U1)] bool detached,
-            InteropWriter outputWriter);
-
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_sign_cleartext")]
-        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial InteropError SignCleartext(
-            in InteropSigningParameters parameters,
-            in byte data,
-            nuint dataLength,
             InteropWriter outputWriter);
     }
 }

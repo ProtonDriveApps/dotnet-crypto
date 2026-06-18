@@ -141,41 +141,6 @@ public static partial class PgpVerifier
         }
     }
 
-    public static unsafe PgpVerificationResult VerifyCleartext(
-        ReadOnlySpan<byte> message,
-        PgpKeyRing verificationKeyRing,
-        Stream cleartextOutputStream,
-        TimeProvider? timeProviderOverride = null)
-    {
-        fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
-        {
-            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
-
-            var cleartextOutputStreamHandle = GCHandle.Alloc(cleartextOutputStream);
-
-            try
-            {
-                var plaintextResult = new InteropPlaintextResult(cleartextOutputStreamHandle);
-
-                using var error = ForeignFunctions.VerifyCleartext(
-                    parameters,
-                    MemoryMarshal.GetReference(message),
-                    (nuint)message.Length,
-                    ref plaintextResult);
-
-                error.ThrowPgpExceptionIfAny();
-
-                return plaintextResult.HasVerificationResult
-                    ? new PgpVerificationResult(plaintextResult.VerificationResultHandle)
-                    : throw new PgpException("Missing verification result");
-            }
-            finally
-            {
-                cleartextOutputStreamHandle.Free();
-            }
-        }
-    }
-
     [StructLayout(LayoutKind.Sequential)]
     private unsafe readonly struct InteropVerificationParameters
     {
@@ -242,13 +207,5 @@ public static partial class PgpVerifier
             InteropReader inputReader,
             InteropPgpEncoding encoding,
             out nint readerHandle);
-
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verify_cleartext")]
-        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial InteropError VerifyCleartext(
-            in InteropVerificationParameters parameters,
-            in byte message,
-            nuint messageLength,
-            ref InteropPlaintextResult plaintextResult);
     }
 }
