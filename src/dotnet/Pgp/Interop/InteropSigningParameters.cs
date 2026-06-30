@@ -18,7 +18,7 @@ internal unsafe readonly struct InteropSigningParameters
         SigningKeysLength = signingKeysLength;
         SigningKeys = signingKeys;
 
-        var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+        var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 
         if (timeProvider is not null)
         {

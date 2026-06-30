@@ -173,7 +173,7 @@ public readonly partial struct PgpPrivateKey
             EmailAddressLength = emailAddressLength;
             Algorithm = (byte)algorithm;
 
-            var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+            var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 
             if (timeProvider is not null)
             {
