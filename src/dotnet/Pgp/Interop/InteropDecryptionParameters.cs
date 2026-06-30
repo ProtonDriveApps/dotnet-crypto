@@ -58,7 +58,7 @@ internal readonly unsafe ref struct InteropDecryptionParameters
         DetachedSignatureIsArmored = detachedSignatureEncoding == PgpEncoding.AsciiArmor;
         DetachedSignatureIsEncrypted = detachedSignatureEncryptionState == EncryptionState.Encrypted;
 
-        var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+        var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 
         if (timeProvider is not null)
         {

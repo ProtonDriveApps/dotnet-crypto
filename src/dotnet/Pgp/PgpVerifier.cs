@@ -157,7 +157,7 @@ public static partial class PgpVerifier
             Keys = verificationKeys;
             KeysLength = verificationKeysLength;
 
-            var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+            var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 
             if (timeProvider is not null)
             {

@@ -61,9 +61,9 @@ internal unsafe readonly struct InteropEncryptionParameters
 
         Compress = compress;
 
-        MessageSizeHint = checked((ulong)(aeadStreamingChunkLength ?? PgpEnvironment.DefaultAeadStreamingChunkLength));
+        MessageSizeHint = checked((ulong)(aeadStreamingChunkLength ?? PgpConfiguration.DefaultAeadStreamingChunkLength));
 
-        var timeProvider = timeProviderOverride ?? PgpEnvironment.DefaultTimeProviderOverride;
+        var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 
         if (timeProvider is not null)
         {
