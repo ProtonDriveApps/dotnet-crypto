@@ -1,7 +1,7 @@
 FROM harbor.protontech.ch/docker.io/ubuntu:26.04
 
-RUN apt update -qq && apt install -qqy --no-install-recommends \
-    ca-certificates wget tar xz-utils unzip git-filter-repo jq just && \
+RUN apt update -qq && apt upgrade -qqy && apt install -qqy --no-install-recommends \
+    ca-certificates wget tar xz-utils unzip git-filter-repo && \
     update-ca-certificates -f && \
     apt clean -y && \
     rm -rf /var/lib/apt/lists/*
@@ -32,11 +32,17 @@ RUN wget -q ${ANDROID_NDK_URL} -O /tmp/android-ndk.zip && \
     unzip -q /tmp/android-ndk.zip -d /opt && \
     rm /tmp/android-ndk.zip
 
+# Install Go build toolchains
 RUN apt update -qq && apt install -qqy --no-install-recommends \
-    golang gcc libc6-dev gcc-i686-linux-gnu libc6-dev-i386-cross gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabihf libc6-dev-armhf-cross rustup && \
+    golang gcc libc6-dev gcc-i686-linux-gnu libc6-dev-i386-cross gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabihf libc6-dev-armhf-cross && \
     apt clean -y && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Rust build toolchains
+RUN apt update -qq && apt install -qqy --no-install-recommends \
+    just jq rustup && \
+    apt clean -y && \
+    rm -rf /var/lib/apt/lists/*
 RUN rustup default stable
 
 # Add cross compiler rust toolchains
