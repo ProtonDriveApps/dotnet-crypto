@@ -28,7 +28,7 @@ public readonly partial struct PgpVerificationContext : IDisposable
                 MemoryMarshal.GetReference(valueUtf8Bytes),
                 (nuint)valueUtf8BytesLength,
                 isRequired,
-                checked((ulong)(requiredAfter?.ToUnixTimeMilliseconds() ?? 0)));
+                checked((ulong)(requiredAfter?.ToUnixTimeSeconds() ?? 0)));
         }
 
         return new PgpVerificationContext(verificationContextHandle);
