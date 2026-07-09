@@ -31,7 +31,7 @@ public sealed class PgpEncryptingReadStreamTest
     [Theory]
     [InlineData(PgpEncoding.None)]
     [InlineData(PgpEncoding.AsciiArmor)]
-    public void Read_ProducesValidMessageWithAttachedSignature_WhenSigningKeysProvided(PgpEncoding encoding)
+    public void Read_ProducesValidMessageWithInlineSignature_WhenSigningKeysProvided(PgpEncoding encoding)
     {
         // Arrange
         using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
@@ -173,7 +173,7 @@ public sealed class PgpEncryptingReadStreamTest
     [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
     [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
     [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
-    public void Read_ProducesValidMessageWithAttachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
+    public void Read_ProducesValidMessageWithInlineSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Arrange
         using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);

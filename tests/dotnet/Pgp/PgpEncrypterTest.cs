@@ -21,7 +21,7 @@ public sealed class PgpEncrypterTest
     [Theory]
     [InlineData(PgpEncoding.None)]
     [InlineData(PgpEncoding.AsciiArmor)]
-    public void Encrypt_ProducesValidMessageWithAttachedSignature_WhenSigningKeysProvided(PgpEncoding encoding)
+    public void Encrypt_ProducesValidMessageWithInlineSignature_WhenSigningKeysProvided(PgpEncoding encoding)
     {
         // Act
         var messageBytes = PgpEncrypter.EncryptAndSign(PgpSamples.PlainText, PgpSamples.PublicKey, PgpSamples.UnlockedPrivateKey, encoding);
@@ -140,7 +140,7 @@ public sealed class PgpEncrypterTest
     [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
     [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
     [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
-    public void EncryptAndSign_ProducesValidMessageWithAttachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
+    public void EncryptAndSign_ProducesValidMessageWithInlineSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Act
         var messageBytes = PgpEncrypter.EncryptAndSign(
@@ -315,7 +315,7 @@ public sealed class PgpEncrypterTest
     [InlineData(PgpProfile.ProtonAead, PgpEncoding.None)]
     [InlineData(PgpProfile.Proton, PgpEncoding.AsciiArmor)]
     [InlineData(PgpProfile.ProtonAead, PgpEncoding.AsciiArmor)]
-    public void EncryptAndSignToStream_ProducesValidMessageWithAttachedSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
+    public void EncryptAndSignToStream_ProducesValidMessageWithInlineSignature_WhenUsingProfileWithV6Key(PgpProfile profile, PgpEncoding encoding)
     {
         // Arrange
         using var outputStream = new MemoryStream();

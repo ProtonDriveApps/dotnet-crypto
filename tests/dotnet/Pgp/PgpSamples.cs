@@ -11,11 +11,8 @@ internal static class PgpSamples
     public static readonly byte[] ArmoredLockedPrivateKeyV6 = ReadPgpFile("locked_private_key_v6.asc");
     public static readonly byte[] ArmoredPublicKey = ReadPgpFile("public_key_v4.asc");
     public static readonly byte[] ArmoredPublicKeyV6 = ReadPgpFile("public_key_v6.asc");
-    public static readonly byte[] ArmoredSignedMessage = ReadPgpFile("signed_message.asc");
     public static readonly byte[] KeyBasedArmoredUnsignedMessage = ReadPgpFile("unsigned_message_key.asc");
     public static readonly byte[] KeyBasedArmoredUnsignedAeadMessage = ReadPgpFile("unsigned_aead_message_key.asc");
-    public static readonly byte[] KeyBasedArmoredMessageWithNonMatchingSignature = ReadPgpFile("message_non_matching_signature.asc");
-    public static readonly byte[] KeyBasedArmoredMessageWithInvalidSignature = ReadPgpFile("message_invalid_signature.asc");
     public static readonly byte[] PasswordBasedArmoredUnsignedMessage = ReadPgpFile("unsigned_message_password.asc");
     public static readonly byte[] ArmoredSignature = ReadPgpFile("armored_signature.asc");
     public static readonly byte[] ArmoredInvalidSignature = ReadPgpFile("armored_invalid_signature.asc");
@@ -32,7 +29,6 @@ internal static class PgpSamples
     public static readonly byte[] ArmoredInlineSignedMessage = ReadPgpFile("armored_inline_message_signed.asc");
     public static readonly byte[] ArmoredInlineMessageWithInvalidSignature = ReadPgpFile("armored_inline_message_signed_invalid.asc");
     public static readonly byte[] ArmoredInlineMessageWithNonMatchingSignature = ReadPgpFile("armored_inline_message_signed_incorrect.asc");
-    public static readonly byte[] ArmoredInlineUnsignedMessage = ReadPgpFile("armored_inline_message_unsigned.asc");
 
     public static readonly SymmetricCipher SessionKeyCipher = SymmetricCipher.Aes256;
 

@@ -51,8 +51,8 @@ public sealed class PgpDecryptingStreamTest
     }
 
     [Theory]
-    [MemberData(nameof(VerificationTestData.AttachedSignatures), MemberType = typeof(VerificationTestData))]
-    public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsAttached(Func<byte[]> armoredMessage, PgpVerificationStatus expectedStatus)
+    [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
+    public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsInline(Func<byte[]> armoredMessage, PgpVerificationStatus expectedStatus)
     {
         // Arrange
         using var inputStream = new MemoryStream(armoredMessage.Invoke(), writable: false);

@@ -4,7 +4,7 @@ public class PgpVerifierTest
 {
     [Theory]
     [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
-    public void Verify_ReturnsExpectedVerificationStatus_WhenSignatureIsAttachedInStream(Func<byte[]> message, PgpVerificationStatus expectedStatus)
+    public void Verify_ReturnsExpectedVerificationStatus_WhenSignatureIsInlineInStream(Func<byte[]> message, PgpVerificationStatus expectedStatus)
     {
         // Arrange
         using var inputStream = new MemoryStream(message.Invoke(), writable: false);
@@ -18,7 +18,7 @@ public class PgpVerifierTest
 
     [Theory]
     [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
-    public void Verify_ReturnsExpectedVerificationStatus_WhenSignatureIsAttached(Func<byte[]> message, PgpVerificationStatus expectedStatus)
+    public void Verify_ReturnsExpectedVerificationStatus_WhenSignatureIsInline(Func<byte[]> message, PgpVerificationStatus expectedStatus)
     {
         // Act
         using var verificationResult = PgpVerifier.Verify(message.Invoke(), PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);

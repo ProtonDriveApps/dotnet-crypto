@@ -76,8 +76,8 @@ public class PgpDecrypterTest
     }
 
     [Theory]
-    [MemberData(nameof(VerificationTestData.AttachedSignatures), MemberType = typeof(VerificationTestData))]
-    public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsAttached(Func<byte[]> armoredInput, PgpVerificationStatus expectedStatus)
+    [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
+    public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsInline(Func<byte[]> armoredInput, PgpVerificationStatus expectedStatus)
     {
         // Act
         PgpDecrypter.DecryptAndVerify(

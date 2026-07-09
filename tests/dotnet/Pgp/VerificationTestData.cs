@@ -2,20 +2,12 @@
 
 internal static class VerificationTestData
 {
-    public static IEnumerable<TheoryDataRow<Func<byte[]>, PgpVerificationStatus>> AttachedSignatures()
-    {
-        yield return (() => PgpSamples.ArmoredSignedMessage, PgpVerificationStatus.Ok);
-        yield return (() => PgpSamples.KeyBasedArmoredMessageWithInvalidSignature, PgpVerificationStatus.Failed);
-        yield return (() => PgpSamples.KeyBasedArmoredMessageWithNonMatchingSignature, PgpVerificationStatus.NoVerifier);
-        yield return (() => PgpSamples.KeyBasedArmoredUnsignedMessage, PgpVerificationStatus.NotSigned);
-    }
-
     public static IEnumerable<TheoryDataRow<Func<byte[]>, PgpVerificationStatus>> InlineSignatures()
     {
         yield return (() => PgpSamples.ArmoredInlineSignedMessage, PgpVerificationStatus.Ok);
         yield return (() => PgpSamples.ArmoredInlineMessageWithInvalidSignature, PgpVerificationStatus.Failed);
         yield return (() => PgpSamples.ArmoredInlineMessageWithNonMatchingSignature, PgpVerificationStatus.NoVerifier);
-        yield return (() => PgpSamples.ArmoredInlineUnsignedMessage, PgpVerificationStatus.NotSigned);
+        yield return (() => PgpSamples.KeyBasedArmoredUnsignedMessage, PgpVerificationStatus.NotSigned);
     }
 
     public static IEnumerable<TheoryDataRow<Func<byte[]>, PgpEncoding, EncryptionState, PgpVerificationStatus>> DetachedSignatures()
