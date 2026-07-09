@@ -163,6 +163,54 @@ internal static class PgpSamples
         -----END PGP MESSAGE-----
         """u8.ToArray();
 
+    public static readonly byte[] ArmoredInlineSignedMessage =
+        """
+        -----BEGIN PGP MESSAGE-----
+
+        xA0DAAgW4T9ucoNOQpEByxBiAAAAAABwbGFpbiB0ZXh0wqsEABYIAF0FgmBlDQAJ
+        EOE/bnKDTkKRNRQAAAAAABwAEHNhbHRAbm90YXRpb25zLm9wZW5wZ3Bqcy5vcmdC
+        ezJhHrVY595A2ymgwlKOFiEEL8kg4K5LYNzoAqRu4T9ucoNOQpEAANOLAP9+d7u9
+        OiY2HmjwOP6mqtTf4t6c4glrbwJOuSUZApAB2QEA4GZlt+YrSdMOnVMnMQmhxH3H
+        2kAP5ml/MvFKx0ZQcg0=
+        =h/Dw
+        -----END PGP MESSAGE-----
+        """u8.ToArray();
+
+    public static readonly byte[] ArmoredInlineMessageWithInvalidSignature =
+        """
+        -----BEGIN PGP MESSAGE-----
+
+        xA0DAAgW4T9ucoNOQpEByxBiAAAAAACPbGFpbiB0ZXh0wqsEABYIAF0FgmBlDQAJ
+        EOE/bnKDTkKRNRQAAAAAABwAEHNhbHRAbm90YXRpb25zLm9wZW5wZ3Bqcy5vcmdu
+        fUwHetby49MgaDxz0XJWFiEEL8kg4K5LYNzoAqRu4T9ucoNOQpEAAMARAQCiXqBk
+        ufhJoZo8aE8sqrtzipWdK8ff7mub5fSWp8ku1AEA2RCvBwrWWsrOpkTQeEz4Y6/i
+        bTKy9Bj4oGv603VjXA4=
+        =V65Z
+        -----END PGP MESSAGE-----
+        """u8.ToArray();
+
+    public static readonly byte[] ArmoredInlineMessageWithNonMatchingSignature =
+        """
+        -----BEGIN PGP MESSAGE-----
+
+        xA0DAAoWj55LkQCxjs4ByxBiAAAAAABwbGFpbiB0ZXh0wrsEABYKAG0FgmBlDQAJ
+        EI+eS5EAsY7ORRQAAAAAABwAIHNhbHRAbm90YXRpb25zLm9wZW5wZ3Bqcy5vcmeB
+        raY1w3AnXbWy/PzLvKAOZnBa8VL/I9MzH1hxMDjeTBYhBDm1ZOi6Agwl78HNSI+e
+        S5EAsY7OAAB8OgD/b2fAS7MkZ8l4TYQZgiXuiWeudcrfcXD945FkYUImkyUA/RJ9
+        ZclYdY0TuGsANgz0AUXMUhPHtXdVKnNQKxmw3pYC
+        =YleN
+        -----END PGP MESSAGE-----
+        """u8.ToArray();
+
+    public static readonly byte[] ArmoredInlineUnsignedMessage =
+        """
+        -----BEGIN PGP MESSAGE-----
+
+        yxBiAGBlDQBwbGFpbiB0ZXh0
+        =xP2g
+        -----END PGP MESSAGE-----
+        """u8.ToArray();
+
     public static readonly byte[] PasswordBasedArmoredUnsignedMessage =
         """
         -----BEGIN PGP MESSAGE-----

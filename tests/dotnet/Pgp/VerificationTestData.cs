@@ -10,6 +10,14 @@ internal static class VerificationTestData
         yield return (() => PgpSamples.KeyBasedArmoredUnsignedMessage, PgpVerificationStatus.NotSigned);
     }
 
+    public static IEnumerable<TheoryDataRow<Func<byte[]>, PgpVerificationStatus>> InlineSignatures()
+    {
+        yield return (() => PgpSamples.ArmoredInlineSignedMessage, PgpVerificationStatus.Ok);
+        yield return (() => PgpSamples.ArmoredInlineMessageWithInvalidSignature, PgpVerificationStatus.Failed);
+        yield return (() => PgpSamples.ArmoredInlineMessageWithNonMatchingSignature, PgpVerificationStatus.NoVerifier);
+        yield return (() => PgpSamples.ArmoredInlineUnsignedMessage, PgpVerificationStatus.NotSigned);
+    }
+
     public static IEnumerable<TheoryDataRow<Func<byte[]>, PgpEncoding, EncryptionState, PgpVerificationStatus>> DetachedSignatures()
     {
         foreach (var row in DetachedPlainSignatures())
