@@ -31,6 +31,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="../data/**/*" Link="data\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="System.Text" />
     <Using Include="Xunit" />
     <Using Include="AwesomeAssertions" />
@@ -44,6 +50,10 @@
       ../../bin/runtimes/$(RuntimeIdentifier)/native/*.so;
       ../../bin/runtimes/$(RuntimeIdentifier)/native/*.dylib"
           CopyToOutputDirectory="PreserveNewest" />
+
+    <None Update="../data/**/*.*">
+     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
