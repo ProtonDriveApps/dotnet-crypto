@@ -6,7 +6,7 @@ public sealed class PgpDecryptingStreamTest
     public void Read_DecryptsMessage_WithPrivateKey()
     {
         // Arrange
-        using var inputStream = new MemoryStream(PgpSamples.KeyBasedArmoredUnsignedMessage, writable: false);
+        using var inputStream = new MemoryStream(PgpSamples.KeyBasedArmoredEncryptedUnsignedMessage, writable: false);
 
         using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
@@ -22,7 +22,7 @@ public sealed class PgpDecryptingStreamTest
     public void Read_DecryptsMessage_WithPassword()
     {
         // Arrange
-        using var inputStream = new MemoryStream(PgpSamples.PasswordBasedArmoredUnsignedMessage, writable: false);
+        using var inputStream = new MemoryStream(PgpSamples.PasswordBasedArmoredEncryptedUnsignedMessage, writable: false);
 
         using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.Password, PgpEncoding.AsciiArmor);
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
@@ -51,7 +51,7 @@ public sealed class PgpDecryptingStreamTest
     }
 
     [Theory]
-    [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
+    [MemberData(nameof(VerificationTestData.EncryptedMessagesWithInlineSignatures), MemberType = typeof(VerificationTestData))]
     public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsInline(Func<byte[]> armoredMessage, PgpVerificationStatus expectedStatus)
     {
         // Arrange
@@ -77,7 +77,7 @@ public sealed class PgpDecryptingStreamTest
         PgpVerificationStatus expectedStatus)
     {
         // Arrange
-        using var inputStream = new MemoryStream(PgpSamples.KeyBasedArmoredUnsignedMessage, writable: false);
+        using var inputStream = new MemoryStream(PgpSamples.KeyBasedArmoredEncryptedUnsignedMessage, writable: false);
 
         using var stream = PgpDecryptingStream.Open(
             inputStream,

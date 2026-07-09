@@ -9,7 +9,7 @@ public class PgpArmorDecoderTest
         using var outputStream = new MemoryStream();
 
         // Act
-        PgpArmorDecoder.Decode(PgpSamples.KeyBasedArmoredUnsignedMessage, outputStream);
+        PgpArmorDecoder.Decode(PgpSamples.KeyBasedArmoredEncryptedUnsignedMessage, outputStream);
 
         // Assert
         var decryptedBytes = PgpDecrypter.Decrypt(outputStream.GetSpan(), PgpSamples.UnlockedPrivateKey);

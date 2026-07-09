@@ -3,7 +3,7 @@
 public class PgpVerifierTest
 {
     [Theory]
-    [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
+    [MemberData(nameof(VerificationTestData.PlainMessagesWithInlineSignatures), MemberType = typeof(VerificationTestData))]
     public void Verify_ReturnsExpectedVerificationStatus_WhenSignatureIsInlineInStream(Func<byte[]> message, PgpVerificationStatus expectedStatus)
     {
         // Arrange
@@ -17,7 +17,7 @@ public class PgpVerifierTest
     }
 
     [Theory]
-    [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
+    [MemberData(nameof(VerificationTestData.PlainMessagesWithInlineSignatures), MemberType = typeof(VerificationTestData))]
     public void Verify_ReturnsExpectedVerificationStatus_WhenSignatureIsInline(Func<byte[]> message, PgpVerificationStatus expectedStatus)
     {
         // Act

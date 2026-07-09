@@ -39,7 +39,7 @@ public class PgpDecrypterTest
     public void Decrypt_DecryptsMessage_WithPrivateKey()
     {
         // Act
-        var output = PgpDecrypter.Decrypt(PgpSamples.KeyBasedArmoredUnsignedMessage, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
+        var output = PgpDecrypter.Decrypt(PgpSamples.KeyBasedArmoredEncryptedUnsignedMessage, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
 
         // Assert
         output.Should().Equal(PgpSamples.PlainText);
@@ -49,7 +49,7 @@ public class PgpDecrypterTest
     public void Decrypt_DecryptsMessage_WithPrivateKeyV6()
     {
         // Act
-        var output = PgpDecrypter.Decrypt(PgpSamples.KeyBasedArmoredUnsignedAeadMessage, PgpSamples.UnlockedPrivateKeyV6, PgpEncoding.AsciiArmor);
+        var output = PgpDecrypter.Decrypt(PgpSamples.KeyBasedArmoredEncryptedUnsignedAeadMessage, PgpSamples.UnlockedPrivateKeyV6, PgpEncoding.AsciiArmor);
 
         // Assert
         output.Should().Equal(PgpSamples.PlainText);
@@ -59,7 +59,7 @@ public class PgpDecrypterTest
     public void Decrypt_DecryptsMessage_WithPassword()
     {
         // Act
-        var output = PgpDecrypter.Decrypt(PgpSamples.PasswordBasedArmoredUnsignedMessage, PgpSamples.Password, PgpEncoding.AsciiArmor);
+        var output = PgpDecrypter.Decrypt(PgpSamples.PasswordBasedArmoredEncryptedUnsignedMessage, PgpSamples.Password, PgpEncoding.AsciiArmor);
 
         // Assert
         output.Should().Equal(PgpSamples.PlainText);
@@ -76,7 +76,7 @@ public class PgpDecrypterTest
     }
 
     [Theory]
-    [MemberData(nameof(VerificationTestData.InlineSignatures), MemberType = typeof(VerificationTestData))]
+    [MemberData(nameof(VerificationTestData.EncryptedMessagesWithInlineSignatures), MemberType = typeof(VerificationTestData))]
     public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsInline(Func<byte[]> armoredInput, PgpVerificationStatus expectedStatus)
     {
         // Act
@@ -101,7 +101,7 @@ public class PgpDecrypterTest
     {
         // Act
         PgpDecrypter.DecryptAndVerify(
-            PgpSamples.KeyBasedArmoredUnsignedMessage,
+            PgpSamples.KeyBasedArmoredEncryptedUnsignedMessage,
             PgpSamples.UnlockedPrivateKey,
             signatureInput.Invoke(),
             PgpSamples.PublicKey,

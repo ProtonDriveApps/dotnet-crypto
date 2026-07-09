@@ -23,7 +23,7 @@ public class PgpMessageTest
     public void GetKeyPacketsLength_Succeeds_WhenMessageIsArmored()
     {
         // Arrange
-        using var message = PgpMessage.Open(PgpSamples.KeyBasedArmoredUnsignedMessage, PgpEncoding.AsciiArmor);
+        using var message = PgpMessage.Open(PgpSamples.KeyBasedArmoredEncryptedUnsignedMessage, PgpEncoding.AsciiArmor);
 
         // Act
         var keyPacketsLength = message.GetKeyPacketsLength();
