@@ -30,7 +30,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         PgpEncoding inputEncoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        return Open(inputStream, inputEncoding, secrets, default, default, default, default, timeProviderOverride);
+        return Open(inputStream, inputEncoding, secrets, default, default, default, default, null, timeProviderOverride);
     }
 
     public static PgpDecryptingStream Open(
@@ -38,9 +38,10 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         in DecryptionSecrets secrets,
         PgpKeyRing verificationKeyRing,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        return Open(inputStream, inputEncoding, secrets, default, default, default, verificationKeyRing, timeProviderOverride);
+        return Open(inputStream, inputEncoding, secrets, default, default, default, verificationKeyRing, verificationContext, timeProviderOverride);
     }
 
     public static PgpDecryptingStream Open(
@@ -51,6 +52,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         return Open(
@@ -61,6 +63,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
             signatureEncoding,
             signatureEncryptionState,
             verificationKeyRing,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -104,6 +107,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
         PgpEncoding signatureEncoding,
         EncryptionState signatureEncryptionState,
         PgpKeyRing verificationKeyRing,
+        PgpVerificationContext? verificationContext,
         TimeProvider? timeProviderOverride)
     {
         var (decryptionKeyRing, sessionKey, password) = secrets;
@@ -130,6 +134,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
                             (nuint)signature.Length,
                             signatureEncoding,
                             signatureEncryptionState,
+                            verificationContext,
                             timeProviderOverride);
 
                         var streamHandle = GCHandle.Alloc(inputStream);

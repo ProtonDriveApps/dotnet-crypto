@@ -38,6 +38,7 @@ public static class EncryptionSecretsExtensions
             PgpCompression outputCompression = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncrypter.EncryptAndSign(
@@ -49,6 +50,7 @@ public static class EncryptionSecretsExtensions
                 outputCompression,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -63,6 +65,7 @@ public static class EncryptionSecretsExtensions
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncrypter.EncryptAndSign(
@@ -77,6 +80,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -105,6 +109,7 @@ public static class EncryptionSecretsExtensions
             PgpCompression outputCompression = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncrypter.EncryptAndSign(
@@ -115,6 +120,7 @@ public static class EncryptionSecretsExtensions
                 outputCompression,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -127,6 +133,7 @@ public static class EncryptionSecretsExtensions
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncrypter.EncryptAndSign(
@@ -139,6 +146,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -170,6 +178,7 @@ public static class EncryptionSecretsExtensions
             PgpCompression outputCompression = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             PgpEncrypter.EncryptAndSignToStream(
@@ -181,6 +190,7 @@ public static class EncryptionSecretsExtensions
                 outputCompression,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -194,6 +204,7 @@ public static class EncryptionSecretsExtensions
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             PgpEncrypter.EncryptAndSignToStreams(
@@ -207,6 +218,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -238,6 +250,7 @@ public static class EncryptionSecretsExtensions
             Encoding? textEncoding = null,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncrypter.EncryptAndSignText(
@@ -249,6 +262,7 @@ public static class EncryptionSecretsExtensions
                 textEncoding,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -262,6 +276,7 @@ public static class EncryptionSecretsExtensions
             Encoding? textEncoding = null,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncrypter.EncryptAndSignText(
@@ -275,6 +290,7 @@ public static class EncryptionSecretsExtensions
                 textEncoding,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -321,6 +337,7 @@ public static class EncryptionSecretsExtensions
             PgpCompression compression = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncryptingWriteStream.Open(
@@ -331,6 +348,7 @@ public static class EncryptionSecretsExtensions
                 compression,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -341,6 +359,7 @@ public static class EncryptionSecretsExtensions
             PgpCompression compression = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncryptingReadStream.Open(
@@ -351,6 +370,7 @@ public static class EncryptionSecretsExtensions
                 compression,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -363,6 +383,7 @@ public static class EncryptionSecretsExtensions
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncryptingWriteStream.Open(
@@ -375,6 +396,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -387,6 +409,7 @@ public static class EncryptionSecretsExtensions
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncryptingReadStream.Open(
@@ -399,6 +422,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -447,6 +471,7 @@ public static class EncryptionSecretsExtensions
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncryptingWriteStream.OpenSplit(
@@ -459,6 +484,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
 
@@ -471,6 +497,7 @@ public static class EncryptionSecretsExtensions
             EncryptionState signatureEncryptionState = default,
             PgpProfile profile = default,
             long? aeadStreamingChunkLength = null,
+            PgpSigningContext? signingContext = null,
             TimeProvider? timeProviderOverride = null)
         {
             return PgpEncryptingReadStream.OpenSplit(
@@ -483,6 +510,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
     }

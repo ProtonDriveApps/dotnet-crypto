@@ -1,4 +1,4 @@
-﻿namespace Proton.Cryptography.Pgp;
+namespace Proton.Cryptography.Pgp;
 
 public static class VerificationKeyRingSourceExtensions
 {
@@ -6,20 +6,22 @@ public static class VerificationKeyRingSourceExtensions
         this T verificationKeyRingSource,
         ReadOnlySpan<byte> message,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IVerificationKeyRingSource
     {
-        return PgpVerifier.Verify(message, verificationKeyRingSource.VerificationKeyRing, encoding);
+        return PgpVerifier.Verify(message, verificationKeyRingSource.VerificationKeyRing, encoding, verificationContext, timeProviderOverride);
     }
 
     public static PgpVerificationResult Verify<T>(
         this T verificationKeyRingSource,
         Stream messageStream,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IVerificationKeyRingSource
     {
-        return PgpVerifier.Verify(messageStream, verificationKeyRingSource.VerificationKeyRing, encoding);
+        return PgpVerifier.Verify(messageStream, verificationKeyRingSource.VerificationKeyRing, encoding, verificationContext, timeProviderOverride);
     }
 
     public static PgpVerificationResult Verify<T>(
@@ -27,10 +29,11 @@ public static class VerificationKeyRingSourceExtensions
         ReadOnlySpan<byte> input,
         ReadOnlySpan<byte> signature,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IVerificationKeyRingSource
     {
-        return PgpVerifier.Verify(input, signature, verificationKeyRingSource.VerificationKeyRing, encoding);
+        return PgpVerifier.Verify(input, signature, verificationKeyRingSource.VerificationKeyRing, encoding, verificationContext, timeProviderOverride);
     }
 
     public static PgpVerificationResult Verify<T>(
@@ -38,9 +41,10 @@ public static class VerificationKeyRingSourceExtensions
         Stream inputStream,
         ReadOnlySpan<byte> signature,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IVerificationKeyRingSource
     {
-        return PgpVerifier.Verify(inputStream, signature, verificationKeyRingSource.VerificationKeyRing, encoding);
+        return PgpVerifier.Verify(inputStream, signature, verificationKeyRingSource.VerificationKeyRing, encoding, verificationContext, timeProviderOverride);
     }
 }

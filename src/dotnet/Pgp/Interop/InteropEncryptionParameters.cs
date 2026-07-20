@@ -37,6 +37,7 @@ internal unsafe readonly struct InteropEncryptionParameters
         bool detachedSignatureIsEncrypted,
         bool compress,
         long? aeadStreamingChunkLength,
+        PgpSigningContext? signingContextOrNull,
         TimeProvider? timeProviderOverride)
     {
         Profile = (byte)profile;
@@ -51,6 +52,12 @@ internal unsafe readonly struct InteropEncryptionParameters
         {
             SessionKey = ((IForeignHandleProxy)sessionKey).ForeignHandle.DangerousGetHandle();
             HasSessionKey = true;
+        }
+
+        if (signingContextOrNull is { } signingContext)
+        {
+            SigningContext = ((IForeignHandleProxy)signingContext).ForeignHandle.DangerousGetHandle();
+            HasSigningContext = true;
         }
 
         Password = password;

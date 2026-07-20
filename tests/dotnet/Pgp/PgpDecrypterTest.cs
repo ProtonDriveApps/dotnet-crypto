@@ -77,7 +77,10 @@ public class PgpDecrypterTest
 
     [Theory]
     [MemberData(nameof(VerificationTestData.EncryptedMessagesWithInlineSignatures), MemberType = typeof(VerificationTestData))]
-    public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsInline(Func<byte[]> armoredInput, PgpVerificationStatus expectedStatus)
+    public void Decrypt_ReturnsExpectedVerificationStatus_WhenSignatureIsInline(
+        Func<byte[]> armoredInput,
+        PgpVerificationContext? verificationContext,
+        PgpVerificationStatus expectedStatus)
     {
         // Act
         PgpDecrypter.DecryptAndVerify(
@@ -85,7 +88,8 @@ public class PgpDecrypterTest
             PgpSamples.UnlockedPrivateKey,
             PgpSamples.PublicKey,
             out var verificationResult,
-            PgpEncoding.AsciiArmor);
+            PgpEncoding.AsciiArmor,
+            verificationContext);
 
         // Assert
         verificationResult.Status.Should().Be(expectedStatus);

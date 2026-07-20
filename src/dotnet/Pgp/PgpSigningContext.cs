@@ -3,12 +3,14 @@ using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
-public readonly partial struct PgpSigningContext : IDisposable
+public readonly partial struct PgpSigningContext : IDisposable, IForeignHandleProxy
 {
     private PgpSigningContext(ForeignSigningContextSafeHandle foreignHandle)
     {
         ForeignHandle = foreignHandle;
     }
+
+    SafeHandle IForeignHandleProxy.ForeignHandle => ForeignHandle;
 
     private ForeignSigningContextSafeHandle ForeignHandle => field ?? throw new InvalidOperationException("Invalid handle");
 

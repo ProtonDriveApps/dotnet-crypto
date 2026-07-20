@@ -65,6 +65,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
             default,
             profile,
             aeadStreamingChunkLength,
+            null,
             timeProviderOverride);
 
         return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -78,6 +79,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         PgpCompression compression = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -96,6 +98,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
             default,
             profile,
             aeadStreamingChunkLength,
+            signingContext,
             timeProviderOverride);
 
         return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -111,6 +114,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -134,6 +138,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
 
             return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
@@ -175,6 +180,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
                 default,
                 profile,
                 aeadStreamingChunkLength,
+                null,
                 timeProviderOverride);
 
             return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
@@ -196,6 +202,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var overflowStream = new MemoryStream(OverflowBufferLength);
@@ -224,6 +231,7 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
                     signatureEncryptionState,
                     profile,
                     aeadStreamingChunkLength,
+                    signingContext,
                     timeProviderOverride);
 
                 return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);

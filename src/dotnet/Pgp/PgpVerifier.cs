@@ -10,11 +10,16 @@ public static partial class PgpVerifier
         Stream messageStream,
         PgpKeyRing verificationKeyRing,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(
+                verificationKeysPointer,
+                (nuint)verificationKeyRing.Count,
+                verificationContext,
+                timeProviderOverride);
 
             var messageStreamHandle = GCHandle.Alloc(messageStream);
 
@@ -47,11 +52,16 @@ public static partial class PgpVerifier
         ReadOnlySpan<byte> signature,
         PgpKeyRing verificationKeyRing,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(
+                verificationKeysPointer,
+                (nuint)verificationKeyRing.Count,
+                verificationContext,
+                timeProviderOverride);
 
             var messageStreamHandle = GCHandle.Alloc(inputStream);
 
@@ -82,11 +92,12 @@ public static partial class PgpVerifier
         ReadOnlySpan<byte> message,
         PgpKeyRing keyRing,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* keysPointer = keyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new InteropVerificationParameters(keysPointer, (nuint)keyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(keysPointer, (nuint)keyRing.Count, verificationContext, timeProviderOverride);
 
             var streamHandle = GCHandle.Alloc(Stream.Null);
 
@@ -117,11 +128,16 @@ public static partial class PgpVerifier
         ReadOnlySpan<byte> signature,
         PgpKeyRing verificationKeyRing,
         PgpEncoding encoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
         {
-            var parameters = new InteropVerificationParameters(verificationKeysPointer, (nuint)verificationKeyRing.Count, timeProviderOverride);
+            var parameters = new InteropVerificationParameters(
+                verificationKeysPointer,
+                (nuint)verificationKeyRing.Count,
+                verificationContext,
+                timeProviderOverride);
 
             using var error = ForeignFunctions.VerifyDetached(
                 parameters,
@@ -152,10 +168,20 @@ public static partial class PgpVerifier
         public readonly nint VerificationContext;
         public readonly ulong VerificationTime;
 
-        public InteropVerificationParameters(nint* verificationKeys, nuint verificationKeysLength, TimeProvider? timeProviderOverride)
+        public InteropVerificationParameters(
+            nint* verificationKeys,
+            nuint verificationKeysLength,
+            PgpVerificationContext? verificationContextOrNull,
+            TimeProvider? timeProviderOverride)
         {
             Keys = verificationKeys;
             KeysLength = verificationKeysLength;
+
+            if (verificationContextOrNull is { } verificationContext)
+            {
+                VerificationContext = ((IForeignHandleProxy)verificationContext).ForeignHandle.DangerousGetHandle();
+                HasVerificationContext = true;
+            }
 
             var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 

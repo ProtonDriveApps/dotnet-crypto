@@ -30,6 +30,7 @@ internal partial struct ForeignEncryptingWriter(
         EncryptionState signatureEncryptionState,
         PgpProfile profile,
         long? aeadStreamingChunkLength,
+        PgpSigningContext? signingContext,
         TimeProvider? timeProviderOverride)
     {
         var (encryptionKeyRing, sessionKey, password) = encryptionSecrets;
@@ -53,6 +54,7 @@ internal partial struct ForeignEncryptingWriter(
                         signatureEncryptionState == EncryptionState.Encrypted,
                         dataCompression != PgpCompression.None,
                         aeadStreamingChunkLength,
+                        signingContext,
                         timeProviderOverride);
 
                     var messageOutputStreamHandle = GCHandle.Alloc(messageOutputStream);

@@ -27,6 +27,7 @@ public static partial class PgpEncrypter
             Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
+            null,
             timeProviderOverride);
     }
 
@@ -39,6 +40,7 @@ public static partial class PgpEncrypter
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         return Encrypt(
@@ -52,6 +54,7 @@ public static partial class PgpEncrypter
             Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
+            signingContext,
             timeProviderOverride);
     }
 
@@ -67,6 +70,7 @@ public static partial class PgpEncrypter
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* signatureOutputPointer = signatureOutput)
@@ -85,6 +89,7 @@ public static partial class PgpEncrypter
                 signatureWriter,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
 
             signatureLength = signatureSpanWriter.NumberOfBytesWritten;
@@ -102,7 +107,7 @@ public static partial class PgpEncrypter
         long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
-        return EncryptAndSign(input, encryptionSecrets, default, outputEncoding, outputCompression, profile, aeadStreamingChunkLength, timeProviderOverride);
+        return EncryptAndSign(input, encryptionSecrets, default, outputEncoding, outputCompression, profile, aeadStreamingChunkLength, null, timeProviderOverride);
     }
 
     public static ArraySegment<byte> EncryptAndSign(
@@ -113,11 +118,22 @@ public static partial class PgpEncrypter
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForMessage(input.Length, 1, signingKeyRing.Count, outputEncoding);
 
-        EncryptAndSignToStream(input, encryptionSecrets, outputStream, signingKeyRing, outputEncoding, outputCompression, profile, aeadStreamingChunkLength, timeProviderOverride);
+        EncryptAndSignToStream(
+            input,
+            encryptionSecrets,
+            outputStream,
+            signingKeyRing,
+            outputEncoding,
+            outputCompression,
+            profile,
+            aeadStreamingChunkLength,
+            signingContext,
+            timeProviderOverride);
 
         return outputStream.TryGetBuffer(out var buffer) ? buffer : outputStream.ToArray();
     }
@@ -132,6 +148,7 @@ public static partial class PgpEncrypter
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForMessage(input.Length, 1, 0, outputEncoding);
@@ -148,6 +165,7 @@ public static partial class PgpEncrypter
             signatureEncryptionState,
             profile,
             aeadStreamingChunkLength,
+            signingContext,
             timeProviderOverride);
 
         signature = signatureOutputStream.TryGetBuffer(out var signatureBuffer) ? signatureBuffer : outputStream.ToArray();
@@ -176,6 +194,7 @@ public static partial class PgpEncrypter
             Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
+            null,
             timeProviderOverride);
     }
 
@@ -188,6 +207,7 @@ public static partial class PgpEncrypter
         PgpCompression outputCompression = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         Encrypt(
@@ -201,6 +221,7 @@ public static partial class PgpEncrypter
             Unsafe.NullRef<InteropWriter>(),
             profile,
             aeadStreamingChunkLength,
+            signingContext,
             timeProviderOverride);
     }
 
@@ -215,6 +236,7 @@ public static partial class PgpEncrypter
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
@@ -234,6 +256,7 @@ public static partial class PgpEncrypter
                 signatureWriter,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
         finally
@@ -276,6 +299,7 @@ public static partial class PgpEncrypter
         Encoding? textEncoding = null,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = default,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         textEncoding ??= Encoding.UTF8;
@@ -297,6 +321,7 @@ public static partial class PgpEncrypter
                 outputCompression,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
     }
@@ -312,6 +337,7 @@ public static partial class PgpEncrypter
         Encoding? textEncoding = null,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         textEncoding ??= Encoding.UTF8;
@@ -335,6 +361,7 @@ public static partial class PgpEncrypter
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
     }
@@ -348,9 +375,10 @@ public static partial class PgpEncrypter
         PgpPrivateKeyRing signingKeyRing,
         EncryptionState signatureEncryptionState,
         in InteropWriter signatureWriterPointer,
-        PgpProfile profile = default,
-        long? aeadStreamingChunkLength = null,
-        TimeProvider? timeProviderOverride = null)
+        PgpProfile profile,
+        long? aeadStreamingChunkLength,
+        PgpSigningContext? signingContext,
+        TimeProvider? timeProviderOverride)
     {
         fixed (byte* outputPointer = output)
         {
@@ -368,6 +396,7 @@ public static partial class PgpEncrypter
                 signatureWriterPointer,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
 
             return outputSpanWriter.NumberOfBytesWritten;
@@ -385,6 +414,7 @@ public static partial class PgpEncrypter
         in InteropWriter signatureWriter,
         PgpProfile profile,
         long? aeadStreamingChunkLength,
+        PgpSigningContext? signingContext,
         TimeProvider? timeProviderOverride)
     {
         var outputStreamHandle = GCHandle.Alloc(outputStream);
@@ -404,6 +434,7 @@ public static partial class PgpEncrypter
                 signatureWriter,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
         }
         finally
@@ -423,6 +454,7 @@ public static partial class PgpEncrypter
         in InteropWriter signatureWriter,
         PgpProfile profile,
         long? aeadStreamingChunkLength,
+        PgpSigningContext? signingContext,
         TimeProvider? timeProviderOverride)
     {
         var (encryptionKeyRing, sessionKey, password) = encryptionSecrets;
@@ -446,6 +478,7 @@ public static partial class PgpEncrypter
                         signatureEncryptionState == EncryptionState.Encrypted,
                         outputCompression != PgpCompression.None,
                         aeadStreamingChunkLength,
+                        signingContext,
                         timeProviderOverride);
 
                     using var error = ForeignFunctions.Encrypt(

@@ -1,4 +1,6 @@
-﻿namespace Proton.Cryptography.Pgp.Interop;
+﻿using Proton.Cryptography.Interop;
+
+namespace Proton.Cryptography.Pgp.Interop;
 
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe readonly struct InteropSigningParameters
@@ -12,11 +14,22 @@ internal unsafe readonly struct InteropSigningParameters
     public readonly nint SigningContext = 0;
     public readonly ulong SigningTime;
 
-    public InteropSigningParameters(void* signingKeys, nuint signingKeysLength, PgpProfile profile, TimeProvider? timeProviderOverride)
+    public InteropSigningParameters(
+        void* signingKeys,
+        nuint signingKeysLength,
+        PgpProfile profile,
+        PgpSigningContext? signingContextOrNull,
+        TimeProvider? timeProviderOverride)
     {
         Profile = (byte)profile;
         SigningKeysLength = signingKeysLength;
         SigningKeys = signingKeys;
+
+        if (signingContextOrNull is { } signingContext)
+        {
+            SigningContext = ((IForeignHandleProxy)signingContext).ForeignHandle.DangerousGetHandle();
+            HasSigningContext = true;
+        }
 
         var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 

@@ -41,6 +41,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
             default,
             profile,
             aeadStreamingChunkLength,
+            null,
             timeProviderOverride);
 
         return new PgpEncryptingWriteStream(foreignStream);
@@ -54,6 +55,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
         PgpCompression compression = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var foreignStream = ForeignEncryptingWriter.Create(
@@ -69,6 +71,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
             default,
             profile,
             aeadStreamingChunkLength,
+            signingContext,
             timeProviderOverride);
 
         return new PgpEncryptingWriteStream(foreignStream);
@@ -84,6 +87,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
@@ -104,6 +108,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
+                signingContext,
                 timeProviderOverride);
 
             return new PgpEncryptingWriteStream(foreignStream);
@@ -142,6 +147,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
                 default,
                 profile,
                 aeadStreamingChunkLength,
+                null,
                 timeProviderOverride);
 
             return new PgpEncryptingWriteStream(foreignStream);
@@ -163,6 +169,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
         EncryptionState signatureEncryptionState = default,
         PgpProfile profile = default,
         long? aeadStreamingChunkLength = null,
+        PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
@@ -188,6 +195,7 @@ public sealed class PgpEncryptingWriteStream : BaseWriteOnlyStream
                     signatureEncryptionState,
                     profile,
                     aeadStreamingChunkLength,
+                    signingContext,
                     timeProviderOverride);
 
                 return new PgpEncryptingWriteStream(foreignStream);

@@ -35,6 +35,7 @@ internal readonly unsafe ref struct InteropDecryptionParameters
         nuint detachedSignatureLength,
         PgpEncoding detachedSignatureEncoding,
         EncryptionState detachedSignatureEncryptionState,
+        PgpVerificationContext? verificationContextOrNull,
         TimeProvider? timeProviderOverride)
     {
         DecryptionKeys = decryptionKeys;
@@ -57,6 +58,12 @@ internal readonly unsafe ref struct InteropDecryptionParameters
 
         DetachedSignatureIsArmored = detachedSignatureEncoding == PgpEncoding.AsciiArmor;
         DetachedSignatureIsEncrypted = detachedSignatureEncryptionState == EncryptionState.Encrypted;
+
+        if (verificationContextOrNull is { } verificationContext)
+        {
+            VerificationContext = ((IForeignHandleProxy)verificationContext).ForeignHandle.DangerousGetHandle();
+            HasVerificationContext = true;
+        }
 
         var timeProvider = timeProviderOverride ?? PgpConfiguration.DefaultTimeProviderOverride;
 

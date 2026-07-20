@@ -18,7 +18,7 @@ public static partial class PgpDecrypter
             var outputSpanWriter = new SpanWriter(outputPointer, output.Length);
             var outputWriter = new InteropPlaintextResult(&outputSpanWriter);
 
-            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref outputWriter, timeProviderOverride);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref outputWriter, null, timeProviderOverride);
 
             return outputSpanWriter.NumberOfBytesWritten;
         }
@@ -31,9 +31,22 @@ public static partial class PgpDecrypter
         Span<byte> output,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        return Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, output, out verificationResult, timeProviderOverride);
+        return Decrypt(
+            input,
+            inputEncoding,
+            secrets,
+            null,
+            0,
+            default,
+            default,
+            verificationKeyRing,
+            output,
+            out verificationResult,
+            verificationContext,
+            timeProviderOverride);
     }
 
     public static unsafe int DecryptAndVerify(
@@ -46,6 +59,7 @@ public static partial class PgpDecrypter
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* signaturePointer = signature)
@@ -61,6 +75,7 @@ public static partial class PgpDecrypter
                 verificationKeyRing,
                 output,
                 out verificationResult,
+                verificationContext,
                 timeProviderOverride);
         }
     }
@@ -78,7 +93,7 @@ public static partial class PgpDecrypter
         {
             var plaintextResult = new InteropPlaintextResult(outputStreamHandle);
 
-            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref plaintextResult, timeProviderOverride);
+            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref plaintextResult, null, timeProviderOverride);
         }
         finally
         {
@@ -93,9 +108,22 @@ public static partial class PgpDecrypter
         Stream outputStream,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        Decrypt(input, inputEncoding, secrets, null, 0, default, default, verificationKeyRing, outputStream, out verificationResult, timeProviderOverride);
+        Decrypt(
+            input,
+            inputEncoding,
+            secrets,
+            null,
+            0,
+            default,
+            default,
+            verificationKeyRing,
+            outputStream,
+            out verificationResult,
+            verificationContext,
+            timeProviderOverride);
     }
 
     public static unsafe void DecryptAndVerify(
@@ -108,6 +136,7 @@ public static partial class PgpDecrypter
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         fixed (byte* signaturePointer = signature)
@@ -123,6 +152,7 @@ public static partial class PgpDecrypter
                 verificationKeyRing,
                 outputStream,
                 out verificationResult,
+                verificationContext,
                 timeProviderOverride);
         }
     }
@@ -146,6 +176,7 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         return DecryptAndVerify(
@@ -155,6 +186,7 @@ public static partial class PgpDecrypter
             verificationKeyRing,
             out verificationResult,
             inputEncoding,
+            verificationContext: verificationContext,
             timeProviderOverride: timeProviderOverride);
     }
 
@@ -167,6 +199,7 @@ public static partial class PgpDecrypter
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         using var outputStream = MemoryProvider.GetMemoryStreamForPlaintext(input.Length, inputEncoding);
@@ -181,6 +214,7 @@ public static partial class PgpDecrypter
             inputEncoding,
             signatureEncoding,
             signatureEncryptionState,
+            verificationContext,
             timeProviderOverride);
 
         return outputStream.TryGetBuffer(out var buffer) ? buffer : outputStream.ToArray();
@@ -207,9 +241,17 @@ public static partial class PgpDecrypter
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         Encoding? textEncoding = null,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var decryptedBytes = DecryptAndVerify(input, secrets, verificationKeyRing, out verificationResult, inputEncoding, timeProviderOverride);
+        var decryptedBytes = DecryptAndVerify(
+            input,
+            secrets,
+            verificationKeyRing,
+            out verificationResult,
+            inputEncoding,
+            verificationContext,
+            timeProviderOverride);
 
         textEncoding ??= Encoding.UTF8;
 
@@ -224,6 +266,7 @@ public static partial class PgpDecrypter
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         Encoding? textEncoding = null,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
     {
         var decryptedBytes = DecryptAndVerify(
@@ -233,6 +276,7 @@ public static partial class PgpDecrypter
             verificationKeyRing,
             out verificationResult,
             inputEncoding,
+            verificationContext: verificationContext,
             timeProviderOverride: timeProviderOverride);
 
         textEncoding ??= Encoding.UTF8;
@@ -256,6 +300,7 @@ public static partial class PgpDecrypter
                 0,
                 default,
                 default,
+                null,
                 null);
 
             using var error = ForeignFunctions.DecryptSessionKey(
@@ -281,6 +326,7 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         Span<byte> output,
         out PgpVerificationResult verificationResult,
+        PgpVerificationContext? verificationContext,
         TimeProvider? timeProviderOverride)
     {
         fixed (byte* outputPointer = output)
@@ -298,6 +344,7 @@ public static partial class PgpDecrypter
                 signatureEncryptionState,
                 verificationKeyRing.DangerousGetForeignKeyHandles(),
                 ref plaintextResult,
+                verificationContext,
                 timeProviderOverride);
 
             verificationResult = plaintextResult.HasVerificationResult
@@ -319,6 +366,7 @@ public static partial class PgpDecrypter
         PgpKeyRing verificationKeyRing,
         Stream outputStream,
         out PgpVerificationResult verificationResult,
+        PgpVerificationContext? verificationContext,
         TimeProvider? timeProviderOverride)
     {
         var outputStreamHandle = GCHandle.Alloc(outputStream);
@@ -337,6 +385,7 @@ public static partial class PgpDecrypter
                 signatureEncryptionState,
                 verificationKeyRing.DangerousGetForeignKeyHandles(),
                 ref plaintextResult,
+                verificationContext,
                 timeProviderOverride);
 
             verificationResult = plaintextResult.HasVerificationResult
@@ -359,6 +408,7 @@ public static partial class PgpDecrypter
         EncryptionState signatureEncryptionState,
         ReadOnlySpan<nint> verificationKeyHandles,
         ref InteropPlaintextResult plaintextResult,
+        PgpVerificationContext? verificationContext,
         TimeProvider? timeProviderOverride)
     {
         var (decryptionKeyRing, sessionKey, password) = secrets;
@@ -381,6 +431,7 @@ public static partial class PgpDecrypter
                         (nuint)signatureLength,
                         signatureEncoding,
                         signatureEncryptionState,
+                        verificationContext,
                         timeProviderOverride);
 
                     using var error = ForeignFunctions.Decrypt(

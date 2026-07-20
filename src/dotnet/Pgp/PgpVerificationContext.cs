@@ -3,12 +3,14 @@ using Proton.Cryptography.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
-public readonly partial struct PgpVerificationContext : IDisposable
+public readonly partial struct PgpVerificationContext : IDisposable, IForeignHandleProxy
 {
     private PgpVerificationContext(nint foreignHandle)
     {
         ForeignHandle = new ForeignVerificationContextHandle(foreignHandle);
     }
+
+    SafeHandle IForeignHandleProxy.ForeignHandle => ForeignHandle;
 
     private ForeignVerificationContextHandle ForeignHandle => field ?? throw new InvalidOperationException("Invalid handle");
 

@@ -339,4 +339,39 @@ public sealed class PgpEncrypterTest
         decryptedBytes.Should().Equal(PgpSamples.PlainText);
         verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
+
+    [Fact]
+    public void EncryptAndSign_ProducesInlineSignatureWithContext_ThatIsCheckedDuringVerification()
+    {
+        // Arrange
+        using var signingContext = PgpSigningContext.Create(PgpSamples.VerificationContext);
+
+        // Act
+        var messageBytes = PgpEncrypter.EncryptAndSign(
+            PgpSamples.PlainText,
+            PgpSamples.PublicKey,
+            PgpSamples.UnlockedPrivateKey,
+            PgpEncoding.AsciiArmor,
+            signingContext: signingContext);
+
+        // Assert
+        using var matchingContext = PgpVerificationContext.Create(PgpSamples.VerificationContext, isRequired: true);
+        var decryptedBytes = PgpSamples.UnlockedPrivateKey.DecryptAndVerify(
+            messageBytes.AsSpan(),
+            PgpSamples.PublicKey,
+            out var matchingResult,
+            PgpEncoding.AsciiArmor,
+            matchingContext);
+        decryptedBytes.Should().Equal(PgpSamples.PlainText);
+        matchingResult.Status.Should().Be(PgpVerificationStatus.Ok);
+
+        using var mismatchingContext = PgpVerificationContext.Create("unexpected-context", isRequired: true);
+        PgpSamples.UnlockedPrivateKey.DecryptAndVerify(
+            messageBytes.AsSpan(),
+            PgpSamples.PublicKey,
+            out var mismatchingResult,
+            PgpEncoding.AsciiArmor,
+            mismatchingContext);
+        mismatchingResult.Status.Should().Be(PgpVerificationStatus.BadContext);
+    }
 }

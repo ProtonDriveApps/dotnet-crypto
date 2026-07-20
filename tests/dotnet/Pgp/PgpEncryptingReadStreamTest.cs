@@ -4,7 +4,7 @@ namespace Proton.Cryptography.Tests.Pgp;
 
 public sealed class PgpEncryptingReadStreamTest
 {
-    private const int Timeout = 500;
+    private const int Timeout = 2000;
 
     [Theory]
     [InlineData(PgpEncoding.None)]

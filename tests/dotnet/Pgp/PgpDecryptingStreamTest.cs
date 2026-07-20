@@ -52,12 +52,20 @@ public sealed class PgpDecryptingStreamTest
 
     [Theory]
     [MemberData(nameof(VerificationTestData.EncryptedMessagesWithInlineSignatures), MemberType = typeof(VerificationTestData))]
-    public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsInline(Func<byte[]> armoredMessage, PgpVerificationStatus expectedStatus)
+    public void GetVerificationResult_ReturnsExpectedStatus_WhenSignatureIsInline(
+        Func<byte[]> armoredMessage,
+        PgpVerificationContext? verificationContext,
+        PgpVerificationStatus expectedStatus)
     {
         // Arrange
         using var inputStream = new MemoryStream(armoredMessage.Invoke(), writable: false);
 
-        using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.UnlockedPrivateKey, PgpSamples.PublicKey, PgpEncoding.AsciiArmor);
+        using var stream = PgpDecryptingStream.Open(
+            inputStream,
+            PgpSamples.UnlockedPrivateKey,
+            PgpSamples.PublicKey,
+            PgpEncoding.AsciiArmor,
+            verificationContext);
         using var streamReader = new StreamReader(stream, Encoding.UTF8);
         streamReader.ReadToEnd();
 

@@ -99,6 +99,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
                 false,
                 false,
                 0,
+                null,
                 timeProviderOverride);
 
             var outputStreamHandle = GCHandle.Alloc(outputStream);

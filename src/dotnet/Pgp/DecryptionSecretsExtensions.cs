@@ -9,6 +9,7 @@ public static class DecryptionSecretsExtensions
         Span<byte> output,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -19,6 +20,7 @@ public static class DecryptionSecretsExtensions
             output,
             out verificationResult,
             inputEncoding,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -32,6 +34,7 @@ public static class DecryptionSecretsExtensions
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -45,6 +48,7 @@ public static class DecryptionSecretsExtensions
             inputEncoding,
             signatureEncoding,
             signatureEncryptionState,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -66,6 +70,7 @@ public static class DecryptionSecretsExtensions
         Stream outputStream,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -76,6 +81,7 @@ public static class DecryptionSecretsExtensions
             outputStream,
             out verificationResult,
             inputEncoding,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -89,6 +95,7 @@ public static class DecryptionSecretsExtensions
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -102,6 +109,7 @@ public static class DecryptionSecretsExtensions
             inputEncoding,
             signatureEncoding,
             signatureEncryptionState,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -121,6 +129,7 @@ public static class DecryptionSecretsExtensions
         PgpKeyRing verificationKeyRing,
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -130,6 +139,7 @@ public static class DecryptionSecretsExtensions
             verificationKeyRing,
             out verificationResult,
             inputEncoding,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -142,6 +152,7 @@ public static class DecryptionSecretsExtensions
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -154,6 +165,7 @@ public static class DecryptionSecretsExtensions
             inputEncoding,
             signatureEncoding,
             signatureEncryptionState,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -175,6 +187,7 @@ public static class DecryptionSecretsExtensions
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         Encoding? textEncoding = null,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -185,6 +198,7 @@ public static class DecryptionSecretsExtensions
             out verificationResult,
             inputEncoding,
             textEncoding,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -196,6 +210,7 @@ public static class DecryptionSecretsExtensions
         out PgpVerificationResult verificationResult,
         PgpEncoding inputEncoding = default,
         Encoding? textEncoding = null,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -207,6 +222,7 @@ public static class DecryptionSecretsExtensions
             out verificationResult,
             inputEncoding,
             textEncoding,
+            verificationContext,
             timeProviderOverride);
     }
 
@@ -225,10 +241,17 @@ public static class DecryptionSecretsExtensions
         Stream inputStream,
         PgpKeyRing verificationKeyRing,
         PgpEncoding inputEncoding = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
-        return PgpDecryptingStream.Open(inputStream, decryptionSecretsSource.DecryptionSecrets, verificationKeyRing, inputEncoding, timeProviderOverride);
+        return PgpDecryptingStream.Open(
+            inputStream,
+            decryptionSecretsSource.DecryptionSecrets,
+            verificationKeyRing,
+            inputEncoding,
+            verificationContext,
+            timeProviderOverride);
     }
 
     public static PgpDecryptingStream OpenDecryptingAndVerifyingStream<T>(
@@ -239,6 +262,7 @@ public static class DecryptionSecretsExtensions
         PgpEncoding inputEncoding = default,
         PgpEncoding signatureEncoding = default,
         EncryptionState signatureEncryptionState = default,
+        PgpVerificationContext? verificationContext = null,
         TimeProvider? timeProviderOverride = null)
         where T : IDecryptionSecretsSource
     {
@@ -250,6 +274,7 @@ public static class DecryptionSecretsExtensions
             inputEncoding,
             signatureEncoding,
             signatureEncryptionState,
+            verificationContext,
             timeProviderOverride);
     }
 }

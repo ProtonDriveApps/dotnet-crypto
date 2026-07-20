@@ -81,4 +81,28 @@ public class PgpSignerTest
         // Assert
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public void Sign_ProducesSignatureWithContext_ThatIsCheckedDuringVerification()
+    {
+        // Arrange
+        using var signingContext = PgpSigningContext.Create(PgpSamples.VerificationContext);
+
+        // Act
+        var messageBytes = PgpSigner.Sign(
+            PgpSamples.PlainText,
+            PgpSamples.UnlockedPrivateKey,
+            PgpEncoding.AsciiArmor,
+            SigningOutputType.FullMessage,
+            signingContext: signingContext);
+
+        // Assert
+        using var matchingContext = PgpVerificationContext.Create(PgpSamples.VerificationContext, isRequired: true);
+        using var matchingResult = PgpVerifier.Verify(messageBytes.AsSpan(), PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor, matchingContext);
+        matchingResult.Status.Should().Be(PgpVerificationStatus.Ok);
+
+        using var mismatchingContext = PgpVerificationContext.Create("unexpected-context", isRequired: true);
+        using var mismatchingResult = PgpVerifier.Verify(messageBytes.AsSpan(), PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor, mismatchingContext);
+        mismatchingResult.Status.Should().Be(PgpVerificationStatus.BadContext);
+    }
 }

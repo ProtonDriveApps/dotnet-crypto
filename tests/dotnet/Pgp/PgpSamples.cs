@@ -12,6 +12,7 @@ internal static class PgpSamples
     public static readonly byte[] ArmoredPublicKey = ReadPgpFile("public_key_v4.asc");
     public static readonly byte[] ArmoredPublicKeyV6 = ReadPgpFile("public_key_v6.asc");
     public static readonly byte[] ArmoredEncryptedSignedMessage = ReadPgpFile("encrypted_message_signed.asc");
+    public static readonly byte[] ArmoredEncryptedSignedMessageWithContext = ReadPgpFile("encrypted_message_signed_with_context.asc");
     public static readonly byte[] KeyBasedArmoredEncryptedUnsignedMessage = ReadPgpFile("encrypted_message_unsigned.asc");
     public static readonly byte[] KeyBasedArmoredEncryptedUnsignedAeadMessage = ReadPgpFile("encrypted_aead_message_unsigned.asc");
     public static readonly byte[] KeyBasedArmoredEncryptedMessageWithNonMatchingSignature = ReadPgpFile("encrypted_message_non_matching_signature.asc");
@@ -30,6 +31,7 @@ internal static class PgpSamples
     public static readonly byte[] LongDataPacket = ReadPgpBase64File("long_data_packet.b64");
 
     public static readonly byte[] ArmoredPlainSignedMessage = ReadPgpFile("plain_message_signed.asc");
+    public static readonly byte[] ArmoredPlainSignedMessageWithContext = ReadPgpFile("plain_message_signed_with_context.asc");
     public static readonly byte[] ArmoredPlainMessageWithInvalidSignature = ReadPgpFile("plain_message_invalid_signature.asc");
     public static readonly byte[] ArmoredPlainMessageWithNonMatchingSignature = ReadPgpFile("plain_message_non_matching_signature.asc");
     public static readonly byte[] ArmoredPlainUnsignedMessage = ReadPgpFile("plain_message_unsigned.asc");
@@ -46,6 +48,8 @@ internal static class PgpSamples
 
     public static readonly byte[] PlainText = ReadPgpFile("plain_text.txt");
     public static readonly byte[] LongPlainText = ReadPgpFile("long_plain_text.txt");
+
+    public static readonly string VerificationContext = Encoding.UTF8.GetString(ReadPgpFile("verification_context.txt")).Trim();
 
     private static byte[] ReadPgpFile(string name) =>
         File.ReadAllBytes(Path.Combine(DataDirPath, "pgp", name));
