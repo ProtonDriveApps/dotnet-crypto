@@ -20,7 +20,7 @@ public readonly partial struct PgpVerificationResult : IDisposable
 
             if (status == PgpVerificationStatus.Ok)
             {
-                error.ThrowPgpExceptionIfAny();
+                error.ThrowPgpOrStreamExceptionIfAny();
             }
 
             return status;

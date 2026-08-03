@@ -7,19 +7,18 @@ internal readonly partial struct ForeignReader(nint foreignHandle) : IDisposable
 {
     private ForeignReaderSafeHandle ForeignHandle { get => field ?? throw new InvalidOperationException("Invalid handle"); } = new(foreignHandle);
 
-    public int Read(ReadOnlySpan<byte> buffer)
+    public int Read(ReadOnlySpan<byte> buffer, ExceptionRecordingStream? inputStream = null)
     {
         using var error = ForeignFunctions.Read(ForeignHandle, MemoryMarshal.GetReference(buffer), (nuint)buffer.Length, out var numberOfBytesRead);
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny(inputStream);
 
         return (int)numberOfBytesRead;
     }
 
-    public PgpVerificationResult GetVerificationResult()
+    public PgpVerificationResult GetVerificationResult(ExceptionRecordingStream? inputStream = null)
     {
         using var error = ForeignFunctions.GetVerificationResult(ForeignHandle, out var verificationResultHandle);
-
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny(inputStream);
 
         return new PgpVerificationResult(verificationResultHandle);
     }

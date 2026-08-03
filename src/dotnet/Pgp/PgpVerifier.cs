@@ -21,24 +21,25 @@ public static partial class PgpVerifier
                 verificationContext,
                 timeProviderOverride);
 
-            var messageStreamHandle = GCHandle.Alloc(messageStream);
+            var inputRecordingStream = new ExceptionRecordingStream(messageStream);
+            var messageStreamHandle = GCHandle.Alloc(inputRecordingStream);
 
             try
             {
                 var inputReader = new InteropReader(messageStreamHandle);
 
                 using var error = ForeignFunctions.VerifyInlineStream(parameters, inputReader, encoding.ToInteropEncoding(), out var outputReaderHandle);
-                error.ThrowPgpExceptionIfAny();
+                error.ThrowPgpOrStreamExceptionIfAny(inputRecordingStream);
 
                 using var outputReader = new ForeignReader(outputReaderHandle);
 
                 // TODO: expose the output reader as a stream and let the caller read from it instead of reading everything here and discarding it
                 Span<byte> buffer = stackalloc byte[4096];
-                while (outputReader.Read(buffer) > 0)
+                while (outputReader.Read(buffer, inputRecordingStream) > 0)
                 {
                 }
 
-                return outputReader.GetVerificationResult();
+                return outputReader.GetVerificationResult(inputRecordingStream);
             }
             finally
             {
@@ -63,7 +64,8 @@ public static partial class PgpVerifier
                 verificationContext,
                 timeProviderOverride);
 
-            var messageStreamHandle = GCHandle.Alloc(inputStream);
+            var inputRecordingStream = new ExceptionRecordingStream(inputStream);
+            var messageStreamHandle = GCHandle.Alloc(inputRecordingStream);
 
             try
             {
@@ -77,7 +79,7 @@ public static partial class PgpVerifier
                     encoding.ToInteropEncoding(),
                     out var verificationResultHandle);
 
-                error.ThrowPgpExceptionIfAny();
+                error.ThrowPgpOrStreamExceptionIfAny(inputRecordingStream);
 
                 return new PgpVerificationResult(verificationResultHandle);
             }
@@ -112,7 +114,7 @@ public static partial class PgpVerifier
                     encoding.ToInteropEncoding(),
                     ref plaintextResult);
 
-                error.ThrowPgpExceptionIfAny();
+                error.ThrowPgpOrStreamExceptionIfAny();
 
                 return new PgpVerificationResult(plaintextResult.VerificationResultHandle);
             }
@@ -150,7 +152,7 @@ public static partial class PgpVerifier
 
             if (verificationResultHandle == 0)
             {
-                error.ThrowPgpExceptionIfAny();
+                error.ThrowPgpOrStreamExceptionIfAny();
             }
 
             return new PgpVerificationResult(verificationResultHandle);

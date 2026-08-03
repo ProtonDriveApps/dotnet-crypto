@@ -7,13 +7,18 @@ namespace Proton.Cryptography.Pgp;
 public sealed partial class PgpSigningStream : BaseWriteOnlyStream
 {
     private readonly ForeignWriter _inputWriter;
+    private readonly ExceptionRecordingStream _outputStream;
 
     private GCHandle _outputStreamHandle;
     private bool _isClosed;
 
-    private PgpSigningStream(ForeignWriter inputWriter, GCHandle outputStreamHandle)
+    private PgpSigningStream(
+        ForeignWriter inputWriter,
+        ExceptionRecordingStream outputStream,
+        GCHandle outputStreamHandle)
     {
         _inputWriter = inputWriter;
+        _outputStream = outputStream;
         _outputStreamHandle = outputStreamHandle;
     }
 
@@ -40,23 +45,36 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
                 signingContext,
                 timeProviderOverride);
 
-            var streamHandle = GCHandle.Alloc(outputStream);
+            var outputRecordingStream = new ExceptionRecordingStream(outputStream);
+            var outputStreamHandle = default(GCHandle);
+            ForeignWriter? inputWriter = null;
+
             try
             {
+                outputStreamHandle = GCHandle.Alloc(outputRecordingStream);
+
                 using var error = ForeignFunctions.OpenStream(
                     parameters,
-                    InteropWriter.FromStreamHandle(streamHandle),
+                    InteropWriter.FromStreamHandle(outputStreamHandle),
                     encoding.ToInteropEncoding(),
                     outputType == SigningOutputType.SignatureOnly,
                     out var inputWriterHandle);
 
-                error.ThrowPgpExceptionIfAny();
+                inputWriter = new ForeignWriter(inputWriterHandle);
 
-                return new PgpSigningStream(new ForeignWriter(inputWriterHandle), streamHandle);
+                error.ThrowPgpOrStreamExceptionIfAny(outputRecordingStream);
+
+                return new PgpSigningStream(inputWriter.Value, outputRecordingStream, outputStreamHandle);
             }
             catch
             {
-                streamHandle.Free();
+                inputWriter?.Dispose();
+
+                if (outputStreamHandle.IsAllocated)
+                {
+                    outputStreamHandle.Free();
+                }
+
                 throw;
             }
         }
@@ -66,7 +84,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
     {
         while (buffer.Length > 0)
         {
-            var numberOfBytesWritten = _inputWriter.Write(buffer);
+            var numberOfBytesWritten = _inputWriter.Write(buffer, _outputStream);
 
             buffer = buffer[numberOfBytesWritten..];
         }
@@ -88,7 +106,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
 
             _isClosed = true;
 
-            _inputWriter.WriteEnd();
+            _inputWriter.WriteEnd(_outputStream);
         }
         finally
         {
@@ -98,14 +116,13 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
 
     protected override void Dispose(bool disposing)
     {
-        var isNotYetDisposed = _outputStreamHandle.IsAllocated;
-        if (isNotYetDisposed)
+        if (disposing)
         {
-            if (disposing)
-            {
-                _inputWriter.Dispose();
-            }
+            _inputWriter.Dispose();
+        }
 
+        if (_outputStreamHandle.IsAllocated)
+        {
             _outputStreamHandle.Free();
         }
 

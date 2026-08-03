@@ -27,7 +27,7 @@ public readonly partial struct PgpSecretKey : IDisposable
             encoding.ToInteropEncoding(),
             out var keyHandle);
 
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpSecretKey(keyHandle);
     }
@@ -44,7 +44,7 @@ public readonly partial struct PgpSecretKey : IDisposable
             (nuint)passphrase.Length,
             out var unlockedKeyHandle);
 
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpPrivateKey(unlockedKeyHandle);
     }

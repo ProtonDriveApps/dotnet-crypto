@@ -53,7 +53,7 @@ public static partial class PgpArmorEncoder
     {
         using var error = ForeignFunctions.Encode(MemoryMarshal.GetReference(message), (nuint)message.Length, blockType, outputWriter);
 
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
     }
 
     private static partial class ForeignFunctions

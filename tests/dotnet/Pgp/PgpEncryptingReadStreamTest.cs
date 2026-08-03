@@ -298,6 +298,36 @@ public sealed class PgpEncryptingReadStreamTest
         verificationResult.Status.Should().Be(PgpVerificationStatus.Ok);
     }
 
+    [Fact]
+    public void Read_RethrowsOutputStreamException_WhenSignatureOutputStreamFails()
+    {
+        // Arrange
+        const string simulatedOutputStreamFailureMessage = "Simulated output stream failure.";
+
+        using var inputStream = new MemoryStream(PgpSamples.PlainText, writable: false);
+        var signatureOutputStream = new FailingStream(
+            new MemoryStream(),
+            failWhenPositionExceeds: 0,
+            createException: () => new InvalidOperationException(simulatedOutputStreamFailureMessage));
+
+        var buffer = new byte[4096];
+
+        // Act
+        var act = () =>
+        {
+            using var stream = PgpEncryptingReadStream.Open(inputStream, signatureOutputStream, PgpSamples.PublicKey, PgpSamples.UnlockedPrivateKey);
+
+            while (stream.Read(buffer) > 0)
+            {
+            }
+        };
+
+        // Assert
+        var exception = act.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Be(simulatedOutputStreamFailureMessage);
+        exception.StackTrace.Should().Contain(nameof(FailingStream));
+    }
+
     [Theory(Timeout = Timeout)]
     [InlineData(0, 1, PgpEncoding.None)]
     [InlineData(0, 4096, PgpEncoding.None)]

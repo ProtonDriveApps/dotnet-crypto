@@ -25,4 +25,29 @@ public class PgpSigningStreamTest
         var decode = () => PgpArmorDecoder.Decode(signatureBytes);
         decode.Should().NotThrow();
     }
+
+    [Fact]
+    public void Write_RethrowsOutputStreamException_WhenOutputStreamFails()
+    {
+        // Arrange
+        const string simulatedOutputStreamFailureMessage = "Simulated output stream failure.";
+
+        var outputStream = new FailingStream(
+            new MemoryStream(),
+            failWhenPositionExceeds: 100,
+            createException: () => new InvalidOperationException(simulatedOutputStreamFailureMessage));
+
+        // Act
+        var act = () =>
+        {
+            var stream = PgpSigningStream.Open(outputStream, PgpSamples.UnlockedPrivateKey, PgpEncoding.AsciiArmor);
+            stream.Write(PgpSamples.LongPlainText);
+            stream.Close();
+        };
+
+        // Assert
+        var exception = act.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Be(simulatedOutputStreamFailureMessage);
+        exception.StackTrace.Should().Contain(nameof(FailingStream));
+    }
 }

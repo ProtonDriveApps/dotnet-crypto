@@ -87,13 +87,26 @@ public static partial class PgpDecrypter
         PgpEncoding inputEncoding = default,
         TimeProvider? timeProviderOverride = null)
     {
-        var outputStreamHandle = GCHandle.Alloc(outputStream);
+        var outputRecordingStream = new ExceptionRecordingStream(outputStream);
+        var outputStreamHandle = GCHandle.Alloc(outputRecordingStream);
 
         try
         {
             var plaintextResult = new InteropPlaintextResult(outputStreamHandle);
 
-            Decrypt(input, inputEncoding, secrets, null, 0, default, default, [], ref plaintextResult, null, timeProviderOverride);
+            Decrypt(
+                input,
+                inputEncoding,
+                secrets,
+                null,
+                0,
+                default,
+                default,
+                [],
+                ref plaintextResult,
+                null,
+                timeProviderOverride,
+                outputRecordingStream);
         }
         finally
         {
@@ -309,7 +322,7 @@ public static partial class PgpDecrypter
                 (nuint)keyPackets.Length,
                 out var sessionKeyHandle);
 
-            error.ThrowPgpExceptionIfAny();
+            error.ThrowPgpOrStreamExceptionIfAny();
 
             return new PgpSessionKey(sessionKeyHandle);
         }
@@ -369,7 +382,8 @@ public static partial class PgpDecrypter
         PgpVerificationContext? verificationContext,
         TimeProvider? timeProviderOverride)
     {
-        var outputStreamHandle = GCHandle.Alloc(outputStream);
+        var outputRecordingStream = new ExceptionRecordingStream(outputStream);
+        var outputStreamHandle = GCHandle.Alloc(outputRecordingStream);
 
         try
         {
@@ -386,7 +400,8 @@ public static partial class PgpDecrypter
                 verificationKeyRing.DangerousGetForeignKeyHandles(),
                 ref plaintextResult,
                 verificationContext,
-                timeProviderOverride);
+                timeProviderOverride,
+                outputRecordingStream);
 
             verificationResult = plaintextResult.HasVerificationResult
                 ? new PgpVerificationResult(plaintextResult.VerificationResultHandle)
@@ -409,7 +424,8 @@ public static partial class PgpDecrypter
         ReadOnlySpan<nint> verificationKeyHandles,
         ref InteropPlaintextResult plaintextResult,
         PgpVerificationContext? verificationContext,
-        TimeProvider? timeProviderOverride)
+        TimeProvider? timeProviderOverride,
+        ExceptionRecordingStream? outputRecordingStream = null)
     {
         var (decryptionKeyRing, sessionKey, password) = secrets;
 
@@ -441,7 +457,7 @@ public static partial class PgpDecrypter
                         inputEncoding.ToInteropEncoding(),
                         ref plaintextResult);
 
-                    error.ThrowPgpExceptionIfAny();
+                    error.ThrowPgpOrStreamExceptionIfAny(outputRecordingStream);
                 }
             }
         }

@@ -24,7 +24,7 @@ public readonly partial struct PgpPublicKey : IVerificationKeyRingSource, IEncry
     public static PgpPublicKey Import(ReadOnlySpan<byte> key, PgpEncoding? encoding = null)
     {
         using var error = ForeignFunctions.Import(MemoryMarshal.GetReference(key), (nuint)key.Length, encoding.ToInteropEncoding(), out var publicKeyHandle);
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpPublicKey(publicKeyHandle);
     }

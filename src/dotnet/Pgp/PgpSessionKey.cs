@@ -26,7 +26,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
     public static PgpSessionKey Generate(SymmetricCipher cipher = SymmetricCipher.Aes256)
     {
         using var error = ForeignFunctions.Generate(cipher, out var sessionKeyHandle);
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpSessionKey(sessionKeyHandle);
     }
@@ -34,7 +34,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
     public static PgpSessionKey GenerateForAead(SymmetricCipher cipher = SymmetricCipher.Aes256)
     {
         using var error = ForeignFunctions.GenerateForAead(cipher, out var sessionKeyHandle);
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpSessionKey(sessionKeyHandle);
     }
@@ -76,7 +76,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
             return false;
         }
 
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         cipher = (SymmetricCipher)foreignCipher;
         return true;
@@ -108,7 +108,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
                 var outputWriter = InteropWriter.FromStreamHandle(outputStreamHandle);
 
                 using var error = ForeignFunctions.Encrypt(parameters, ForeignHandle, outputWriter);
-                error.ThrowPgpExceptionIfAny();
+                error.ThrowPgpOrStreamExceptionIfAny();
             }
             finally
             {

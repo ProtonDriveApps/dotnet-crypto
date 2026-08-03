@@ -28,7 +28,7 @@ public readonly partial struct PgpKey : IVerificationKeyRingSource, IEncryptionK
             var outputWriter = InteropWriter.FromStreamHandle(streamHandle);
 
             using var error = ForeignFunctions.Export(ForeignHandle, forcePublic: false, encoding == PgpEncoding.AsciiArmor, outputWriter);
-            error.ThrowPgpExceptionIfAny();
+            error.ThrowPgpOrStreamExceptionIfAny();
         }
         finally
         {
@@ -46,7 +46,7 @@ public readonly partial struct PgpKey : IVerificationKeyRingSource, IEncryptionK
 
             using var error = ForeignFunctions.Export(ForeignHandle, forcePublic: false, encoding == PgpEncoding.AsciiArmor, outputWriter);
 
-            error.ThrowPgpExceptionIfAny();
+            error.ThrowPgpOrStreamExceptionIfAny();
 
             return spanWriter.NumberOfBytesWritten;
         }

@@ -52,12 +52,10 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         var overflowStream = new MemoryStream(OverflowBufferLength);
         var internalOutputStream = new InternalOutputStream(overflowStream);
 
-        var foreignStream = ForeignEncryptingWriter.Create(
+        var foreignStream = ForeignEncryptingWriter.Open(
             internalOutputStream,
             null,
-            Unsafe.NullRef<InteropWriter>(),
             null,
-            Unsafe.NullRef<InteropWriter>(),
             encryptionSecrets,
             default,
             encoding,
@@ -85,12 +83,10 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         var overflowStream = new MemoryStream(OverflowBufferLength);
         var internalOutputStream = new InternalOutputStream(overflowStream);
 
-        var foreignStream = ForeignEncryptingWriter.Create(
+        var foreignStream = ForeignEncryptingWriter.Open(
             internalOutputStream,
             null,
-            Unsafe.NullRef<InteropWriter>(),
             null,
-            Unsafe.NullRef<InteropWriter>(),
             encryptionSecrets,
             signingKeyRing,
             encoding,
@@ -120,34 +116,21 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         var overflowStream = new MemoryStream(OverflowBufferLength);
         var internalOutputStream = new InternalOutputStream(overflowStream);
 
-        var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
-        try
-        {
-            var signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
+        var foreignStream = ForeignEncryptingWriter.Open(
+            internalOutputStream,
+            null,
+            signatureOutputStream,
+            encryptionSecrets,
+            signingKeyRing,
+            encoding,
+            messageCompression,
+            signatureEncryptionState,
+            profile,
+            aeadStreamingChunkLength,
+            signingContext,
+            timeProviderOverride);
 
-            var foreignStream = ForeignEncryptingWriter.Create(
-                internalOutputStream,
-                null,
-                Unsafe.NullRef<InteropWriter>(),
-                signatureOutputStreamHandle,
-                signatureWriter,
-                encryptionSecrets,
-                signingKeyRing,
-                encoding,
-                messageCompression,
-                signatureEncryptionState,
-                profile,
-                aeadStreamingChunkLength,
-                signingContext,
-                timeProviderOverride);
-
-            return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
-        }
-        catch
-        {
-            signatureOutputStreamHandle.Free();
-            throw;
-        }
+        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
     }
 
     public static PgpEncryptingReadStream OpenSplit(
@@ -162,34 +145,21 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         var overflowStream = new MemoryStream(OverflowBufferLength);
         var internalOutputStream = new InternalOutputStream(overflowStream);
 
-        var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
-        try
-        {
-            var keyPacketWriter = InteropWriter.FromStreamHandle(keyPacketOutputStreamHandle);
+        var foreignStream = ForeignEncryptingWriter.Open(
+            internalOutputStream,
+            keyPacketsOutputStream,
+            null,
+            encryptionSecrets,
+            default,
+            default,
+            messageCompression,
+            default,
+            profile,
+            aeadStreamingChunkLength,
+            null,
+            timeProviderOverride);
 
-            var foreignStream = ForeignEncryptingWriter.Create(
-                internalOutputStream,
-                keyPacketOutputStreamHandle,
-                keyPacketWriter,
-                null,
-                Unsafe.NullRef<InteropWriter>(),
-                encryptionSecrets,
-                default,
-                default,
-                messageCompression,
-                default,
-                profile,
-                aeadStreamingChunkLength,
-                null,
-                timeProviderOverride);
-
-            return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
-        }
-        catch
-        {
-            keyPacketOutputStreamHandle.Free();
-            throw;
-        }
+        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
     }
 
     public static PgpEncryptingReadStream OpenSplit(
@@ -208,45 +178,21 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         var overflowStream = new MemoryStream(OverflowBufferLength);
         var internalOutputStream = new InternalOutputStream(overflowStream);
 
-        var keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketsOutputStream);
-        try
-        {
-            var keyPacketWriter = InteropWriter.FromStreamHandle(keyPacketOutputStreamHandle);
+        var foreignStream = ForeignEncryptingWriter.Open(
+            internalOutputStream,
+            keyPacketsOutputStream,
+            signatureOutputStream,
+            encryptionSecrets,
+            signingKeyRing,
+            default,
+            messageCompression,
+            signatureEncryptionState,
+            profile,
+            aeadStreamingChunkLength,
+            signingContext,
+            timeProviderOverride);
 
-            var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
-            try
-            {
-                var signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
-
-                var foreignStream = ForeignEncryptingWriter.Create(
-                    internalOutputStream,
-                    keyPacketOutputStreamHandle,
-                    keyPacketWriter,
-                    signatureOutputStreamHandle,
-                    signatureWriter,
-                    encryptionSecrets,
-                    signingKeyRing,
-                    default,
-                    messageCompression,
-                    signatureEncryptionState,
-                    profile,
-                    aeadStreamingChunkLength,
-                    signingContext,
-                    timeProviderOverride);
-
-                return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
-            }
-            catch
-            {
-                signatureOutputStreamHandle.Free();
-                throw;
-            }
-        }
-        catch
-        {
-            keyPacketOutputStreamHandle.Free();
-            throw;
-        }
+        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
     }
 
     public override int Read(byte[] buffer, int offset, int count)

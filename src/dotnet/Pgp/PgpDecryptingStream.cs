@@ -7,13 +7,19 @@ namespace Proton.Cryptography.Pgp;
 
 public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
 {
+    private readonly ExceptionRecordingStream _inputStream;
     private readonly ForeignReader _outputReader;
 
     private GCHandle _inputStreamHandle;
     private MemoryHandle _detachedSignatureMemoryHandle;
 
-    private PgpDecryptingStream(ForeignReader outputReader, GCHandle inputStreamHandle, MemoryHandle detachedSignatureMemoryHandle)
+    private PgpDecryptingStream(
+        ExceptionRecordingStream inputStream,
+        ForeignReader outputReader,
+        GCHandle inputStreamHandle,
+        MemoryHandle detachedSignatureMemoryHandle)
     {
+        _inputStream = inputStream;
         _outputReader = outputReader;
         _inputStreamHandle = inputStreamHandle;
         _detachedSignatureMemoryHandle = detachedSignatureMemoryHandle;
@@ -69,7 +75,7 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
 
     public override int Read(Span<byte> buffer)
     {
-        return _outputReader.Read(buffer);
+        return _outputReader.Read(buffer, _inputStream);
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -79,22 +85,23 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
 
     public PgpVerificationResult GetVerificationResult()
     {
-        return _outputReader.GetVerificationResult();
+        return _outputReader.GetVerificationResult(_inputStream);
     }
 
     protected override void Dispose(bool disposing)
     {
-        var isNotYetDisposed = _inputStreamHandle.IsAllocated;
-        if (isNotYetDisposed)
+        if (!_inputStreamHandle.IsAllocated)
         {
-            if (disposing)
-            {
-                _outputReader.Dispose();
-            }
-
-            _inputStreamHandle.Free();
-            _detachedSignatureMemoryHandle.Dispose();
+            return;
         }
+
+        if (disposing)
+        {
+            _outputReader.Dispose();
+        }
+
+        _inputStreamHandle.Free();
+        _detachedSignatureMemoryHandle.Dispose();
 
         base.Dispose(disposing);
     }
@@ -118,10 +125,15 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
             {
                 fixed (nint* verificationKeysPointer = verificationKeyRing.DangerousGetForeignKeyHandles())
                 {
+                    var inputRecordingStream = new ExceptionRecordingStream(inputStream);
                     var detachedSignatureMemoryHandle = signature.Pin();
+                    var inputStreamHandle = default(GCHandle);
+                    ForeignReader? outputReader = null;
 
                     try
                     {
+                        inputStreamHandle = GCHandle.Alloc(inputRecordingStream);
+
                         var parameters = new InteropDecryptionParameters(
                             decryptionKeysPointer,
                             (nuint)decryptionKeyRing.Count,
@@ -137,28 +149,31 @@ public sealed partial class PgpDecryptingStream : BaseReadOnlyStream
                             verificationContext,
                             timeProviderOverride);
 
-                        var streamHandle = GCHandle.Alloc(inputStream);
+                        using var error = ForeignFunctions.OpenStream(
+                            parameters,
+                            new InteropReader(inputStreamHandle),
+                            inputEncoding.ToInteropEncoding(),
+                            out var outputReaderHandle);
 
-                        try
-                        {
-                            using var error = ForeignFunctions.OpenStream(
-                                parameters,
-                                new InteropReader(streamHandle),
-                                inputEncoding.ToInteropEncoding(),
-                                out var outputReaderHandle);
+                        outputReader = new ForeignReader(outputReaderHandle);
 
-                            error.ThrowPgpExceptionIfAny();
+                        error.ThrowPgpOrStreamExceptionIfAny(inputRecordingStream);
 
-                            return new PgpDecryptingStream(new ForeignReader(outputReaderHandle), streamHandle, detachedSignatureMemoryHandle);
-                        }
-                        catch
-                        {
-                            streamHandle.Free();
-                            throw;
-                        }
+                        return new PgpDecryptingStream(
+                            inputRecordingStream,
+                            outputReader.Value,
+                            inputStreamHandle,
+                            detachedSignatureMemoryHandle);
                     }
                     catch
                     {
+                        outputReader?.Dispose();
+
+                        if (inputStreamHandle.IsAllocated)
+                        {
+                            inputStreamHandle.Free();
+                        }
+
                         detachedSignatureMemoryHandle.Dispose();
                         throw;
                     }

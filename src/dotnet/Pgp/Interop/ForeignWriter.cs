@@ -7,18 +7,18 @@ internal readonly partial struct ForeignWriter(nint foreignHandle) : IDisposable
 {
     private ForeignWriterSafeHandle ForeignHandle { get => field ?? throw new InvalidOperationException("Invalid handle"); } = new(foreignHandle);
 
-    public int Write(ReadOnlySpan<byte> buffer)
+    public int Write(ReadOnlySpan<byte> buffer, params ReadOnlySpan<ExceptionRecordingStream?> outputStreams)
     {
         using var error = ForeignFunctions.Write(ForeignHandle, MemoryMarshal.GetReference(buffer), (nuint)buffer.Length, out var numberOfBytesWritten);
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny(outputStreams);
 
         return (int)numberOfBytesWritten;
     }
 
-    public void WriteEnd()
+    public void WriteEnd(params ReadOnlySpan<ExceptionRecordingStream?> outputStreams)
     {
         using var error = ForeignFunctions.Close(ForeignHandle);
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny(outputStreams);
     }
 
     public void Dispose()

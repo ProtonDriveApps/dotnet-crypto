@@ -239,7 +239,8 @@ public static partial class PgpEncrypter
         PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var signatureOutputStreamHandle = GCHandle.Alloc(signatureOutputStream);
+        var signatureRecordingStream = new ExceptionRecordingStream(signatureOutputStream);
+        var signatureOutputStreamHandle = GCHandle.Alloc(signatureRecordingStream);
 
         try
         {
@@ -257,7 +258,8 @@ public static partial class PgpEncrypter
                 profile,
                 aeadStreamingChunkLength,
                 signingContext,
-                timeProviderOverride);
+                timeProviderOverride,
+                signatureRecordingStream);
         }
         finally
         {
@@ -415,9 +417,11 @@ public static partial class PgpEncrypter
         PgpProfile profile,
         long? aeadStreamingChunkLength,
         PgpSigningContext? signingContext,
-        TimeProvider? timeProviderOverride)
+        TimeProvider? timeProviderOverride,
+        ExceptionRecordingStream? signatureRecordingStream = null)
     {
-        var outputStreamHandle = GCHandle.Alloc(outputStream);
+        var outputRecordingStream = new ExceptionRecordingStream(outputStream);
+        var outputStreamHandle = GCHandle.Alloc(outputRecordingStream);
 
         try
         {
@@ -435,7 +439,9 @@ public static partial class PgpEncrypter
                 profile,
                 aeadStreamingChunkLength,
                 signingContext,
-                timeProviderOverride);
+                timeProviderOverride,
+                outputRecordingStream,
+                signatureRecordingStream);
         }
         finally
         {
@@ -455,7 +461,9 @@ public static partial class PgpEncrypter
         PgpProfile profile,
         long? aeadStreamingChunkLength,
         PgpSigningContext? signingContext,
-        TimeProvider? timeProviderOverride)
+        TimeProvider? timeProviderOverride,
+        ExceptionRecordingStream? outputRecordingStream = null,
+        ExceptionRecordingStream? signatureRecordingStream = null)
     {
         var (encryptionKeyRing, sessionKey, password) = encryptionSecrets;
 
@@ -489,7 +497,7 @@ public static partial class PgpEncrypter
                         signatureWriter,
                         outputWriter);
 
-                    error.ThrowPgpExceptionIfAny();
+                    error.ThrowPgpOrStreamExceptionIfAny(outputRecordingStream, signatureRecordingStream);
                 }
             }
         }

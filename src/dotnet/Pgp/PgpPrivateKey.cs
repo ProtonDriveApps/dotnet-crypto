@@ -74,7 +74,7 @@ public readonly partial struct PgpPrivateKey
                             timeProviderOverride);
 
                         using var error = ForeignFunctions.Generate(parameters, out var privateKeyHandle);
-                        error.ThrowPgpExceptionIfAny();
+                        error.ThrowPgpOrStreamExceptionIfAny();
 
                         return new PgpPrivateKey(privateKeyHandle);
                     }
@@ -91,7 +91,7 @@ public readonly partial struct PgpPrivateKey
             encoding.ToInteropEncoding(),
             out var keyHandle);
 
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpPrivateKey(keyHandle);
     }
@@ -106,7 +106,7 @@ public readonly partial struct PgpPrivateKey
             encoding.ToInteropEncoding(),
             out var privateKeyHandle);
 
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpPrivateKey(privateKeyHandle);
     }
@@ -123,7 +123,7 @@ public readonly partial struct PgpPrivateKey
             (nuint)passphrase.Length,
             out var lockedPrivateKeyHandle);
 
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpSecretKey(lockedPrivateKeyHandle);
     }
@@ -131,7 +131,7 @@ public readonly partial struct PgpPrivateKey
     public PgpPublicKey ToPublic()
     {
         using var error = ForeignFunctions.GetPublicKey(Base.ForeignHandle, out var publicKey);
-        error.ThrowPgpExceptionIfAny();
+        error.ThrowPgpOrStreamExceptionIfAny();
 
         return new PgpPublicKey(publicKey);
     }

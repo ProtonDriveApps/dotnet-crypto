@@ -205,12 +205,23 @@ public static partial class PgpSigner
         PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var outputStreamHandle = GCHandle.Alloc(outputStream);
+        var outputRecordingStream = new ExceptionRecordingStream(outputStream);
+        var outputStreamHandle = GCHandle.Alloc(outputRecordingStream);
+
         try
         {
             var outputWriter = InteropWriter.FromStreamHandle(outputStreamHandle);
 
-            Sign(input, signingKeyRing, outputWriter, outputEncoding, outputType, profile, signingContext, timeProviderOverride);
+            Sign(
+                input,
+                signingKeyRing,
+                outputWriter,
+                outputEncoding,
+                outputType,
+                profile,
+                signingContext,
+                timeProviderOverride,
+                outputRecordingStream);
         }
         finally
         {
@@ -226,7 +237,8 @@ public static partial class PgpSigner
         SigningOutputType outputType,
         PgpProfile profile,
         PgpSigningContext? signingContext,
-        TimeProvider? timeProviderOverride)
+        TimeProvider? timeProviderOverride,
+        ExceptionRecordingStream? outputRecordingStream = null)
     {
         fixed (nint* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
         {
@@ -247,7 +259,7 @@ public static partial class PgpSigner
                 detached,
                 outputWriter);
 
-            error.ThrowPgpExceptionIfAny();
+            error.ThrowPgpOrStreamExceptionIfAny(outputRecordingStream);
         }
     }
 

@@ -50,6 +50,36 @@ public sealed class PgpDecryptingStreamTest
         output.Should().Be(Encoding.UTF8.GetString(PgpSamples.LongPlainText));
     }
 
+    [Fact]
+    public void Read_RethrowsInputStreamException_WhenInputStreamFails()
+    {
+        // Arrange
+        const string simulatedInputStreamFailureMessage = "Simulated input stream failure.";
+
+        using var innerStream = new MemoryStream(PgpSamples.LongDataPacket, writable: false);
+        var inputStream = new FailingStream(
+            innerStream,
+            failWhenPositionExceeds: 0,
+            createException: () => new InvalidOperationException(simulatedInputStreamFailureMessage));
+
+        var buffer = new byte[4096];
+
+        // Act
+        var act = () =>
+        {
+            using var stream = PgpDecryptingStream.Open(inputStream, PgpSamples.SessionKey);
+
+            while (stream.Read(buffer) > 0)
+            {
+            }
+        };
+
+        // Assert
+        var exception = act.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Be(simulatedInputStreamFailureMessage);
+        exception.StackTrace.Should().Contain(nameof(FailingStream));
+    }
+
     [Fact(Timeout = 1000)]
     public void Read_OutputsPartiallyDecryptedDataPacket_WithSessionKey_WhenBufferSmallerThanPlainData()
     {
