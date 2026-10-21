@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Runtime.CompilerServices;
 using Proton.Cryptography.Interop;
+using Proton.Cryptography.Pgp.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
@@ -22,7 +23,13 @@ public readonly partial struct PgpMessage : IDisposable
 
         try
         {
-            var messageHandle = ForeignFunctions.Create((byte*)messageMemoryHandle.Pointer, (nuint)message.Length, encoding == PgpEncoding.AsciiArmor);
+            var error = ForeignFunctions.Create(
+                (byte*)messageMemoryHandle.Pointer,
+                (nuint)message.Length,
+                encoding == PgpEncoding.AsciiArmor,
+                out var messageHandle);
+
+            error.ThrowPgpExceptionIfAny();
 
             return new PgpMessage(messageHandle, messageMemoryHandle);
         }
@@ -35,7 +42,7 @@ public readonly partial struct PgpMessage : IDisposable
 
     public unsafe ulong[] GetEncryptionKeyIds()
     {
-        ForeignFunctions.GetEncryptionKeyIds(ForeignHandle, out var keyIdsPointer, out var keyIdsLength);
+        ForeignFunctions.GetEncryptionKeyIds(ForeignHandle, out var keyIdsPointer, out var keyIdsLength).ThrowPgpExceptionIfAny();
 
         if (keyIdsPointer == null)
         {
@@ -47,7 +54,7 @@ public readonly partial struct PgpMessage : IDisposable
 
     public unsafe ulong[] GetSigningKeyIds()
     {
-        ForeignFunctions.GetSigningKeyIds(ForeignHandle, out var keyIdsPointer, out var keyIdsLength);
+        ForeignFunctions.GetSigningKeyIds(ForeignHandle, out var keyIdsPointer, out var keyIdsLength).ThrowPgpExceptionIfAny();
 
         if (keyIdsPointer == null)
         {
@@ -59,7 +66,10 @@ public readonly partial struct PgpMessage : IDisposable
 
     public int GetKeyPacketsLength()
     {
-        return (int)ForeignFunctions.KeyPacketSplit(ForeignHandle);
+        var error = ForeignFunctions.KeyPacketSplit(ForeignHandle, out var keyPacketsLength);
+        error.ThrowPgpExceptionIfAny();
+
+        return (int)keyPacketsLength;
     }
 
     public void Dispose()
@@ -72,19 +82,23 @@ public readonly partial struct PgpMessage : IDisposable
     {
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_new")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial nint Create(byte* message, nuint messageLength, [MarshalAs(UnmanagedType.U1)] bool isArmored);
+        public static unsafe partial InteropError Create(
+            byte* message,
+            nuint messageLength,
+            [MarshalAs(UnmanagedType.U1)] bool isArmored,
+            out nint messageHandle);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_get_enc_key_ids")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial void GetEncryptionKeyIds(ForeignMessageSafeHandle messageHandle, out ulong* keyIds, out nuint keyIdsLength);
+        public static unsafe partial InteropError GetEncryptionKeyIds(ForeignMessageSafeHandle messageHandle, out ulong* keyIds, out nuint keyIdsLength);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_get_sig_key_ids")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial void GetSigningKeyIds(ForeignMessageSafeHandle messageHandle, out ulong* keyIds, out nuint keyIdsLength);
+        public static unsafe partial InteropError GetSigningKeyIds(ForeignMessageSafeHandle messageHandle, out ulong* keyIds, out nuint keyIdsLength);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_key_packet_split")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static partial nuint KeyPacketSplit(ForeignMessageSafeHandle messageHandle);
+        public static partial InteropError KeyPacketSplit(ForeignMessageSafeHandle messageHandle, out nuint keyPacketsLength);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_destroy")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

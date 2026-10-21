@@ -58,6 +58,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
                     InteropWriter.FromStreamHandle(outputStreamHandle),
                     encoding.ToInteropEncoding(),
                     outputType == SigningOutputType.SignatureOnly,
+                    WorkDispatcher.Pointer,
                     out var inputWriterHandle);
 
                 inputWriter = new ForeignWriter(inputWriterHandle);
@@ -138,6 +139,7 @@ public sealed partial class PgpSigningStream : BaseWriteOnlyStream
             InteropWriter outputWriter,
             InteropPgpEncoding encoding,
             [MarshalAs(UnmanagedType.U1)] bool isDetached,
+            delegate* unmanaged[Cdecl]<WorkDispatcher.InteropWorkTask, byte> workDispatcher,
             out nint inputWriterHandle);
     }
 }

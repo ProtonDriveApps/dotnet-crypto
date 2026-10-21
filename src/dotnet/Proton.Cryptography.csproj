@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="../../bin/**/*.dll;../../bin/**/*.so;../../bin/**/*.dylib" PackagePath=".">
+    <Content Include="../../bin/**/*.dll;../../bin/**/*.so;../../bin/**/*.dylib;../../bin/**/*.pdb" PackagePath=".">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="../../bin/**/*.lib;../../bin/**/*.a" PackagePath="." />

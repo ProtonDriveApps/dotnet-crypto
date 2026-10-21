@@ -1,38 +1,37 @@
-using System.Buffers;
-using System.Buffers.Text;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+using Proton.Cryptography.Interop;
 using Proton.Cryptography.Pgp.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
-public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
+public sealed partial class PgpEncryptingReadStream : BaseReadOnlyStream
 {
-    private const int OverflowBufferLength = 8192;
+    private readonly ForeignAsyncReader _foreignReader;
+    private readonly ExceptionRecordingStream _plainDataInputStream;
+    private readonly ExceptionRecordingStream? _signatureRecordingStream;
+    private readonly ExceptionRecordingStream? _keyPacketRecordingStream;
 
-    private readonly Stream _plainDataInputStream;
-    private readonly InternalOutputStream _internalOutputStream;
-    private readonly MemoryStream _overflowStream;
-    private readonly PgpEncoding _encoding;
-
-    private ForeignEncryptingWriter _foreignWriter;
-
-    private byte[]? _readBuffer;
-    private bool _endWritten;
+    // Not readonly because freeing the handle requires mutability, but should never be reassigned after construction
+    private GCHandle _plainDataInputStreamHandle;
+    private GCHandle _signatureOutputStreamHandle;
+    private GCHandle _keyPacketsOutputStreamHandle;
 
     private PgpEncryptingReadStream(
-        ForeignEncryptingWriter foreignWriter,
-        Stream plainDataInputStream,
-        InternalOutputStream internalOutputStream,
-        MemoryStream overflowStream,
-        PgpEncoding encoding)
+        ForeignAsyncReader foreignReader,
+        ExceptionRecordingStream plainDataInputStream,
+        ExceptionRecordingStream? signatureRecordingStream,
+        ExceptionRecordingStream? keyPacketRecordingStream,
+        GCHandle plainDataInputStreamHandle,
+        GCHandle signatureOutputStreamHandle,
+        GCHandle keyPacketsOutputStreamHandle)
     {
-        _foreignWriter = foreignWriter;
+        _foreignReader = foreignReader;
         _plainDataInputStream = plainDataInputStream;
-        _internalOutputStream = internalOutputStream;
-        _overflowStream = overflowStream;
-        _encoding = encoding;
-
-        _overflowStream.Seek(0, SeekOrigin.Begin);
+        _signatureRecordingStream = signatureRecordingStream;
+        _keyPacketRecordingStream = keyPacketRecordingStream;
+        _plainDataInputStreamHandle = plainDataInputStreamHandle;
+        _signatureOutputStreamHandle = signatureOutputStreamHandle;
+        _keyPacketsOutputStreamHandle = keyPacketsOutputStreamHandle;
     }
 
     ~PgpEncryptingReadStream()
@@ -49,11 +48,8 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var overflowStream = new MemoryStream(OverflowBufferLength);
-        var internalOutputStream = new InternalOutputStream(overflowStream);
-
-        var foreignStream = ForeignEncryptingWriter.Open(
-            internalOutputStream,
+        return Create(
+            plainDataInputStream,
             null,
             null,
             encryptionSecrets,
@@ -65,8 +61,6 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
             aeadStreamingChunkLength,
             null,
             timeProviderOverride);
-
-        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
     }
 
     public static PgpEncryptingReadStream Open(
@@ -80,11 +74,8 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var overflowStream = new MemoryStream(OverflowBufferLength);
-        var internalOutputStream = new InternalOutputStream(overflowStream);
-
-        var foreignStream = ForeignEncryptingWriter.Open(
-            internalOutputStream,
+        return Create(
+            plainDataInputStream,
             null,
             null,
             encryptionSecrets,
@@ -96,8 +87,6 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
             aeadStreamingChunkLength,
             signingContext,
             timeProviderOverride);
-
-        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
     }
 
     public static PgpEncryptingReadStream Open(
@@ -113,11 +102,8 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var overflowStream = new MemoryStream(OverflowBufferLength);
-        var internalOutputStream = new InternalOutputStream(overflowStream);
-
-        var foreignStream = ForeignEncryptingWriter.Open(
-            internalOutputStream,
+        return Create(
+            plainDataInputStream,
             null,
             signatureOutputStream,
             encryptionSecrets,
@@ -129,8 +115,6 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
             aeadStreamingChunkLength,
             signingContext,
             timeProviderOverride);
-
-        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, encoding);
     }
 
     public static PgpEncryptingReadStream OpenSplit(
@@ -142,11 +126,8 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         long? aeadStreamingChunkLength = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var overflowStream = new MemoryStream(OverflowBufferLength);
-        var internalOutputStream = new InternalOutputStream(overflowStream);
-
-        var foreignStream = ForeignEncryptingWriter.Open(
-            internalOutputStream,
+        return Create(
+            plainDataInputStream,
             keyPacketsOutputStream,
             null,
             encryptionSecrets,
@@ -158,8 +139,6 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
             aeadStreamingChunkLength,
             null,
             timeProviderOverride);
-
-        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
     }
 
     public static PgpEncryptingReadStream OpenSplit(
@@ -175,11 +154,8 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
         PgpSigningContext? signingContext = null,
         TimeProvider? timeProviderOverride = null)
     {
-        var overflowStream = new MemoryStream(OverflowBufferLength);
-        var internalOutputStream = new InternalOutputStream(overflowStream);
-
-        var foreignStream = ForeignEncryptingWriter.Open(
-            internalOutputStream,
+        return Create(
+            plainDataInputStream,
             keyPacketsOutputStream,
             signatureOutputStream,
             encryptionSecrets,
@@ -191,8 +167,6 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
             aeadStreamingChunkLength,
             signingContext,
             timeProviderOverride);
-
-        return new PgpEncryptingReadStream(foreignStream, plainDataInputStream, internalOutputStream, overflowStream, default);
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -202,211 +176,177 @@ public sealed class PgpEncryptingReadStream : BaseReadOnlyStream
 
     public override int Read(Span<byte> buffer)
     {
-        var totalBytesProduced = 0;
-        var inputEndReached = _endWritten;
-
-        while (totalBytesProduced < buffer.Length)
-        {
-            totalBytesProduced += DrainAnyOverflow(buffer[totalBytesProduced..]);
-
-            if (totalBytesProduced == buffer.Length || inputEndReached)
-            {
-                break;
-            }
-
-            var (inputBytesRead, bytesProduced) = ReadFromInput(buffer[totalBytesProduced..]);
-
-            inputEndReached = inputBytesRead <= 0;
-            totalBytesProduced += bytesProduced;
-        }
-
-        return totalBytesProduced;
+        return _foreignReader.Read(
+            ref MemoryMarshal.GetReference(buffer),
+            buffer.Length,
+            _plainDataInputStream,
+            _keyPacketRecordingStream,
+            _signatureRecordingStream);
     }
 
-    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        return ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
-    }
-
-    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-    {
-        var totalBytesProduced = 0;
-        var inputEndReached = _endWritten;
-
-        while (totalBytesProduced < buffer.Length)
-        {
-            totalBytesProduced += DrainAnyOverflow(buffer.Span[totalBytesProduced..]);
-
-            if (totalBytesProduced == buffer.Length || inputEndReached)
-            {
-                break;
-            }
-
-            var (inputBytesRead, bytesProduced) = await ReadFromInputAsync(buffer[totalBytesProduced..], cancellationToken).ConfigureAwait(false);
-
-            inputEndReached = inputBytesRead <= 0;
-            totalBytesProduced += bytesProduced;
-        }
-
-        return totalBytesProduced;
+        return _foreignReader.ReadAsync(
+            buffer,
+            cancellationToken,
+            _plainDataInputStream,
+            _keyPacketRecordingStream,
+            _signatureRecordingStream);
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            if (_readBuffer is not null)
-            {
-                CryptographicOperations.ZeroMemory(_readBuffer);
-                ArrayPool<byte>.Shared.Return(_readBuffer);
-                _readBuffer = null;
-            }
+            _foreignReader.Dispose();
+        }
 
-            _foreignWriter.Dispose();
+        if (_plainDataInputStreamHandle.IsAllocated)
+        {
+            _plainDataInputStreamHandle.Free();
+        }
+
+        if (_signatureOutputStreamHandle.IsAllocated)
+        {
+            _signatureOutputStreamHandle.Free();
+        }
+
+        if (_keyPacketsOutputStreamHandle.IsAllocated)
+        {
+            _keyPacketsOutputStreamHandle.Free();
         }
 
         base.Dispose(disposing);
     }
 
-    private ReadFromInputResult ReadFromInput(Span<byte> destination)
+    private static unsafe PgpEncryptingReadStream Create(
+        Stream plainDataInputStream,
+        Stream? keyPacketsOutputStream,
+        Stream? signatureOutputStream,
+        in EncryptionSecrets encryptionSecrets,
+        PgpPrivateKeyRing signingKeyRing,
+        PgpEncoding encoding,
+        PgpCompression dataCompression,
+        EncryptionState signatureEncryptionState,
+        PgpProfile profile,
+        long? aeadStreamingChunkLength,
+        PgpSigningContext? signingContext,
+        TimeProvider? timeProviderOverride)
     {
-        var readBuffer = GetReadBuffer(destination.Length);
+        var plainDataRecordingStream = new ExceptionRecordingStream(plainDataInputStream);
+        var plainDataInputStreamHandle = GCHandle.Alloc(plainDataRecordingStream);
 
-        var bytesReadFromInput = _plainDataInputStream.Read(readBuffer.Span);
+        ExceptionRecordingStream? signatureRecordingStream = null;
+        ExceptionRecordingStream? keyPacketRecordingStream = null;
+        var signatureOutputStreamHandle = default(GCHandle);
+        var keyPacketOutputStreamHandle = default(GCHandle);
+        ForeignAsyncReader? foreignReader = null;
 
-        return EncryptIntoDestination(readBuffer.Span[..bytesReadFromInput], destination);
-    }
-
-    private async ValueTask<ReadFromInputResult> ReadFromInputAsync(
-        Memory<byte> destination,
-        CancellationToken cancellationToken)
-    {
-        var readBuffer = GetReadBuffer(destination.Length);
-
-        var bytesReadFromInput = await _plainDataInputStream.ReadAsync(readBuffer, cancellationToken).ConfigureAwait(false);
-
-        return EncryptIntoDestination(readBuffer.Span[..bytesReadFromInput], destination.Span);
-    }
-
-    private ReadFromInputResult EncryptIntoDestination(ReadOnlySpan<byte> plainDataInput, Span<byte> destination)
-    {
-        if (destination.IsEmpty)
+        try
         {
-            return new ReadFromInputResult(plainDataInput.Length, 0);
-        }
+            InteropWriter signatureWriter = default;
+            InteropWriter keyPacketWriter = default;
 
-        unsafe
-        {
-            fixed (byte* destinationPointer = destination)
+            if (signatureOutputStream is not null)
             {
-                _internalOutputStream.SetSpanWriter(new SpanWriter(destinationPointer, destination.Length));
+                signatureRecordingStream = new ExceptionRecordingStream(signatureOutputStream);
+                signatureOutputStreamHandle = GCHandle.Alloc(signatureRecordingStream);
+                signatureWriter = InteropWriter.FromStreamHandle(signatureOutputStreamHandle);
+            }
 
-                if (plainDataInput.IsEmpty)
+            if (keyPacketsOutputStream is not null)
+            {
+                keyPacketRecordingStream = new ExceptionRecordingStream(keyPacketsOutputStream);
+                keyPacketOutputStreamHandle = GCHandle.Alloc(keyPacketRecordingStream);
+                keyPacketWriter = InteropWriter.FromStreamHandle(keyPacketOutputStreamHandle);
+            }
+
+            var (encryptionKeyRing, sessionKey, password) = encryptionSecrets;
+
+            fixed (nint* encryptionKeysPointer = encryptionKeyRing.DangerousGetForeignKeyHandles())
+            {
+                fixed (byte* passwordPointer = password)
                 {
-                    _foreignWriter.WriteEnd();
-                    _endWritten = true;
+                    fixed (nint* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
+                    {
+                        var parameters = new InteropEncryptionParameters(
+                            profile,
+                            encryptionKeysPointer,
+                            (nuint)encryptionKeyRing.Count,
+                            signingKeysPointer,
+                            (nuint)signingKeyRing.Count,
+                            sessionKey,
+                            passwordPointer,
+                            (nuint)password.Length,
+                            signatureOutputStream is not null,
+                            signatureEncryptionState == EncryptionState.Encrypted,
+                            dataCompression != PgpCompression.None,
+                            aeadStreamingChunkLength,
+                            signingContext,
+                            timeProviderOverride);
+
+                        var interopPlaintextReader = new InteropReader(plainDataInputStreamHandle);
+                        var interopEncoding = encoding.ToInteropEncoding();
+
+                        using var error = ForeignFunctions.OpenEncryptReader(
+                            parameters,
+                            interopPlaintextReader,
+                            signatureWriter,
+                            keyPacketWriter,
+                            (byte)interopEncoding,
+                            WorkDispatcher.Pointer,
+                            out var readerHandle);
+
+                        foreignReader = new ForeignAsyncReader(readerHandle);
+
+                        error.ThrowPgpOrStreamExceptionIfAny(plainDataRecordingStream, keyPacketRecordingStream, signatureRecordingStream);
+
+                        return new PgpEncryptingReadStream(
+                            foreignReader,
+                            plainDataRecordingStream,
+                            signatureRecordingStream,
+                            keyPacketRecordingStream,
+                            plainDataInputStreamHandle,
+                            signatureOutputStreamHandle,
+                            keyPacketOutputStreamHandle);
+                    }
                 }
-                else
-                {
-                    _foreignWriter.Write(plainDataInput);
-                }
             }
         }
-
-        _overflowStream.Seek(0, SeekOrigin.Begin);
-
-        return new ReadFromInputResult(plainDataInput.Length, (int)_internalOutputStream.Length);
-    }
-
-    private Memory<byte> GetReadBuffer(int destinationLength)
-    {
-        var lengthToRead = _encoding is PgpEncoding.AsciiArmor ? Math.Max(1, Base64.GetMaxDecodedFromUtf8Length(destinationLength)) : destinationLength;
-
-        EnsureReadBufferLength(lengthToRead);
-
-        return _readBuffer.AsMemory(0, lengthToRead);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int DrainAnyOverflow(Span<byte> destination)
-    {
-        var remainingInOverflowStream = _overflowStream.Length - _overflowStream.Position;
-        return remainingInOverflowStream > 0 ? _overflowStream.Read(destination) : 0;
-    }
-
-    [MemberNotNull(nameof(_readBuffer))]
-    private void EnsureReadBufferLength(int length)
-    {
-        if (_readBuffer is not null)
+        catch
         {
-            if (_readBuffer.Length >= length)
+            foreignReader?.Dispose();
+
+            if (keyPacketOutputStreamHandle.IsAllocated)
             {
-                return;
+                keyPacketOutputStreamHandle.Free();
             }
 
-            ArrayPool<byte>.Shared.Return(_readBuffer);
-        }
+            if (signatureOutputStreamHandle.IsAllocated)
+            {
+                signatureOutputStreamHandle.Free();
+            }
 
-        _readBuffer = ArrayPool<byte>.Shared.Rent(length);
+            if (plainDataInputStreamHandle.IsAllocated)
+            {
+                plainDataInputStreamHandle.Free();
+            }
+
+            throw;
+        }
     }
 
-    private readonly record struct ReadFromInputResult(int InputBytesRead, int BytesProduced);
-
-    private sealed class InternalOutputStream(MemoryStream overflowStream) : Stream
+    private static partial class ForeignFunctions
     {
-        private readonly MemoryStream _overflowStream = overflowStream;
-        private SpanWriter _spanWriter;
-
-        public override bool CanRead => throw new NotSupportedException();
-        public override bool CanSeek => false;
-        public override bool CanWrite => true;
-
-        public override long Length => _spanWriter.NumberOfBytesWritten;
-
-        public override long Position
-        {
-            get => throw new NotSupportedException();
-            set => throw new NotSupportedException();
-        }
-
-        public override void Flush()
-        {
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            throw new NotSupportedException();
-        }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotSupportedException();
-        }
-
-        public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            Write(buffer.AsSpan(offset, count));
-        }
-
-        public override void Write(ReadOnlySpan<byte> buffer)
-        {
-            var numberOfBytesWritten = _spanWriter.Write(buffer, allowPartial: true);
-
-            if (numberOfBytesWritten < buffer.Length)
-            {
-                _overflowStream.Write(buffer[numberOfBytesWritten..]);
-            }
-        }
-
-        public void SetSpanWriter(SpanWriter spanWriter)
-        {
-            _spanWriter = spanWriter;
-            _overflowStream.SetLength(0);
-        }
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_encrypt_reader_open")]
+        [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+        public static unsafe partial InteropError OpenEncryptReader(
+            in InteropEncryptionParameters parameters,
+            InteropReader inputReader,
+            InteropWriter signatureWriter,
+            InteropWriter keyPacketWriter,
+            byte encoding,
+            delegate* unmanaged[Cdecl]<WorkDispatcher.InteropWorkTask, byte> workDispatcher,
+            out nint outputReaderHandle);
     }
 }

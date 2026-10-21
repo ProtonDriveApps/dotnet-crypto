@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using Proton.Cryptography.Interop;
+using Proton.Cryptography.Pgp.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
@@ -26,7 +27,13 @@ public readonly partial struct PgpSigningContext : IDisposable, IForeignHandlePr
         {
             var valueUtf8BytesLength = Encoding.UTF8.GetBytes(value, valueUtf8Bytes);
 
-            signingContextHandle = ForeignFunctions.Create(MemoryMarshal.GetReference(valueUtf8Bytes), (nuint)valueUtf8BytesLength, isCritical);
+            using var error = ForeignFunctions.Create(
+                MemoryMarshal.GetReference(valueUtf8Bytes),
+                (nuint)valueUtf8BytesLength,
+                isCritical,
+                out signingContextHandle);
+
+            error.ThrowPgpExceptionIfAny();
         }
 
         return new PgpSigningContext(new ForeignSigningContextSafeHandle(signingContextHandle));
@@ -41,7 +48,11 @@ public readonly partial struct PgpSigningContext : IDisposable, IForeignHandlePr
     {
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_signing_context_new")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial nint Create(in byte value, nuint valueLength, [MarshalAs(UnmanagedType.U1)] bool isCritical);
+        public static unsafe partial InteropError Create(
+            in byte value,
+            nuint valueLength,
+            [MarshalAs(UnmanagedType.U1)] bool isCritical,
+            out nint signingContextHandle);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_signing_context_new_destroy")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

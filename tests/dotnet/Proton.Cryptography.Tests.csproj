@@ -52,4 +52,9 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="..\data\**\*.*">
+     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

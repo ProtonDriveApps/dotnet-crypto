@@ -17,6 +17,9 @@ public readonly partial struct SrpClient : IDisposable
 
     private ForeignSrpAuthSafeHandle ForeignHandle => field ?? throw new InvalidOperationException("Invalid handle");
 
+    // TODO: split the handshake computation and the verifier derivation into separate types
+    // Instead of using an injected salt that may not have been generated in a cryptographically secure way,
+    // we could generate one ourselves with assurance that it is cryptographically secure.
     public static SrpClient Create(string username, ReadOnlySpan<byte> password, ReadOnlySpan<byte> salt, string signedModulus)
     {
         return Create(username, password, salt, signedModulus, GetDefaultModulusVerificationKey());

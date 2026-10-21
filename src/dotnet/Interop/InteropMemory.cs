@@ -17,7 +17,7 @@ internal static partial class InteropMemory
         }
     }
 
-    [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "libc_free")]
+    [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "interop_memory_free")]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static unsafe partial void Free(void* pointer);
 }

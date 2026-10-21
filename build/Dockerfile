@@ -70,7 +70,7 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=gcc \
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
     CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc
 
-# Windows (llvm-mingw) — clang driver + llvm-ar
+# Windows (llvm-mingw) — clang driver + llvm-ar + llvm-rc (DLL version resource)
 ENV CARGO_TARGET_I686_PC_WINDOWS_GNULLVM_LINKER=${LLVM_MINGW_ROOT}/bin/i686-w64-mingw32-clang \
     CC_i686_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/i686-w64-mingw32-clang \
     AR_i686_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/llvm-ar \
@@ -79,7 +79,10 @@ ENV CARGO_TARGET_I686_PC_WINDOWS_GNULLVM_LINKER=${LLVM_MINGW_ROOT}/bin/i686-w64-
     AR_x86_64_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/llvm-ar \
     CARGO_TARGET_AARCH64_PC_WINDOWS_GNULLVM_LINKER=${LLVM_MINGW_ROOT}/bin/aarch64-w64-mingw32-clang \
     CC_aarch64_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/aarch64-w64-mingw32-clang \
-    AR_aarch64_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/llvm-ar
+    AR_aarch64_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/llvm-ar \
+    RC_i686_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/llvm-rc \
+    RC_x86_64_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/llvm-rc \
+    RC_aarch64_pc_windows_gnullvm=${LLVM_MINGW_ROOT}/bin/llvm-rc
 
 # Android (NDK r29) — NDK clang + llvm-ar; aarch64 keeps explicit lld
 ENV NDK_BIN=${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin

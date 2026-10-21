@@ -34,7 +34,7 @@ public class PgpSigningStreamTest
 
         var outputStream = new FailingStream(
             new MemoryStream(),
-            failWhenPositionExceeds: 100,
+            failWhenPositionExceeds: 0,
             createException: () => new InvalidOperationException(simulatedOutputStreamFailureMessage));
 
         // Act

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using Proton.Cryptography.Interop;
+using Proton.Cryptography.Pgp.Interop;
 
 namespace Proton.Cryptography.Pgp;
 
@@ -26,11 +27,14 @@ public readonly partial struct PgpVerificationContext : IDisposable, IForeignHan
         {
             var valueUtf8BytesLength = Encoding.UTF8.GetBytes(value, valueUtf8Bytes);
 
-            verificationContextHandle = ForeignFunctions.Create(
+            using var error = ForeignFunctions.Create(
                 MemoryMarshal.GetReference(valueUtf8Bytes),
                 (nuint)valueUtf8BytesLength,
                 isRequired,
-                checked((ulong)(requiredAfter?.ToUnixTimeSeconds() ?? 0)));
+                checked((ulong)(requiredAfter?.ToUnixTimeSeconds() ?? 0)),
+                out verificationContextHandle);
+
+            error.ThrowPgpExceptionIfAny();
         }
 
         return new PgpVerificationContext(verificationContextHandle);
@@ -38,18 +42,26 @@ public readonly partial struct PgpVerificationContext : IDisposable, IForeignHan
 
     public string GetValue()
     {
-        ForeignFunctions.GetValue(ForeignHandle, out var value);
+        var error = ForeignFunctions.GetValue(ForeignHandle, out var value);
+        error.ThrowPgpExceptionIfAny();
+
         return value;
     }
 
     public bool IsRequired()
     {
-        return ForeignFunctions.IsRequired(ForeignHandle);
+        var error = ForeignFunctions.IsRequired(ForeignHandle, out var isRequired);
+        error.ThrowPgpExceptionIfAny();
+
+        return isRequired;
     }
 
     public DateTimeOffset IsRequiredAfter()
     {
-        return DateTimeOffset.FromUnixTimeMilliseconds(checked((long)ForeignFunctions.IsRequiredAfter(ForeignHandle)));
+        var error = ForeignFunctions.IsRequiredAfter(ForeignHandle, out var requiredAfter);
+        error.ThrowPgpExceptionIfAny();
+
+        return DateTimeOffset.FromUnixTimeMilliseconds(checked((long)requiredAfter));
     }
 
     public void Dispose()
@@ -61,22 +73,28 @@ public readonly partial struct PgpVerificationContext : IDisposable, IForeignHan
     {
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verification_context_new")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial nint Create(in byte value, nuint valueLength, [MarshalAs(UnmanagedType.U1)] bool isRequired, ulong requiredAfter);
+        public static unsafe partial InteropError Create(
+            in byte value,
+            nuint valueLength,
+            [MarshalAs(UnmanagedType.U1)] bool isRequired,
+            ulong requiredAfter,
+            out nint verificationContextHandle);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verification_context_get_value")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial void GetValue(
+        public static unsafe partial InteropError GetValue(
             ForeignVerificationContextHandle verificationContextHandle,
             [MarshalAs(UnmanagedType.LPUTF8Str)] out string value);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verification_context_is_required")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        [return: MarshalAs(UnmanagedType.U1)]
-        public static unsafe partial bool IsRequired(ForeignVerificationContextHandle verificationContextHandle);
+        public static unsafe partial InteropError IsRequired(
+            ForeignVerificationContextHandle verificationContextHandle,
+            [MarshalAs(UnmanagedType.U1)] out bool isRequired);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verification_context_is_required_after")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial ulong IsRequiredAfter(ForeignVerificationContextHandle verificationContextHandle);
+        public static unsafe partial InteropError IsRequiredAfter(ForeignVerificationContextHandle verificationContextHandle, out ulong requiredAfter);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_verification_context_destroy")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

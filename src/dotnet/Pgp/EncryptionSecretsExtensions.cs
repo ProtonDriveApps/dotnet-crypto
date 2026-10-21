@@ -289,8 +289,7 @@ public static class EncryptionSecretsExtensions
                 textEncoding,
                 profile,
                 aeadStreamingChunkLength,
-                signingContext,
-                timeProviderOverride);
+                signingContext);
         }
 
         public PgpEncryptingReadStream OpenEncryptingReadStream(
@@ -329,8 +328,7 @@ public static class EncryptionSecretsExtensions
                 compression,
                 profile,
                 aeadStreamingChunkLength,
-                signingContext,
-                timeProviderOverride);
+                signingContext);
         }
 
         public PgpEncryptingReadStream OpenEncryptingAndSigningReadStream(
@@ -355,8 +353,7 @@ public static class EncryptionSecretsExtensions
                 signatureEncryptionState,
                 profile,
                 aeadStreamingChunkLength,
-                signingContext,
-                timeProviderOverride);
+                signingContext);
         }
 
         public PgpEncryptingReadStream OpenSplitEncryptingReadStream(

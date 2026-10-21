@@ -1,0 +1,70 @@
+pkg_name := `cargo metadata --no-deps --format-version 1 | jq -r '.packages[].name' | tr '-' '_'`
+# Build profile: "debug" (default) or "release". Override with `just mode=release <recipe>`.
+mode := "debug"
+# Build tool: "cross" (default; containerized, for local dev) or "cargo" (CI, run inside the toolchain image).
+builder := "cross"
+set shell := ["bash", "-euo", "pipefail", "-c"]
+release_flag := if mode == "release" { "--release" } else { "" }
+# List available recipes (runs when you type just with no args).
+default:
+    @just --list
+
+repo_root := "../../../"
+# Output target where dotnet requires the build artifacts
+runtimes_dir := repo_root + "/bin/runtimes/"
+
+# Arguments: rs-id (target rust triple), cs-id (.NET RID)
+_build_target_linux rs-id cs-id:
+    {{builder}} build {{release_flag}} --target {{rs-id}}
+    mkdir -p {{runtimes_dir}}/{{cs-id}}/native
+    cp ./target/{{rs-id}}/{{mode}}/lib{{pkg_name}}.{a,so} {{runtimes_dir}}/{{cs-id}}/native
+
+_build_target_win rs-id cs-id:
+    {{builder}} build {{release_flag}} --target {{rs-id}}
+    mkdir -p {{runtimes_dir}}/{{cs-id}}/native
+    cp ./target/{{rs-id}}/{{mode}}/{{pkg_name}}.dll {{runtimes_dir}}/{{cs-id}}/native
+    cp ./target/{{rs-id}}/{{mode}}/lib{{pkg_name}}.a {{runtimes_dir}}/{{cs-id}}/native/{{pkg_name}}.lib
+
+# Apple builder: native macOS build (cargo + Xcode SDK); cross cannot target Apple.
+# Drops the lib prefix so output matches build-rust.sh / the .NET layout (proton_crypto.dylib/.a).
+_build_target_macos rs-id cs-id:
+    @[ "$(uname)" = "Darwin" ] || { echo "Apple targets must be built on macOS hardware" ;  exit 1; }
+    rustup target add {{rs-id}}
+    cargo build {{release_flag}} --target {{rs-id}}
+    mkdir -p {{runtimes_dir}}/{{cs-id}}/native
+    cp ./target/{{rs-id}}/{{mode}}/lib{{pkg_name}}.a {{runtimes_dir}}/{{cs-id}}/native/{{pkg_name}}.a
+    cp ./target/{{rs-id}}/{{mode}}/lib{{pkg_name}}.dylib {{runtimes_dir}}/{{cs-id}}/native/{{pkg_name}}.dylib
+
+_build_target_ios rs-id cs-id:
+    @[ "$(uname)" = "Darwin" ] || { echo "Apple targets must be built on macOS hardware" ; exit 1; }
+    rustup target add {{rs-id}}
+    cargo build {{release_flag}} --target {{rs-id}}
+    mkdir -p {{runtimes_dir}}/{{cs-id}}/native
+    cp ./target/{{rs-id}}/{{mode}}/lib{{pkg_name}}.a {{runtimes_dir}}/{{cs-id}}/native/{{pkg_name}}.a
+
+linux-x86: (_build_target_linux "i686-unknown-linux-gnu" "linux-x86")
+linux-x64: (_build_target_linux "x86_64-unknown-linux-gnu" "linux-x64")
+linux-arm: (_build_target_linux "armv7-unknown-linux-gnueabihf" "linux-arm")
+linux-arm64: (_build_target_linux "aarch64-unknown-linux-gnu" "linux-arm64")
+
+linux-bionic-x86: (_build_target_linux "i686-linux-android" "linux-bionic-x86")
+linux-bionic-x64: (_build_target_linux "x86_64-linux-android" "linux-bionic-x64")
+linux-bionic-arm: (_build_target_linux "armv7-linux-androideabi" "linux-bionic-arm")
+linux-bionic-arm64: (_build_target_linux "aarch64-linux-android" "linux-bionic-arm64")
+
+osx-x64: (_build_target_macos "x86_64-apple-darwin" "osx-x64")
+osx-arm64: (_build_target_macos "aarch64-apple-darwin" "osx-arm64")
+
+ios-arm64: (_build_target_ios "aarch64-apple-ios" "ios-arm64")
+iossimulator-x64: (_build_target_ios "x86_64-apple-ios" "iossimulator-x64")
+iossimulator-arm64: (_build_target_ios "aarch64-apple-ios-sim" "iossimulator-arm64")
+
+win-x86: (_build_target_win "i686-pc-windows-gnullvm" "win-x86")
+win-x64: (_build_target_win "x86_64-pc-windows-gnullvm" "win-x64")
+win-arm64: (_build_target_win "aarch64-pc-windows-gnullvm" "win-arm64")
+
+linux-all: linux-x86 linux-x64 linux-arm linux-arm64
+android-all: linux-bionic-x86 linux-bionic-x64 linux-bionic-arm linux-bionic-arm64
+# Apple targets build natively on macOS hardware (cargo + Xcode); they cannot be cross-built.
+apple-all: osx-x64 osx-arm64 ios-arm64 iossimulator-x64 iossimulator-arm64
+windows-all: win-x86 win-x64 win-arm64

@@ -28,15 +28,15 @@ internal readonly partial struct ForeignWriter(nint foreignHandle) : IDisposable
 
     private static partial class ForeignFunctions
     {
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_write_closer_write")]
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_writer_write")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial InteropError Write(ForeignWriterSafeHandle writerHandle, in byte buffer, nuint bufferLength, out nint numberOfBytesWritten);
 
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_write_closer_close")]
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_writer_close")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial InteropError Close(ForeignWriterSafeHandle writerHandle);
 
-        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_write_closer_destroy")]
+        [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_message_writer_destroy")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
         public static partial void ReleaseHandle(nint writerHandle);
     }

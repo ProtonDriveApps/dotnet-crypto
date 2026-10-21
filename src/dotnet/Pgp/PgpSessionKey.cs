@@ -41,21 +41,24 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
 
     public static PgpSessionKey Import(ReadOnlySpan<byte> token, SymmetricCipher cipher)
     {
-        var sessionKeyHandle = ForeignFunctions.Import(MemoryMarshal.GetReference(token), (nuint)token.Length, cipher);
+        using var error = ForeignFunctions.Import(MemoryMarshal.GetReference(token), (nuint)token.Length, cipher, out var sessionKeyHandle);
+        error.ThrowPgpExceptionIfAny();
 
         return new PgpSessionKey(sessionKeyHandle);
     }
 
     public static PgpSessionKey ImportForAead(ReadOnlySpan<byte> token, SymmetricCipher cipher)
     {
-        var handle = ForeignFunctions.ImportForAead(MemoryMarshal.GetReference(token), (nuint)token.Length, cipher);
+        using var error = ForeignFunctions.ImportForAead(MemoryMarshal.GetReference(token), (nuint)token.Length, cipher, out var sessionKeyHandle);
+        error.ThrowPgpExceptionIfAny();
 
-        return new PgpSessionKey(handle);
+        return new PgpSessionKey(sessionKeyHandle);
     }
 
     public unsafe byte[] Export()
     {
-        ForeignFunctions.Export(ForeignHandle, out var tokenPointer, out var tokenLength);
+        using var error = ForeignFunctions.Export(ForeignHandle, out var tokenPointer, out var tokenLength);
+        error.ThrowPgpExceptionIfAny();
 
         if (tokenPointer == null)
         {
@@ -119,9 +122,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
 
     public bool IsAead()
     {
-        ForeignFunctions.IsAead(ForeignHandle, out var isAead);
-
-        return isAead;
+        return ForeignFunctions.IsAead(ForeignHandle, out var isAead).SucceededOrThrowPgpException() && isAead;
     }
 
     public void Dispose()
@@ -141,15 +142,15 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_new_session_key_from_token")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static partial ForeignSessionKeySafeHandle Import(in byte token, nuint tokenLength, SymmetricCipher cipher);
+        public static partial InteropError Import(in byte token, nuint tokenLength, SymmetricCipher cipher, out ForeignSessionKeySafeHandle keyHandle);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_new_session_key_from_token_aead")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static partial ForeignSessionKeySafeHandle ImportForAead(in byte token, nuint tokenLength, SymmetricCipher cipher);
+        public static partial InteropError ImportForAead(in byte token, nuint tokenLength, SymmetricCipher cipher, out ForeignSessionKeySafeHandle keyHandle);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_session_key_export_token")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial void Export(ForeignSessionKeySafeHandle keyHandle, out byte* tokenPointer, out nuint tokenLength);
+        public static unsafe partial InteropError Export(ForeignSessionKeySafeHandle keyHandle, out byte* tokenPointer, out nuint tokenLength);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_encrypt_session_key")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
@@ -164,7 +165,7 @@ public readonly partial struct PgpSessionKey : IDisposable, IDecryptionSecretsSo
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_session_key_is_aead")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-        public static unsafe partial void IsAead(ForeignSessionKeySafeHandle keyHandle, [MarshalAs(UnmanagedType.I1)] out bool isAead);
+        public static unsafe partial InteropError IsAead(ForeignSessionKeySafeHandle keyHandle, [MarshalAs(UnmanagedType.I1)] out bool isAead);
 
         [LibraryImport(Constants.ForeignLibraryName, EntryPoint = "pgp_session_key_destroy")]
         [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

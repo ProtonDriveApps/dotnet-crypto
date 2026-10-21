@@ -28,7 +28,11 @@ public static partial class PgpVerifier
             {
                 var inputReader = new InteropReader(messageStreamHandle);
 
-                using var error = ForeignFunctions.VerifyInlineStream(parameters, inputReader, encoding.ToInteropEncoding(), out var outputReaderHandle);
+                using var error = ForeignFunctions.VerifyInlineStream(
+                    parameters,
+                    inputReader,
+                    encoding.ToInteropEncoding(),
+                    out var outputReaderHandle);
                 error.ThrowPgpOrStreamExceptionIfAny(inputRecordingStream);
 
                 using var outputReader = new ForeignReader(outputReaderHandle);

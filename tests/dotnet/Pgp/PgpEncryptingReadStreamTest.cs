@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace Proton.Cryptography.Tests.Pgp;
@@ -465,5 +466,44 @@ public sealed class PgpEncryptingReadStreamTest
         var decryptedData = PgpSamples.UnlockedPrivateKeyV6.Decrypt(outputStream.GetSpan(), encoding);
 
         decryptedData.Should().Equal(plainData);
+    }
+
+    [Fact]
+    public void Dispose_FreesHandlesOnlyOnce()
+    {
+        var key = PgpPrivateKey.Generate("test", "test@example.com", KeyGenerationAlgorithm.Default);
+        var inputStream = new MemoryStream();
+        var signatureOutputStream = new MemoryStream();
+
+        var encryptingStream = PgpEncryptingReadStream.Open(inputStream, signatureOutputStream, key.ToPublic(), key);
+
+        encryptingStream.Dispose();
+
+        // We need to do the allocation / disposal sequence twice, only the second time does it reuse the handle that the encrypting stream used.
+        var firstHandle = GCHandle.Alloc(signatureOutputStream);
+        try
+        {
+            encryptingStream.Dispose();
+            var reusedHandle = GCHandle.Alloc(signatureOutputStream);
+            try
+            {
+                encryptingStream.Dispose();
+                reusedHandle.Target.Should().NotBeNull();
+            }
+            finally
+            {
+                if (reusedHandle.IsAllocated)
+                {
+                    reusedHandle.Free();
+                }
+            }
+        }
+        finally
+        {
+            if (firstHandle.IsAllocated)
+            {
+                firstHandle.Free();
+            }
+        }
     }
 }

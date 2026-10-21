@@ -1,0 +1,17 @@
+[build]
+rustflags = ["--cfg", "aes_armv8", "--cfg", "polyval_armv8"]
+
+[net]
+git-fetch-with-cli = true
+
+[registries.proton]
+index = "sparse+https://rust-registry.proton.me/index/"
+
+[target.x86_64-pc-windows-gnullvm]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.i686-pc-windows-gnullvm]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-pc-windows-gnullvm]
+rustflags = ["-C", "target-feature=+crt-static"]

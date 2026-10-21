@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repository contains the code for the Proton.Cryptography NuGet package which wraps GopenPGP and GoSRP for use in .NET projects.
+This repository contains the code for the `Proton.Cryptography` NuGet package which wraps `proton-rpgp` and `proton-srp` for use in .NET projects.
 
 ## License
 
@@ -11,11 +11,12 @@ Please see [LICENSE](LICENSE.txt) file for the license.
 ## Build prerequisites
 
 This assumes that the build is done on a Debian-based operating system (e.g. Ubuntu) on an x86-64 architecture.
-Instead of the following instructions, you can use `build/Dockerfile` if you are familiar with docker.
+Instead of the following instructions, you can use `build/Dockerfile` if you are familiar with Docker.
 
-- Install Golang and .NET
+- Install Rust and .NET
 ```sh
-sudo apt install golang-1.22 dotnet-sdk-9.0
+sudo apt install dotnet-sdk-9.0
+#TODO Rust
 ```
 
 - Install support for building for Windows (including ARM64)
@@ -41,14 +42,14 @@ export NDK_ROOT="$PWD/android-ndk-r27c"
 
 ## Build
 
-1. Build the Go crypto library for non-Apple targets, from a Linux machine
+1. Build the Rust library for non-Apple targets, from a Linux machine
 ```sh
-build/build-go.sh linux/amd64 linux/arm64 windows/amd64 windows/arm64 android/arm64
+build/build-rust.sh linux/amd64 linux/arm64 windows/amd64 windows/arm64 android/arm64
 ```
 
-2. Build the Go crypto library for Apple targets, from an Apple machine
+2. Build the Rust library for Apple targets, from an Apple machine
 ```sh
-build/build-go.sh darwin/amd64 darwin/arm64 ios/arm64
+build/build-rust.sh darwin/amd64 darwin/arm64 ios/arm64
 ```
 
 3. Pack into NuGet package
@@ -65,7 +66,7 @@ Add a reference to the package in your project configuration (.csproj):
 
 ## Known issues and missing features
 
-This package currently does not support the following OpenPGP features:
+This package currently does not support the following features:
 - Signing and verification contexts
 - Validation of UTF-8 content
 

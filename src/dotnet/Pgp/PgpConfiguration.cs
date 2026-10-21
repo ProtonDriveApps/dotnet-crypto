@@ -11,5 +11,5 @@ public static class PgpConfiguration
     /// <summary>
     /// Gets the minimum input length for AEAD decryption.
     /// </summary>
-    public static int GetAeadDecryptionMinimumInputLength(int aeadChunkLength) => aeadChunkLength + PgpOverheadAllowance;
+    public static int GetAeadDecryptionMinimumInputLength(int aeadChunkLength) => (2 * aeadChunkLength) + PgpOverheadAllowance;
 }

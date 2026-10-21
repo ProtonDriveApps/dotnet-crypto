@@ -1,0 +1,27 @@
+[package]
+name = "proton-crypto"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "proton_crypto"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+base64 = "0.23.1"
+libc = "0.2"
+self_cell = "1"
+
+proton-rpgp = { version = "0.9", registry = "proton" }
+proton-srp = { version = "0.8", registry = "proton" } 
+zeroize = { version = "1.9.1", features = ["aarch64"] }
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"
+
+[dev-dependencies]
+test-case = "3.4.0"
+
+[build-dependencies]
+embed-resource = "3"

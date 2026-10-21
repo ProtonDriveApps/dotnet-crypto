@@ -473,6 +473,8 @@ public static partial class PgpEncrypter
             {
                 fixed (nint* signingKeysPointer = signingKeyRing.DangerousGetForeignKeyHandles())
                 {
+                    var hasSignatureWriter = !Unsafe.IsNullRef(in signatureWriter);
+
                     var parameters = new InteropEncryptionParameters(
                         profile,
                         encryptionKeysPointer,
@@ -482,7 +484,7 @@ public static partial class PgpEncrypter
                         sessionKey,
                         passwordPointer,
                         (nuint)password.Length,
-                        !Unsafe.IsNullRef(in signatureWriter),
+                        hasSignatureWriter,
                         signatureEncryptionState == EncryptionState.Encrypted,
                         outputCompression != PgpCompression.None,
                         aeadStreamingChunkLength,
@@ -494,7 +496,7 @@ public static partial class PgpEncrypter
                         MemoryMarshal.GetReference(input),
                         (nuint)input.Length,
                         outputEncoding.ToInteropEncoding(),
-                        signatureWriter,
+                        hasSignatureWriter ? signatureWriter : default,
                         outputWriter);
 
                     error.ThrowPgpOrStreamExceptionIfAny(outputRecordingStream, signatureRecordingStream);
@@ -512,7 +514,7 @@ public static partial class PgpEncrypter
             in byte message,
             nuint messageLength,
             InteropPgpEncoding encoding,
-            in InteropWriter signatureWriter,
+            InteropWriter signatureWriter,
             InteropWriter outputWriter);
     }
 }

@@ -1,0 +1,32 @@
+[target.x86_64-unknown-linux-gnu]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.i686-unknown-linux-gnu]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.aarch64-unknown-linux-gnu]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.armv7-unknown-linux-gnueabihf]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.x86_64-pc-windows-gnullvm]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.i686-pc-windows-gnullvm]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.aarch64-pc-windows-gnullvm]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.x86_64-linux-android]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.i686-linux-android]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.aarch64-linux-android]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"
+
+[target.armv7-linux-androideabi]
+image = "harbor.protontech.ch/drive/dotnet/build-crypto:latest"

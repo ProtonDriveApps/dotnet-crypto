@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 namespace Proton.Cryptography.Pgp.Interop;
 
 internal sealed class ExceptionRecordingStream(Stream inner) : Stream
@@ -5,6 +7,17 @@ internal sealed class ExceptionRecordingStream(Stream inner) : Stream
     private readonly Stream _inner = inner;
 
     private Exception? _lastException;
+
+    public static void ThrowIfAnyException(params ReadOnlySpan<ExceptionRecordingStream?> streams)
+    {
+        foreach (var stream in streams)
+        {
+            if (stream?.TakeLastException() is { } streamException)
+            {
+                ExceptionDispatchInfo.Capture(streamException).Throw();
+            }
+        }
+    }
 
     public Exception? TakeLastException()
     {

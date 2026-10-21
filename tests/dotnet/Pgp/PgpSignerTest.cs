@@ -55,7 +55,7 @@ public class PgpSignerTest
         var act = new Action(() => privateKey.Sign(PgpSamples.PlainText, timeProviderOverride: encryptionTimeProvider));
 
         // Assert
-        act.Should().Throw<PgpException>().And.Message.Should().Contain("no valid signing keys");
+        act.Should().Throw<PgpException>().And.Message.Should().Contain("Signature has a creation time in the future");
     }
 
     [Theory]
