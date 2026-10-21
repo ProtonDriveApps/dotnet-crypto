@@ -37,10 +37,9 @@ public static partial class PgpArmorEncoder
 
             Encode(message, blockType, outputWriter);
         }
-        catch
+        finally
         {
             outputStreamHandle.Free();
-            throw;
         }
     }
 
