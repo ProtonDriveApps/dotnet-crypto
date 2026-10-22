@@ -21,7 +21,7 @@ public static partial class PgpArmorEncoder
 
     public static ArraySegment<byte> Encode(ReadOnlySpan<byte> message, PgpBlockType blockType)
     {
-        using var outputStream = MemoryProvider.GetMemoryStreamForDecodedMessage(message.Length);
+        using var outputStream = MemoryProvider.GetMemoryStreamForArmoredMessage(message.Length);
 
         Encode(message, blockType, outputStream);
 

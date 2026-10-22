@@ -7,6 +7,12 @@ internal static class MemoryProvider
 {
     private const int MaxStackBufferSize = 0x100;
     private const int MinArmorHeaderPlusFooterLength = 54;
+
+    // Smallest number of non-data characters in any block the native library accepts: "-----BEGIN PUBLIC KEY-----" and
+    // "-----END PUBLIC KEY-----" (50), plus the line break after the begin line and the blank line before the data (2).
+    // Unlike MinArmorHeaderPlusFooterLength, which feeds an estimate, this must never exceed the real overhead.
+    private const int MinArmorNonDataLength = 52;
+
     private const int MaxArmorHeaderPlusFooterLength = 74;
     private const int GenerousArmorVersionAndCommentLength = 90;
     private const int ArmorBytesPerNewline = 48;
@@ -42,9 +48,14 @@ internal static class MemoryProvider
         return new MemoryStream(EstimateMessageLength(plaintextLength, numberOfEncryptionKeys, numberOfSigningKeys, encoding));
     }
 
-    public static MemoryStream GetMemoryStreamForDecodedMessage(int plaintextLength)
+    public static MemoryStream GetMemoryStreamForDecodedMessage(int armoredLength)
     {
-        return new MemoryStream(EstimateDecodedLength(plaintextLength));
+        return new MemoryStream(EstimateDecodedLength(armoredLength));
+    }
+
+    public static MemoryStream GetMemoryStreamForArmoredMessage(int unarmoredLength)
+    {
+        return new MemoryStream(EstimateEncodedLength(unarmoredLength, PgpEncoding.AsciiArmor));
     }
 
     public static MemoryStream GetMemoryStreamForKeyPackets(int numberOfEncryptionKeys)
@@ -102,11 +113,11 @@ internal static class MemoryProvider
             : originalLength);
     }
 
-    public static int EstimateDecodedLength(long originalLength)
+    public static int EstimateDecodedLength(long armoredLength)
     {
-        var lengthWithoutHeaderAndFooter = originalLength - MaxArmorHeaderPlusFooterLength;
-        var lengthWithoutLineBreaks = lengthWithoutHeaderAndFooter / ArmorBytesPerNewline;
+        // Every 4 base64 characters decode to at most 3 bytes, so this is an upper bound for any accepted armored block.
+        var maxBase64Length = Math.Max(0, armoredLength - MinArmorNonDataLength);
 
-        return (int)((lengthWithoutLineBreaks / 4L) * 3L);
+        return (int)((maxBase64Length * 3L) / 4L);
     }
 }
